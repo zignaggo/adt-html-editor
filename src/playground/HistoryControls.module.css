@@ -1,0 +1,38 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.button {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--pg-line);
+  border-radius: 8px;
+  background: var(--pg-bg);
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition-property: scale, opacity, background-color;
+  transition-duration: 120ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.button:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.counts {
+  margin-inline-start: auto;
+  color: var(--pg-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}

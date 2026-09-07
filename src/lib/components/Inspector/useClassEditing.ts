@@ -1,0 +1,90 @@
+import { twMerge } from 'tailwind-merge'
+import type { NodeId } from '../../core/ids'
+import { isStyled } from '../../core/model'
+import { stripVariants, variantOf, withVariant, type VariantId } from '../../tailwind/categories'
+import { useEditor, useEditorStoreApi } from '../Editor/context'
+
+export type ClassEditing = ReturnType<typeof useClassEditing>
+
+export function useClassEditing(id: NodeId) {
+  const store = useEditorStoreApi()
+  const { setClasses } = useEditor()
+
+  return buildClassEditing(id, store, setClasses)
+}
+
+function buildClassEditing(
+  id: NodeId,
+  store: ReturnType<typeof useEditorStoreApi>,
+  setClasses: (id: NodeId, classes: string[]) => void,
+) {
+  const currentClasses = (): string[] => {
+    const node = store.getState().doc.nodes[id]
+    return node && isStyled(node) ? node.classes : []
+  }
+
+  return {
+    currentClasses,
+
+    classesForVariant(variant: VariantId): string[] {
+      return currentClasses().filter((entry) => variantOf(entry) === variant)
+    },
+
+    apply(className: string, variant: VariantId) {
+      const trimmed = className.trim()
+      if (!trimmed) return
+      const next = trimmed.includes(':') ? trimmed : withVariant(trimmed, variant)
+      const merged = twMerge(currentClasses().join(' '), next)
+      setClasses(id, merged.split(/\s+/).filter(Boolean))
+    },
+
+    applyRaw(className: string) {
+      const trimmed = className.trim()
+      if (!trimmed) return
+      const merged = twMerge(currentClasses().join(' '), trimmed)
+      setClasses(id, merged.split(/\s+/).filter(Boolean))
+    },
+
+    remove(className: string) {
+      setClasses(
+        id,
+        currentClasses().filter((entry) => entry !== className),
+      )
+    },
+
+    removeRoots(roots: string[], variant: VariantId) {
+      setClasses(
+        id,
+        currentClasses().filter((entry) => {
+          if (variantOf(entry) !== variant) return true
+          return !matchesRoot(stripVariants(entry), roots)
+        }),
+      )
+    },
+
+    valueForRoots(roots: string[], variant: VariantId): string | null {
+      const match = currentClasses().find(
+        (entry) => variantOf(entry) === variant && matchesRoot(stripVariants(entry), roots),
+      )
+      return match ? stripVariants(match) : null
+    },
+
+    reorder(from: number, to: number) {
+      const classes = currentClasses()
+      if (from === to || from < 0 || from >= classes.length) return
+      const next = [...classes]
+      const [moved] = next.splice(from, 1)
+      next.splice(Math.max(0, Math.min(to, next.length)), 0, moved)
+      setClasses(id, next)
+    },
+  }
+}
+
+export function matchesRoot(className: string, roots: string[]): boolean {
+  for (const root of roots) {
+    if (className === root) return true
+    if (className.startsWith(`${root}-`)) return true
+    if (className.startsWith(`-${root}-`)) return true
+  }
+  return false
+}

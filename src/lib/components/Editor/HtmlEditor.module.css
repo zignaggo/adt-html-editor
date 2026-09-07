@@ -1,0 +1,35 @@
+@import '../../styles/base.css';
+
+.shell {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  isolation: isolate;
+}
+
+.threePane {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(260px, 300px);
+  min-height: 0;
+  width: 100%;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.layers {
+  flex: 1;
+  min-height: 0;
+}
+
+.canvas {
+  min-width: 0;
+}
+
+.inspector {
+  min-height: 0;
+}

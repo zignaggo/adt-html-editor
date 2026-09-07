@@ -1,0 +1,127 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--adt-space-3);
+  height: var(--adt-row-height);
+  padding-inline-end: var(--adt-space-4);
+  border-radius: var(--adt-radius-sm);
+  margin-inline: var(--adt-space-2);
+  color: var(--adt-text);
+  cursor: default;
+  user-select: none;
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--adt-row-height);
+  transition-property: background-color, opacity, scale;
+  transition-duration: var(--adt-duration-fast);
+  transition-timing-function: var(--adt-ease);
+}
+
+.row:hover {
+  background: var(--adt-surface-hover);
+}
+
+.row:active {
+  scale: 0.995;
+}
+
+.row[data-selected] {
+  background: var(--adt-selected);
+  color: var(--adt-text);
+}
+
+.row[data-selected] .tag {
+  color: var(--adt-selected-strong);
+}
+
+.row[data-dragging] {
+  opacity: 0.4;
+}
+
+.row[data-kind='comment'] .kind,
+.row[data-kind='text'] .kind {
+  font-style: italic;
+}
+
+.chevron {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--adt-row-height);
+  height: var(--adt-row-height);
+  margin-inline-start: calc(var(--adt-space-3) * -1);
+  padding: 0;
+  border: 0;
+  border-radius: var(--adt-radius-xs);
+  background: none;
+  color: var(--adt-text-muted);
+  cursor: default;
+  transition-property: color, background-color;
+  transition-duration: var(--adt-duration-fast);
+  transition-timing-function: var(--adt-ease);
+}
+
+.chevron:hover {
+  color: var(--adt-text);
+  background: var(--adt-surface-active);
+}
+
+.chevron svg {
+  rotate: 90deg;
+  transition-property: rotate;
+  transition-duration: var(--adt-duration);
+  transition-timing-function: var(--adt-ease);
+}
+
+.chevron[data-collapsed] svg {
+  rotate: 0deg;
+}
+
+.chevronSpacer {
+  flex: none;
+  width: calc(var(--adt-row-height) - var(--adt-space-3));
+}
+
+.label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--adt-space-2);
+  min-width: 0;
+  flex: none;
+  max-width: 60%;
+}
+
+.tag {
+  font-family: var(--adt-font-mono);
+  font-size: var(--adt-text-sm);
+  color: var(--adt-accent);
+  white-space: nowrap;
+}
+
+.kind,
+.text {
+  overflow: hidden;
+  color: var(--adt-text-muted);
+  font-size: var(--adt-text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hash {
+  color: var(--adt-text-faint);
+  font-family: var(--adt-font-mono);
+  font-size: var(--adt-text-xs);
+  white-space: nowrap;
+}
+
+.classes {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--adt-text-faint);
+  font-family: var(--adt-font-mono);
+  font-size: var(--adt-text-xs);
+  text-align: end;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+}

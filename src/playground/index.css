@@ -1,0 +1,29 @@
+:root {
+  color-scheme: light dark;
+  --pg-bg: #ffffff;
+  --pg-surface: #f6f7f9;
+  --pg-line: rgba(9, 30, 66, 0.14);
+  --pg-text: #1a1c1f;
+  --pg-text-muted: #62676d;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pg-bg: #16181c;
+    --pg-surface: #1c1f24;
+    --pg-line: rgba(255, 255, 255, 0.14);
+    --pg-text: #e6e8ea;
+    --pg-text-muted: #a3a9b0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
