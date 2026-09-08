@@ -45,8 +45,8 @@ export function useEditorShortcuts(shellRef: RefObject<HTMLElement | null>) {
       if (!isInsideEditor(event.target)) return
 
       event.preventDefault()
-      if (key === 'y' || event.shiftKey) store.getState().redo()
-      else store.getState().undo()
+      if (key === 'y' || event.shiftKey) store.actions.redo()
+      else store.actions.undo()
     }
 
     window.addEventListener('pointerdown', onPointerDown, true)

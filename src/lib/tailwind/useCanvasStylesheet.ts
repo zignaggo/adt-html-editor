@@ -59,7 +59,7 @@ export function useCanvasStylesheet(): boolean {
         return
       }
 
-      const used = store.getState().usedClasses
+      const used = store.state.usedClasses
       if (used === builtRef.current) {
         setReady(true)
         return
@@ -80,16 +80,19 @@ export function useCanvasStylesheet(): boolean {
 
     run()
 
-    const unsubscribe = store.subscribe((state, previous) => {
-      if (state.usedClasses === previous.usedClasses) return
+    let previousUsed = store.state.usedClasses
+    const subscription = store.subscribe((state) => {
+      if (state.usedClasses === previousUsed) return
+      const previous = previousUsed
+      previousUsed = state.usedClasses
       // Documento trocado por inteiro: o conjunto anterior não sobrevive → esconder até estilizar.
-      if (!isSuperset(state.usedClasses, previous.usedClasses)) setReady(false)
+      if (!isSuperset(state.usedClasses, previous)) setReady(false)
       run()
     })
 
     return () => {
       disposed = true
-      unsubscribe()
+      subscription.unsubscribe()
     }
   }, [store])
 

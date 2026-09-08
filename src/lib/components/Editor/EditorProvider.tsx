@@ -69,7 +69,7 @@ export function EditorProvider({
 
   useEffect(() => {
     if (lastEmittedRef.current === null) {
-      lastEmittedRef.current = serializeHtml(store.getState().doc)
+      lastEmittedRef.current = serializeHtml(store.state.doc)
     }
   }, [store])
 
@@ -82,15 +82,17 @@ export function EditorProvider({
       onChangeRef.current?.(html, doc)
     }
 
-    const unsubscribe = store.subscribe((state, previous) => {
-      if (state.doc === previous.doc) return
+    let previousDoc = store.state.doc
+    const subscription = store.subscribe((state) => {
+      if (state.doc === previousDoc) return
+      previousDoc = state.doc
       const { doc } = state
       schedule.run(() => emit(doc))
     })
 
     return () => {
       schedule.cancel()
-      unsubscribe()
+      subscription.unsubscribe()
     }
   }, [store, changeDebounceMs])
 
@@ -98,17 +100,17 @@ export function EditorProvider({
     if (value === undefined) return
     if (value === lastEmittedRef.current) return
     lastEmittedRef.current = value
-    store.getState().replaceDocument(value)
+    store.actions.replaceDocument(value)
   }, [store, value])
 
   useImperativeHandle(
     handleRef,
     (): HtmlEditorHandle => ({
-      getHtml: () => serializeHtml(store.getState().doc),
-      setHtml: (html) => store.getState().replaceDocument(html),
-      getDocument: () => store.getState().doc,
-      undo: () => store.getState().undo(),
-      redo: () => store.getState().redo(),
+      getHtml: () => serializeHtml(store.state.doc),
+      setHtml: (html) => store.actions.replaceDocument(html),
+      getDocument: () => store.state.doc,
+      undo: () => store.actions.undo(),
+      redo: () => store.actions.redo(),
     }),
     [store],
   )

@@ -16,6 +16,12 @@
       "sourceType": "local",
       "computedHash": "907d99a561051340ef6ea99ebe75356a3b484c2b1d1fc4c7a9dde47c538ce7a2"
     },
+    "tanstack-store": {
+      "source": "tanstack-skills/tanstack-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tanstack-store/skills/tanstack-store/SKILL.md",
+      "computedHash": "acfc5f1217685253fa9484f8f89dc92aae96a9ae30e42001b07b2ca672c758b2"
+    },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",

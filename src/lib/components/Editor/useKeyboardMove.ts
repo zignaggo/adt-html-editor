@@ -9,7 +9,7 @@ export function useKeyboardMove(): KeyboardMove {
   const store = useEditorStoreApi()
 
   return function move(direction) {
-    const state = store.getState()
+    const { state, actions } = store
     const id = state.selectedId
     if (!id) return false
 
@@ -19,12 +19,12 @@ export function useKeyboardMove(): KeyboardMove {
       return false
     }
 
-    if (direction === 'in') state.setCollapsed(target.parentId, false)
+    if (direction === 'in') actions.setCollapsed(target.parentId, false)
 
-    const moved = state.moveNode(id, target)
+    const moved = actions.moveNode(id, target)
     if (!moved) return false
 
-    const next = store.getState().doc
+    const next = store.state.doc
     const node = next.nodes[id]
     const name = node ? labelOf(node) : id
 

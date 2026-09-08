@@ -68,10 +68,10 @@ describe('useCanvasStylesheet', () => {
     await act(async () => builds[0].resolve('css-1'))
     await waitFor(() => expect(hook.result.current).toBe(true))
 
-    const state = store.getState()
+    const { state, actions } = store
     const root = state.doc.nodes[state.doc.rootId]
     if (root.kind !== 'element') throw new Error('raiz inesperada')
-    act(() => state.setClasses(root.children[0], ['p-4', 'm-2']))
+    act(() => actions.setClasses(root.children[0], ['p-4', 'm-2']))
 
     expect(hook.result.current).toBe(true)
     expect(buildCss).toHaveBeenLastCalledWith(['p-4', 'm-2'])
@@ -84,7 +84,7 @@ describe('useCanvasStylesheet', () => {
     await act(async () => builds[0].resolve('css-1'))
     await waitFor(() => expect(hook.result.current).toBe(true))
 
-    act(() => store.getState().replaceDocument('<p class="m-2">b</p>'))
+    act(() => store.actions.replaceDocument('<p class="m-2">b</p>'))
     expect(hook.result.current).toBe(false)
     expect(buildCss).toHaveBeenLastCalledWith(['m-2'])
 
@@ -96,7 +96,7 @@ describe('useCanvasStylesheet', () => {
   it('rebuilds when the class set changes but keeps the same size', async () => {
     const { store } = setup('<p class="p-4">a</p>')
     await act(async () => builds[0].resolve('css-1'))
-    act(() => store.getState().replaceDocument('<p class="p-8">b</p>'))
+    act(() => store.actions.replaceDocument('<p class="p-8">b</p>'))
     expect(buildCss).toHaveBeenLastCalledWith(['p-8'])
   })
 })

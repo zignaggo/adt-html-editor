@@ -6,7 +6,7 @@ import { COALESCE_WINDOW_MS, pushSnapshot, emptyHistory } from '../history'
 const HTML = '<section id="a"><p id="p1">um</p><p id="p2">dois</p></section><aside id="b"></aside>'
 
 function firstByTag(store: ReturnType<typeof createEditorStore>, tag: string) {
-  const { doc } = store.getState()
+  const { doc } = store.state
   const id = Object.values(doc.nodes).find((node) => 'tag' in node && node.tag === tag)?.id
   if (!id) throw new Error(`sem <${tag}>`)
   return id
@@ -52,110 +52,110 @@ describe('coalescência de ações no store', () => {
   it('um burst de setClasses no mesmo nó vira uma entrada', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
-    for (let i = 0; i < 50; i += 1) store.getState().setClasses(section, [`p-${i}`])
-    expect(store.getState().history.past).toHaveLength(1)
+    for (let i = 0; i < 50; i += 1) store.actions.setClasses(section, [`p-${i}`])
+    expect(store.state.history.past).toHaveLength(1)
   })
 
   it('um undo depois do burst volta ao estado anterior ao burst', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
-    const before = store.getState().getHtml()
-    for (let i = 0; i < 50; i += 1) store.getState().setClasses(section, [`p-${i}`])
-    expect(store.getState().getHtml()).toContain('p-49')
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(before)
+    const before = store.actions.getHtml()
+    for (let i = 0; i < 50; i += 1) store.actions.setClasses(section, [`p-${i}`])
+    expect(store.actions.getHtml()).toContain('p-49')
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(before)
   })
 
   it('nós fora do burst permanecem intactos após o undo', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
     const aside = firstByTag(store, 'aside')
-    store.getState().setClasses(aside, ['ring'])
-    const asideHtml = store.getState().getHtml()
-    for (let i = 0; i < 30; i += 1) store.getState().setClasses(section, [`m-${i}`])
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(asideHtml)
+    store.actions.setClasses(aside, ['ring'])
+    const asideHtml = store.actions.getHtml()
+    for (let i = 0; i < 30; i += 1) store.actions.setClasses(section, [`m-${i}`])
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(asideHtml)
   })
 
   it('nós diferentes não coalescem entre si', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
     const aside = firstByTag(store, 'aside')
-    store.getState().setClasses(section, ['flex'])
-    store.getState().setClasses(aside, ['grid'])
-    expect(store.getState().history.past).toHaveLength(2)
+    store.actions.setClasses(section, ['flex'])
+    store.actions.setClasses(aside, ['grid'])
+    expect(store.state.history.past).toHaveLength(2)
   })
 
   it('ações estruturais nunca coalescem', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
-    const [p1, p2] = childrenOf(store.getState().doc, section)
-    store.getState().moveNode(p2, { parentId: section, index: 0 })
-    store.getState().moveNode(p1, { parentId: section, index: 0 })
-    expect(store.getState().history.past).toHaveLength(2)
+    const [p1, p2] = childrenOf(store.state.doc, section)
+    store.actions.moveNode(p2, { parentId: section, index: 0 })
+    store.actions.moveNode(p1, { parentId: section, index: 0 })
+    expect(store.state.history.past).toHaveLength(2)
   })
 
   it('redo após um burst coalescido restaura o último valor', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
-    for (let i = 0; i < 20; i += 1) store.getState().setClasses(section, [`p-${i}`])
-    const burstResult = store.getState().getHtml()
-    store.getState().undo()
-    store.getState().redo()
-    expect(store.getState().getHtml()).toBe(burstResult)
+    for (let i = 0; i < 20; i += 1) store.actions.setClasses(section, [`p-${i}`])
+    const burstResult = store.actions.getHtml()
+    store.actions.undo()
+    store.actions.redo()
+    expect(store.actions.getHtml()).toBe(burstResult)
   })
 
   it('editar depois de um undo não corrompe o redo descartado', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
     const aside = firstByTag(store, 'aside')
-    const original = store.getState().getHtml()
+    const original = store.actions.getHtml()
 
-    store.getState().setClasses(section, ['flex'])
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(original)
+    store.actions.setClasses(section, ['flex'])
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(original)
 
-    for (let i = 0; i < 20; i += 1) store.getState().setClasses(aside, [`p-${i}`])
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(original)
+    for (let i = 0; i < 20; i += 1) store.actions.setClasses(aside, [`p-${i}`])
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(original)
   })
 
   it('burst, undo e novo burst com a mesma chave não corrompe o snapshot', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
-    const original = store.getState().getHtml()
+    const original = store.actions.getHtml()
 
-    for (let i = 0; i < 20; i += 1) store.getState().setClasses(section, [`p-${i}`])
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(original)
+    for (let i = 0; i < 20; i += 1) store.actions.setClasses(section, [`p-${i}`])
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(original)
 
-    for (let i = 0; i < 20; i += 1) store.getState().setClasses(section, [`m-${i}`])
-    expect(store.getState().getHtml()).toContain('m-19')
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(original)
+    for (let i = 0; i < 20; i += 1) store.actions.setClasses(section, [`m-${i}`])
+    expect(store.actions.getHtml()).toContain('m-19')
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(original)
   })
 
   it('undo no meio de um burst não vaza estados intermediários', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
-    const original = store.getState().getHtml()
+    const original = store.actions.getHtml()
 
-    for (let i = 0; i < 10; i += 1) store.getState().setClasses(section, [`p-${i}`])
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(original)
-    for (let i = 0; i < 10; i += 1) store.getState().setClasses(section, [`p-${i}`])
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(original)
-    expect(store.getState().history.past).toHaveLength(0)
+    for (let i = 0; i < 10; i += 1) store.actions.setClasses(section, [`p-${i}`])
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(original)
+    for (let i = 0; i < 10; i += 1) store.actions.setClasses(section, [`p-${i}`])
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(original)
+    expect(store.state.history.past).toHaveLength(0)
   })
 
   it('o mapa de nós do snapshot nunca é o mapa vivo', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
-    store.getState().setClasses(section, ['flex'])
-    for (let i = 0; i < 10; i += 1) store.getState().setClasses(section, [`p-${i}`])
-    const snapshotNodes = store.getState().history.past[0].snapshot.doc.nodes
-    expect(snapshotNodes).not.toBe(store.getState().doc.nodes)
+    store.actions.setClasses(section, ['flex'])
+    for (let i = 0; i < 10; i += 1) store.actions.setClasses(section, [`p-${i}`])
+    const snapshotNodes = store.state.history.past[0].snapshot.doc.nodes
+    expect(snapshotNodes).not.toBe(store.state.doc.nodes)
     expect((snapshotNodes[section] as { classes: string[] }).classes).toEqual([])
   })
 
@@ -163,24 +163,24 @@ describe('coalescência de ações no store', () => {
     const store = createEditorStore(HTML)
     const section = firstByTag(store, 'section')
     const aside = firstByTag(store, 'aside')
-    const states = [store.getState().getHtml()]
+    const states = [store.actions.getHtml()]
 
-    store.getState().setClasses(section, ['flex'])
-    states.push(store.getState().getHtml())
-    store.getState().moveNode(childrenOf(store.getState().doc, section)[1], {
+    store.actions.setClasses(section, ['flex'])
+    states.push(store.actions.getHtml())
+    store.actions.moveNode(childrenOf(store.state.doc, section)[1], {
       parentId: aside,
       index: 0,
     })
-    states.push(store.getState().getHtml())
+    states.push(store.actions.getHtml())
 
-    store.getState().undo()
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(states[0])
-    store.getState().redo()
-    expect(store.getState().getHtml()).toBe(states[1])
-    store.getState().redo()
-    expect(store.getState().getHtml()).toBe(states[2])
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(states[1])
+    store.actions.undo()
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(states[0])
+    store.actions.redo()
+    expect(store.actions.getHtml()).toBe(states[1])
+    store.actions.redo()
+    expect(store.actions.getHtml()).toBe(states[2])
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(states[1])
   })
 })

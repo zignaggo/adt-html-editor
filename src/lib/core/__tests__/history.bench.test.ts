@@ -27,31 +27,31 @@ function timed(label: string, run: () => void) {
 describe('perfil do historico', () => {
   it('custo por acao, undo e retencao', () => {
     const store = createEditorStore(html)
-    const nodeCount = Object.keys(store.getState().doc.nodes).length
-    const roots = childrenOf(store.getState().doc, store.getState().doc.rootId)
+    const nodeCount = Object.keys(store.state.doc.nodes).length
+    const roots = childrenOf(store.state.doc, store.state.doc.rootId)
     console.log(`  nodes: ${nodeCount}`)
 
     const burst = timed('200 setClasses (burst de slider)', () => {
       for (let i = 0; i < 200; i += 1) {
-        store.getState().setClasses(roots[1], [`p-${i % 12}`])
+        store.actions.setClasses(roots[1], [`p-${i % 12}`])
       }
     })
     console.log(`  por acao: ${(burst / 200).toFixed(3)} ms`)
-    console.log(`  entradas de historico apos burst: ${store.getState().history.past.length}`)
+    console.log(`  entradas de historico apos burst: ${store.state.history.past.length}`)
 
     timed('100 undo', () => {
-      for (let i = 0; i < 100; i += 1) store.getState().undo()
+      for (let i = 0; i < 100; i += 1) store.actions.undo()
     })
 
     const fresh = createEditorStore(html)
-    const freshRoots = childrenOf(fresh.getState().doc, fresh.getState().doc.rootId)
-    const before = fresh.getState().doc
-    fresh.getState().setClasses(freshRoots[0], ['grid'])
-    const after = fresh.getState().doc
+    const freshRoots = childrenOf(fresh.state.doc, fresh.state.doc.rootId)
+    const before = fresh.state.doc
+    fresh.actions.setClasses(freshRoots[0], ['grid'])
+    const after = fresh.state.doc
     const ids = Object.keys(before.nodes)
     const shared = ids.filter((id) => before.nodes[id] === after.nodes[id]).length
     console.log(`  nodes compartilhados apos 1 acao: ${shared}/${ids.length}`)
-    console.log(`  snapshot guarda o doc anterior por referencia: ${fresh.getState().history.past[0].snapshot.doc === before}`)
+    console.log(`  snapshot guarda o doc anterior por referencia: ${fresh.state.history.past[0].snapshot.doc === before}`)
 
     expect(shared).toBeGreaterThan(ids.length - 5)
     expect(nodeCount).toBeGreaterThan(3000)

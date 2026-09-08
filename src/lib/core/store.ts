@@ -1,4 +1,4 @@
-import { createStore } from 'zustand/vanilla'
+import { Store, batch } from '@tanstack/store'
 import { createIdFactory, type NodeId } from './ids'
 import {
   canCoalesce,
@@ -63,8 +63,13 @@ export type EditorActions = {
   getHtml: () => string
 }
 
-export type EditorStoreState = EditorState & EditorActions
-export type EditorStore = ReturnType<typeof createEditorStore>
+/**
+ * Store do editor: `store.state` é somente leitura, `store.actions` é a única forma de mutar,
+ * `store.subscribe(listener)` notifica a cada mudança (retorna `{ unsubscribe }`).
+ */
+export type EditorStore = Store<EditorState, EditorActions>
+
+type Patch = Partial<EditorState>
 
 function snapshotOf(state: EditorState): Snapshot {
   return { doc: state.doc, selectedId: state.selectedId }
@@ -105,11 +110,27 @@ type CommitOptions = {
   classes?: Iterable<string>
 }
 
-export function createEditorStore(initialHtml: string) {
+export function createEditorStore(initialHtml: string): EditorStore {
   const nextId = createIdFactory('e')
+  const initialDoc = parseHtml(initialHtml)
 
-  return createStore<EditorStoreState>()((set, get) => {
-    const initialDoc = parseHtml(initialHtml)
+  const initialState: EditorState = {
+    doc: initialDoc,
+    selectedId: null,
+    collapsed: {},
+    usedClasses: classSetOf(initialDoc),
+    history: emptyHistory(),
+    editingTextId: null,
+  }
+
+  return new Store<EditorState, EditorActions>(initialState, ({ setState, get }) => {
+    /** `set` no estilo "patch": mescla um parcial; devolver o próprio `state` é um no-op sem notificação. */
+    function set(patch: Patch | ((state: EditorState) => Patch | EditorState)) {
+      setState((state) => {
+        const next = typeof patch === 'function' ? patch(state) : patch
+        return next === state ? state : { ...state, ...next }
+      })
+    }
 
     let ownsNodes = true
     let reuseNodes = false
@@ -235,13 +256,6 @@ export function createEditorStore(initialHtml: string) {
     }
 
     return {
-      doc: initialDoc,
-      selectedId: null,
-      collapsed: {},
-      usedClasses: classSetOf(initialDoc),
-      history: emptyHistory(),
-      editingTextId: null,
-
       replaceDocument(html) {
         const doc = parseHtml(html)
         ownsNodes = true
@@ -257,78 +271,82 @@ export function createEditorStore(initialHtml: string) {
 
       insertNode(template, at) {
         let created: NodeId | null = null
-        commit((doc) => {
-          const parent = doc.nodes[at.parentId]
-          if (!parent || !canHaveChildren(parent)) return null
-          const nodes = draftNodes(doc)
-          created = materialize(template, at.parentId, nodes)
-          attach(nodes, created, at.parentId, at.index)
-          return { ...doc, nodes }
-        }, { classes: classesInTemplate(template) })
-        if (created) set({ selectedId: created })
+        batch(() => {
+          commit((doc) => {
+            const parent = doc.nodes[at.parentId]
+            if (!parent || !canHaveChildren(parent)) return null
+            const nodes = draftNodes(doc)
+            created = materialize(template, at.parentId, nodes)
+            attach(nodes, created, at.parentId, at.index)
+            return { ...doc, nodes }
+          }, { classes: classesInTemplate(template) })
+          if (created) set({ selectedId: created })
+        })
         return created
       },
 
       insertHtml(html, at) {
         const created: NodeId[] = []
         const parsed = parseHtml(html)
-        commit((doc) => {
-          const parent = doc.nodes[at.parentId]
-          if (!parent || !canHaveChildren(parent)) return null
+        batch(() => {
+          commit((doc) => {
+            const parent = doc.nodes[at.parentId]
+            if (!parent || !canHaveChildren(parent)) return null
 
-          const incoming = childrenOf(parsed, parsed.rootId)
-          if (incoming.length === 0) return null
+            const incoming = childrenOf(parsed, parsed.rootId)
+            if (incoming.length === 0) return null
 
-          const nodes = draftNodes(doc)
-          const remap = new Map<NodeId, NodeId>()
+            const nodes = draftNodes(doc)
+            const remap = new Map<NodeId, NodeId>()
 
-          for (const sourceId of Object.keys(parsed.nodes)) {
-            if (sourceId === parsed.rootId) continue
-            remap.set(sourceId, nextId())
-          }
-
-          for (const [sourceId, targetId] of remap) {
-            const source = parsed.nodes[sourceId]
-            const parentId =
-              source.parentId && source.parentId !== parsed.rootId
-                ? remap.get(source.parentId) ?? at.parentId
-                : at.parentId
-            if (source.kind === 'element') {
-              nodes[targetId] = {
-                ...source,
-                id: targetId,
-                parentId,
-                attrs: { ...source.attrs },
-                attrOrder: [...source.attrOrder],
-                classes: [...source.classes],
-                children: source.children.map((child) => remap.get(child) ?? child),
-              }
-            } else if (source.kind === 'opaque') {
-              nodes[targetId] = {
-                ...source,
-                id: targetId,
-                parentId,
-                attrs: { ...source.attrs },
-                attrOrder: [...source.attrOrder],
-                classes: [...source.classes],
-              }
-            } else {
-              nodes[targetId] = { ...source, id: targetId, parentId }
+            for (const sourceId of Object.keys(parsed.nodes)) {
+              if (sourceId === parsed.rootId) continue
+              remap.set(sourceId, nextId())
             }
-          }
 
-          for (let index = 0; index < incoming.length; index += 1) {
-            const targetId = remap.get(incoming[index])
-            if (!targetId) continue
-            created.push(targetId)
-            attach(nodes, targetId, at.parentId, at.index + index)
-          }
+            for (const [sourceId, targetId] of remap) {
+              const source = parsed.nodes[sourceId]
+              const parentId =
+                source.parentId && source.parentId !== parsed.rootId
+                  ? remap.get(source.parentId) ?? at.parentId
+                  : at.parentId
+              if (source.kind === 'element') {
+                nodes[targetId] = {
+                  ...source,
+                  id: targetId,
+                  parentId,
+                  attrs: { ...source.attrs },
+                  attrOrder: [...source.attrOrder],
+                  classes: [...source.classes],
+                  children: source.children.map((child) => remap.get(child) ?? child),
+                }
+              } else if (source.kind === 'opaque') {
+                nodes[targetId] = {
+                  ...source,
+                  id: targetId,
+                  parentId,
+                  attrs: { ...source.attrs },
+                  attrOrder: [...source.attrOrder],
+                  classes: [...source.classes],
+                }
+              } else {
+                nodes[targetId] = { ...source, id: targetId, parentId }
+              }
+            }
 
-          return { ...doc, nodes }
-        }, { classes: classSetOf(parsed) })
-        const first = created[0] ?? null
-        if (first) set({ selectedId: first })
-        return first
+            for (let index = 0; index < incoming.length; index += 1) {
+              const targetId = remap.get(incoming[index])
+              if (!targetId) continue
+              created.push(targetId)
+              attach(nodes, targetId, at.parentId, at.index + index)
+            }
+
+            return { ...doc, nodes }
+          }, { classes: classSetOf(parsed) })
+          const first = created[0] ?? null
+          if (first) set({ selectedId: first })
+        })
+        return created[0] ?? null
       },
 
       moveNode(id, at) {
@@ -363,33 +381,37 @@ export function createEditorStore(initialHtml: string) {
       },
 
       removeNode(id) {
-        commit((doc) => {
-          const node = doc.nodes[id]
-          if (!node?.parentId || id === doc.rootId) return null
-          const nodes = draftNodes(doc)
-          detach(nodes, id, node.parentId)
-          for (const gone of collectSubtree(doc, id)) delete nodes[gone]
-          return { ...doc, nodes }
+        batch(() => {
+          commit((doc) => {
+            const node = doc.nodes[id]
+            if (!node?.parentId || id === doc.rootId) return null
+            const nodes = draftNodes(doc)
+            detach(nodes, id, node.parentId)
+            for (const gone of collectSubtree(doc, id)) delete nodes[gone]
+            return { ...doc, nodes }
+          })
+          set((state) =>
+            state.selectedId && !state.doc.nodes[state.selectedId] ? { selectedId: null } : state,
+          )
         })
-        set((state) =>
-          state.selectedId && !state.doc.nodes[state.selectedId] ? { selectedId: null } : state,
-        )
       },
 
       duplicateNode(id) {
         let created: NodeId | null = null
         const duplicatedClasses = classesInSubtree(get().doc, id)
-        commit((doc) => {
-          const node = doc.nodes[id]
-          if (!node?.parentId || id === doc.rootId) return null
-          const parent = doc.nodes[node.parentId]
-          if (!parent || parent.kind !== 'element') return null
-          const nodes = draftNodes(doc)
-          created = cloneSubtree(doc, id, node.parentId, nodes)
-          attach(nodes, created, node.parentId, parent.children.indexOf(id) + 1)
-          return { ...doc, nodes }
-        }, { classes: duplicatedClasses })
-        if (created) set({ selectedId: created })
+        batch(() => {
+          commit((doc) => {
+            const node = doc.nodes[id]
+            if (!node?.parentId || id === doc.rootId) return null
+            const parent = doc.nodes[node.parentId]
+            if (!parent || parent.kind !== 'element') return null
+            const nodes = draftNodes(doc)
+            created = cloneSubtree(doc, id, node.parentId, nodes)
+            attach(nodes, created, node.parentId, parent.children.indexOf(id) + 1)
+            return { ...doc, nodes }
+          }, { classes: duplicatedClasses })
+          if (created) set({ selectedId: created })
+        })
         return created
       },
 

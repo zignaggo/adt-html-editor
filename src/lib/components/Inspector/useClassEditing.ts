@@ -19,7 +19,7 @@ function buildClassEditing(
   setClasses: (id: NodeId, classes: string[]) => void,
 ) {
   const currentClasses = (): string[] => {
-    const node = store.getState().doc.nodes[id]
+    const node = store.state.doc.nodes[id]
     return node && isStyled(node) ? node.classes : []
   }
 

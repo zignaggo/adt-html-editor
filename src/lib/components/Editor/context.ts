@@ -1,9 +1,9 @@
-import { createContext, useContext } from 'react'
-import { useStore } from 'zustand'
+import { createContext, use } from 'react'
+import { useSelector } from '@tanstack/react-store'
 import invariant from 'tiny-invariant'
 import type { NodeId } from '../../core/ids'
 import type { AnyNode, EditorDocument } from '../../core/model'
-import type { EditorStore, EditorStoreState } from '../../core/store'
+import type { EditorActions, EditorState, EditorStore } from '../../core/store'
 
 export type StyleMode = 'tailwind' | 'inline-css'
 
@@ -16,7 +16,7 @@ export type EditorContextValue = {
 export const EditorContext = createContext<EditorContextValue | null>(null)
 
 export function useEditorContext(): EditorContextValue {
-  const value = useContext(EditorContext)
+  const value = use(EditorContext)
   invariant(value, '<HtmlEditor> ausente: os painéis precisam ficar dentro do provider')
   return value
 }
@@ -25,8 +25,8 @@ export function useEditorStoreApi(): EditorStore {
   return useEditorContext().store
 }
 
-export function useEditorSelector<T>(selector: (state: EditorStoreState) => T): T {
-  return useStore(useEditorContext().store, selector)
+export function useEditorSelector<T>(selector: (state: EditorState) => T): T {
+  return useSelector(useEditorContext().store, selector)
 }
 
 const EMPTY_CHILDREN: NodeId[] = []
@@ -66,36 +66,9 @@ export function useDocument(): EditorDocument {
   return useEditorSelector((state) => state.doc)
 }
 
-const actionsByStore = new WeakMap<EditorStore, EditorApi>()
-
+/** Ações do editor. O objeto é estável por instância — seguro em deps de hooks. */
 export function useEditor(): EditorApi {
-  const store = useEditorStoreApi()
-  const cached = actionsByStore.get(store)
-  if (cached) return cached
-  const api = selectActions(store.getState())
-  actionsByStore.set(store, api)
-  return api
+  return useEditorStoreApi().actions
 }
 
-export type EditorApi = ReturnType<typeof selectActions>
-
-function selectActions(state: EditorStoreState) {
-  return {
-    insertNode: state.insertNode,
-    insertHtml: state.insertHtml,
-    moveNode: state.moveNode,
-    removeNode: state.removeNode,
-    duplicateNode: state.duplicateNode,
-    setClasses: state.setClasses,
-    setAttr: state.setAttr,
-    setText: state.setText,
-    select: state.select,
-    toggleCollapsed: state.toggleCollapsed,
-    setCollapsed: state.setCollapsed,
-    beginTextEdit: state.beginTextEdit,
-    undo: state.undo,
-    redo: state.redo,
-    getHtml: state.getHtml,
-    replaceDocument: state.replaceDocument,
-  }
-}
+export type EditorApi = EditorActions

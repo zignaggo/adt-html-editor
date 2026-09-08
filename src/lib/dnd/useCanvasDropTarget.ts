@@ -31,7 +31,7 @@ export function useCanvasDropTarget(target: DragTargetRef, nodeId: NodeId) {
 
     const isBlocked = (draggedId: NodeId | null) => {
       if (!draggedId) return false
-      const { doc } = store.getState()
+      const { doc } = store.state
       return draggedId === nodeId || isDescendantOf(doc, nodeId, draggedId)
     }
 
@@ -57,7 +57,7 @@ export function useCanvasDropTarget(target: DragTargetRef, nodeId: NodeId) {
         !isBlocked(isNodeDrag(source.data) ? source.data.nodeId : null),
       getIsSticky: () => true,
       getData: ({ input, element: target }) => {
-        const { doc } = store.getState()
+        const { doc } = store.state
         const canNest = acceptsNesting(doc, doc.nodes[nodeId])
         const { outer, inner } = axes(target)
         const zone = computeZone({

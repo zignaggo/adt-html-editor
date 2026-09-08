@@ -48,25 +48,25 @@ describe('orçamento de performance (2.000 nós)', () => {
 
   it('moveNode fica abaixo de 20 ms', () => {
     const store = createEditorStore(html)
-    const roots = childrenOf(store.getState().doc, store.getState().doc.rootId)
+    const roots = childrenOf(store.state.doc, store.state.doc.rootId)
     const source = roots[0]
     const target = roots[roots.length - 1]
     const elapsed = measure('move', () => {
-      store.getState().moveNode(source, { parentId: target, index: 0 })
+      store.actions.moveNode(source, { parentId: target, index: 0 })
     })
     expect(elapsed).toBeLessThan(20)
-    expect(store.getState().doc.nodes[source].parentId).toBe(target)
+    expect(store.state.doc.nodes[source].parentId).toBe(target)
   })
 
   it('setClasses fica abaixo de 20 ms e não recria o mapa de nós inteiro', () => {
     const store = createEditorStore(html)
-    const roots = childrenOf(store.getState().doc, store.getState().doc.rootId)
-    const before = store.getState().doc.nodes
+    const roots = childrenOf(store.state.doc, store.state.doc.rootId)
+    const before = store.state.doc.nodes
     const other = roots[1]
     const elapsed = measure('setClasses', () => {
-      store.getState().setClasses(roots[0], ['grid', 'gap-8'])
+      store.actions.setClasses(roots[0], ['grid', 'gap-8'])
     })
-    const after = store.getState().doc.nodes
+    const after = store.state.doc.nodes
     expect(elapsed).toBeLessThan(20)
     expect(after[other]).toBe(before[other])
     expect(after[roots[0]]).not.toBe(before[roots[0]])
@@ -74,13 +74,13 @@ describe('orçamento de performance (2.000 nós)', () => {
 
   it('undo restaura por referência, sem copiar a árvore', () => {
     const store = createEditorStore(html)
-    const roots = childrenOf(store.getState().doc, store.getState().doc.rootId)
-    const original = store.getState().doc
-    store.getState().setClasses(roots[0], ['grid'])
-    expect(store.getState().doc).not.toBe(original)
-    const elapsed = measure('undo', () => store.getState().undo())
+    const roots = childrenOf(store.state.doc, store.state.doc.rootId)
+    const original = store.state.doc
+    store.actions.setClasses(roots[0], ['grid'])
+    expect(store.state.doc).not.toBe(original)
+    const elapsed = measure('undo', () => store.actions.undo())
     expect(elapsed).toBeLessThan(10)
-    expect(store.getState().doc).toBe(original)
+    expect(store.state.doc).toBe(original)
   })
 
   it('collectSubtree percorre a maior seção rapidamente', () => {

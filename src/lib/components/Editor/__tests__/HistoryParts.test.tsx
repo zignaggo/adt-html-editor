@@ -27,10 +27,10 @@ function setup(children = <HistoryGroup />) {
 }
 
 function removeFirstChild(store: EditorStore) {
-  const state = store.getState()
+  const { state, actions } = store
   const root = state.doc.nodes[state.doc.rootId]
   if (root.kind !== 'element') throw new Error('raiz inesperada')
-  act(() => state.removeNode(root.children[0]))
+  act(() => actions.removeNode(root.children[0]))
 }
 
 describe('HtmlEditor.History', () => {
@@ -45,9 +45,9 @@ describe('HtmlEditor.History', () => {
 
   it('undoes and redoes through the buttons', () => {
     const store = setup()
-    const before = store.getState().getHtml()
+    const before = store.actions.getHtml()
     removeFirstChild(store)
-    const after = store.getState().getHtml()
+    const after = store.actions.getHtml()
     expect(after).not.toBe(before)
 
     const undo = screen.getByRole('button', { name: 'Desfazer' })
@@ -56,12 +56,12 @@ describe('HtmlEditor.History', () => {
     expect(redo).toHaveProperty('disabled', true)
 
     fireEvent.click(undo)
-    expect(store.getState().getHtml()).toBe(before)
+    expect(store.actions.getHtml()).toBe(before)
     expect(undo).toHaveProperty('disabled', true)
     expect(redo).toHaveProperty('disabled', false)
 
     fireEvent.click(redo)
-    expect(store.getState().getHtml()).toBe(after)
+    expect(store.actions.getHtml()).toBe(after)
   })
 
   it('lets consumers compose their own labels and extra parts', () => {

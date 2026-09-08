@@ -58,7 +58,7 @@ export function useTreeDropTarget(
     if (!element) return
 
     const blockedFor = (draggedId: NodeId | null): Instruction['type'][] => {
-      const { doc } = store.getState()
+      const { doc } = store.state
       if (draggedId && (draggedId === nodeId || isDescendantOf(doc, nodeId, draggedId))) {
         return ALL_INSTRUCTIONS
       }

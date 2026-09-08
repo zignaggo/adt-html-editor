@@ -118,7 +118,6 @@ export type {
   EditorActions,
   EditorState,
   EditorStore,
-  EditorStoreState,
   NodeTemplate,
 } from './core/store'
 

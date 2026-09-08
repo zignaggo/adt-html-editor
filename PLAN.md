@@ -56,7 +56,7 @@ O playground simula o workflow: textarea de entrada → editor → textarea de s
 | Stack | Vite 8 + React 19 + TS + React Compiler (já configurado) | Compiler elimina a maior parte de `memo`/`useCallback` manual. |
 | DnD | `@atlaskit/pragmatic-drag-and-drop` (element adapter) + `-hitbox` + `-auto-scroll` + `-live-region` | Nativo, sem re-render por frame, sem provider; preview renderizado fora da main thread. |
 | Modelo do documento | Mapa plano normalizado `Record<NodeId, Node>` + `children: NodeId[]` | Lookup O(1), mover nó = 2 splices, assinatura por nó, undo barato por structural sharing. |
-| Store | `zustand/vanilla` (uma store por instância de editor) exposta por Context; hooks com selectors | Re-render granular por nó; sem estado global; compatível com Compiler. |
+| Store | `@tanstack/store` (uma `Store<EditorState, EditorActions>` por instância de editor) exposta por Context; hooks com `useSelector` | Re-render granular por nó; sem estado global; compatível com Compiler. |
 | Estado transiente de drag | Store separada (`dragStore`) + escrita direta de `style` no indicador | Frames de drag nunca re-renderizam a árvore ou o canvas. |
 | Canvas | **Mesmo documento** (sem iframe), subtree `.adt-canvas`, CSS Tailwind gerado em runtime dentro de `@scope (.adt-canvas)` | Mantém tree ↔ canvas ↔ paleta no mesmo `window`, onde o DnD nativo funciona sem gambiarras. Iframe quebraria o pdnd na fronteira. |
 | Responsivo no canvas | Pós-processar CSS gerado: `@media (width >= X)` → `@container adt-canvas (width >= X)`; `.adt-canvas { container: adt-canvas / inline-size }` | Faz `md:`/`lg:` responderem à largura do canvas, não da janela do editor. |
@@ -83,7 +83,7 @@ src/
     index.ts                      # exports públicos
     core/
       model.ts                    # Node, NodeId, Document, helpers puros
-      store.ts                    # createEditorStore (zustand/vanilla) + actions
+      store.ts                    # createEditorStore (@tanstack/store) + actions
       history.ts                  # undo/redo (pilha de snapshots do mapa)
       html/parse.ts               # HTML string -> Document (DOMParser)
       html/serialize.ts           # Document -> HTML string
@@ -223,7 +223,7 @@ Também exportados: `parseHtml`, `serializeHtml`, `useEditor()` (headless), tipo
 ## 5. Fases
 
 ### Fase 0 — Fundação (1 dia)
-- [x] Instalar: `@atlaskit/pragmatic-drag-and-drop`, `-hitbox`, `-auto-scroll`, `-live-region`, `zustand`, `tiny-invariant`, `tailwindcss`, `tailwind-merge`; dev: `vitest`, `@testing-library/react`, `@atlaskit/pragmatic-drag-and-drop-unit-testing`, `@tanstack/react-virtual` (fase 6).
+- [x] Instalar: `@atlaskit/pragmatic-drag-and-drop`, `-hitbox`, `-auto-scroll`, `-live-region`, `@tanstack/store`, `@tanstack/react-store`, `tiny-invariant`, `tailwindcss`, `tailwind-merge`; dev: `vitest`, `@testing-library/react`, `@atlaskit/pragmatic-drag-and-drop-unit-testing`, `@tanstack/react-virtual` (fase 6).
 - [x] Reorganizar `src/` em `lib/` e `playground/`; `vite.config.ts` com `build.lib`; `package.json` com `exports`, `peerDependencies`, `files`.
 - [x] `tokens.css`, tema claro/escuro, remover assets do template.
 - **Pronto quando**: `bun run build` gera `dist/index.js` + `dist/style.css`; playground roda.

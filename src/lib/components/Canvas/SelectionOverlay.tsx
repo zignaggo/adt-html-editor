@@ -16,7 +16,7 @@ export function SelectionOverlay() {
     const root = canvasRootRef.current
     if (!root) return
 
-    let selectedId = store.getState().selectedId
+    let selectedId = store.state.selectedId
     let hoveredId: NodeId | null = null
     let frame = 0
 
@@ -33,7 +33,7 @@ export function SelectionOverlay() {
       box.style.width = `${rect.width}px`
       box.style.height = `${rect.height}px`
       if (withLabel && labelRef.current && id) {
-        const node = store.getState().doc.nodes[id]
+        const node = store.state.doc.nodes[id]
         labelRef.current.textContent = node ? labelOf(node) : ''
         labelRef.current.dataset.flip = rect.top < 24 ? 'below' : 'above'
       }
@@ -50,7 +50,7 @@ export function SelectionOverlay() {
       frame = requestAnimationFrame(sync)
     }
 
-    const unsubscribeStore = store.subscribe((state) => {
+    const storeSubscription = store.subscribe((state) => {
       if (state.selectedId === selectedId) return
       selectedId = state.selectedId
       schedule()
@@ -75,7 +75,7 @@ export function SelectionOverlay() {
 
     return () => {
       cancelAnimationFrame(frame)
-      unsubscribeStore()
+      storeSubscription.unsubscribe()
       unsubscribeHover()
       observer.disconnect()
       mutation.disconnect()

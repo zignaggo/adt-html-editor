@@ -37,7 +37,7 @@ export function useEditorDropMonitor() {
         const target = location.current.dropTargets[0]
         if (!target) return
 
-        const state = store.getState()
+        const { state, actions } = store
         const draggedId = isNodeDrag(source.data) ? source.data.nodeId : null
         const position = resolveDrop(state.doc, target, draggedId, location.current.input)
         if (!position) return
@@ -45,13 +45,13 @@ export function useEditorDropMonitor() {
         const parentLabel = labelOf(state.doc.nodes[position.parentId])
 
         if (isNodeDrag(source.data)) {
-          const moved = state.moveNode(source.data.nodeId, position)
+          const moved = actions.moveNode(source.data.nodeId, position)
           if (moved) announce(`${source.data.label} movido para dentro de ${parentLabel}`)
           return
         }
 
         if (isPaletteDrag(source.data)) {
-          const created = state.insertNode(source.data.template, position)
+          const created = actions.insertNode(source.data.template, position)
           if (created) announce(`${source.data.label} inserido em ${parentLabel}`)
         }
       },

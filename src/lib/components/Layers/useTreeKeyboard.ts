@@ -10,7 +10,7 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
 
   return function onKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.altKey) return
-    const state = store.getState()
+    const { state, actions } = store
     const { doc, selectedId } = state
     const modifier = event.metaKey || event.ctrlKey
     const key = event.key.toLowerCase()
@@ -18,14 +18,14 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
     if (!selectedId) {
       if (event.key === 'ArrowDown' && rows.length > 0) {
         event.preventDefault()
-        state.select(rows[0].id)
+        actions.select(rows[0].id)
       }
       return
     }
 
     if (modifier && key === 'd') {
       event.preventDefault()
-      state.duplicateNode(selectedId)
+      actions.duplicateNode(selectedId)
       return
     }
 
@@ -35,7 +35,7 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
       if (!copySubtree(doc, selectedId)) return
       const name = node ? labelOf(node) : 'elemento'
       if (key === 'x') {
-        state.removeNode(selectedId)
+        actions.removeNode(selectedId)
         announce(`${name} recortado`)
         return
       }
@@ -49,7 +49,7 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
       const parentId = doc.nodes[selectedId]?.parentId
       if (!clip || !parentId) return
       const siblings = siblingsOf(doc, selectedId)
-      state.insertHtml(clip, { parentId, index: siblings.indexOf(selectedId) + 1 })
+      actions.insertHtml(clip, { parentId, index: siblings.indexOf(selectedId) + 1 })
       announce('elemento colado')
       return
     }
@@ -57,7 +57,7 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault()
       const node = doc.nodes[selectedId]
-      state.removeNode(selectedId)
+      actions.removeNode(selectedId)
       if (node) announce(`${labelOf(node)} removido`)
       return
     }
@@ -69,14 +69,14 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
       const next = rows[index + 1]
-      if (next) state.select(next.id)
+      if (next) actions.select(next.id)
       return
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault()
       const previous = rows[index - 1]
-      if (previous) state.select(previous.id)
+      if (previous) actions.select(previous.id)
       return
     }
 
@@ -84,22 +84,22 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
       event.preventDefault()
       if (!row.hasChildren) return
       if (state.collapsed[selectedId]) {
-        state.setCollapsed(selectedId, false)
+        actions.setCollapsed(selectedId, false)
         return
       }
       const first = rows[index + 1]
-      if (first) state.select(first.id)
+      if (first) actions.select(first.id)
       return
     }
 
     if (event.key === 'ArrowLeft') {
       event.preventDefault()
       if (row.hasChildren && !state.collapsed[selectedId]) {
-        state.setCollapsed(selectedId, true)
+        actions.setCollapsed(selectedId, true)
         return
       }
       const parentId = doc.nodes[selectedId]?.parentId
-      if (parentId && parentId !== doc.rootId) state.select(parentId)
+      if (parentId && parentId !== doc.rootId) actions.select(parentId)
     }
   }
 }

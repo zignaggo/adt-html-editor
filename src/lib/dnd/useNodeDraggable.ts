@@ -24,11 +24,11 @@ export function useNodeDraggable(
     return draggable({
       element,
       getInitialData: () => {
-        const node = store.getState().doc.nodes[nodeId]
+        const node = store.state.doc.nodes[nodeId]
         return nodeDrag({ nodeId, surface, label: node ? labelOf(node) : nodeId })
       },
       onGenerateDragPreview({ nativeSetDragImage }) {
-        const node = store.getState().doc.nodes[nodeId]
+        const node = store.state.doc.nodes[nodeId]
         const classes = node && 'classes' in node ? node.classes : []
         renderDragPreview(nativeSetDragImage, {
           label: node ? labelOf(node) : nodeId,

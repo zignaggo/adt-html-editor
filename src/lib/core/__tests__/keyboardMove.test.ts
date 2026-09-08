@@ -100,64 +100,64 @@ describe('resolveKeyboardMove', () => {
 describe('movimento por teclado aplicado no store', () => {
   it('desce um elemento e a ordem final confere', () => {
     const store = createEditorStore(HTML)
-    const { section, p1 } = ids(store.getState().doc)
-    const before = childrenOf(store.getState().doc, section)
-    const target = resolveKeyboardMove(store.getState().doc, p1, 'down')
+    const { section, p1 } = ids(store.state.doc)
+    const before = childrenOf(store.state.doc, section)
+    const target = resolveKeyboardMove(store.state.doc, p1, 'down')
     expect(target).not.toBeNull()
-    store.getState().moveNode(p1, target!)
-    const after = childrenOf(store.getState().doc, section)
+    store.actions.moveNode(p1, target!)
+    const after = childrenOf(store.state.doc, section)
     expect(after).toEqual([before[1], before[0], before[2]])
   })
 
   it('sobe e desce volta ao estado original', () => {
     const store = createEditorStore(HTML)
-    const { section, p2 } = ids(store.getState().doc)
-    const original = store.getState().getHtml()
+    const { section, p2 } = ids(store.state.doc)
+    const original = store.actions.getHtml()
 
-    store.getState().moveNode(p2, resolveKeyboardMove(store.getState().doc, p2, 'up')!)
-    expect(childrenOf(store.getState().doc, section)[0]).toBe(p2)
+    store.actions.moveNode(p2, resolveKeyboardMove(store.state.doc, p2, 'up')!)
+    expect(childrenOf(store.state.doc, section)[0]).toBe(p2)
 
-    store.getState().moveNode(p2, resolveKeyboardMove(store.getState().doc, p2, 'down')!)
-    expect(store.getState().getHtml()).toBe(original)
+    store.actions.moveNode(p2, resolveKeyboardMove(store.state.doc, p2, 'down')!)
+    expect(store.actions.getHtml()).toBe(original)
   })
 
   it('sair e entrar de novo volta ao estado original', () => {
     const store = createEditorStore(HTML)
-    const { p3 } = ids(store.getState().doc)
-    const original = store.getState().getHtml()
+    const { p3 } = ids(store.state.doc)
+    const original = store.actions.getHtml()
 
-    store.getState().moveNode(p3, resolveKeyboardMove(store.getState().doc, p3, 'out')!)
-    expect(store.getState().doc.nodes[p3].parentId).toBe(store.getState().doc.rootId)
+    store.actions.moveNode(p3, resolveKeyboardMove(store.state.doc, p3, 'out')!)
+    expect(store.state.doc.nodes[p3].parentId).toBe(store.state.doc.rootId)
 
-    store.getState().moveNode(p3, resolveKeyboardMove(store.getState().doc, p3, 'in')!)
-    expect(store.getState().getHtml()).toBe(original)
+    store.actions.moveNode(p3, resolveKeyboardMove(store.state.doc, p3, 'in')!)
+    expect(store.actions.getHtml()).toBe(original)
   })
 
   it('cada movimento é uma entrada de histórico desfazível', () => {
     const store = createEditorStore(HTML)
-    const { p1 } = ids(store.getState().doc)
-    const original = store.getState().getHtml()
+    const { p1 } = ids(store.state.doc)
+    const original = store.actions.getHtml()
 
-    store.getState().moveNode(p1, resolveKeyboardMove(store.getState().doc, p1, 'down')!)
-    store.getState().moveNode(p1, resolveKeyboardMove(store.getState().doc, p1, 'down')!)
-    expect(store.getState().history.past).toHaveLength(2)
+    store.actions.moveNode(p1, resolveKeyboardMove(store.state.doc, p1, 'down')!)
+    store.actions.moveNode(p1, resolveKeyboardMove(store.state.doc, p1, 'down')!)
+    expect(store.state.history.past).toHaveLength(2)
 
-    store.getState().undo()
-    store.getState().undo()
-    expect(store.getState().getHtml()).toBe(original)
+    store.actions.undo()
+    store.actions.undo()
+    expect(store.actions.getHtml()).toBe(original)
   })
 
   it('mover para fora repetidamente sobe um nível por vez', () => {
     const store = createEditorStore('<div id="a"><div id="b"><p id="p">x</p></div></div>')
-    const doc = () => store.getState().doc
+    const doc = () => store.state.doc
     const outer = childrenOf(doc(), doc().rootId)[0]
     const inner = childrenOf(doc(), outer)[0]
     const p = childrenOf(doc(), inner)[0]
 
-    store.getState().moveNode(p, resolveKeyboardMove(doc(), p, 'out')!)
+    store.actions.moveNode(p, resolveKeyboardMove(doc(), p, 'out')!)
     expect(doc().nodes[p].parentId).toBe(outer)
 
-    store.getState().moveNode(p, resolveKeyboardMove(doc(), p, 'out')!)
+    store.actions.moveNode(p, resolveKeyboardMove(doc(), p, 'out')!)
     expect(doc().nodes[p].parentId).toBe(doc().rootId)
 
     expect(resolveKeyboardMove(doc(), p, 'out')).toBeNull()
