@@ -24,6 +24,7 @@ import { LayerRow } from '../Layers/LayerRow'
 import { LayersCount, LayersEmpty, LayersHeader, LayersTitle, LayersTree } from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
 import { EditorProvider, type EditorProviderProps } from './EditorProvider'
+import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
 import { useEditorShortcuts } from './useEditorShortcuts'
 import styles from './HtmlEditor.module.css'
 
@@ -111,6 +112,11 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Attributes: InspectorAttributes,
 })
 
+const HistoryNamespace = Object.assign(HistoryGroup, {
+  Undo: HistoryUndo,
+  Redo: HistoryRedo,
+})
+
 const PaletteNamespace = Object.assign(Palette, {
   Header: PaletteHeader,
   Grid: PaletteGrid,
@@ -121,5 +127,6 @@ HtmlEditor.Layers = LayersNamespace
 HtmlEditor.Canvas = CanvasNamespace
 HtmlEditor.Inspector = InspectorNamespace
 HtmlEditor.Palette = PaletteNamespace
+HtmlEditor.History = HistoryNamespace
 HtmlEditor.Layout = Layout
 HtmlEditor.DefaultLayout = DefaultLayout

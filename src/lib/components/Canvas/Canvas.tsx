@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useCanvasStylesheet } from '../../tailwind/useCanvasStylesheet'
+import { HistoryGroup } from '../Editor/HistoryParts'
 import {
   CanvasContext,
   DEFAULT_WIDTH_PRESETS,
@@ -43,6 +44,7 @@ function DefaultCanvas() {
   return (
     <>
       <CanvasToolbar>
+        <HistoryGroup />
         <CanvasWidthPresets />
         <CanvasDarkToggle />
       </CanvasToolbar>

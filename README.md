@@ -60,6 +60,10 @@ Cada painel é um `Root` que aceita `children`. **Sem children ele renderiza a c
     <HtmlEditor.Canvas>
       <HtmlEditor.Canvas.Viewport />
       <HtmlEditor.Canvas.Toolbar>
+        <HtmlEditor.History>
+          <HtmlEditor.History.Undo>↶</HtmlEditor.History.Undo>
+          <HtmlEditor.History.Redo>↷</HtmlEditor.History.Redo>
+        </HtmlEditor.History>
         <HtmlEditor.Canvas.DarkToggle>Tema escuro</HtmlEditor.Canvas.DarkToggle>
         <HtmlEditor.Canvas.WidthPresets
           presets={[
@@ -96,12 +100,15 @@ O `src/playground/CustomLayout.tsx` é um exemplo completo — o playground alte
 | `HtmlEditor.Canvas` | `Toolbar`, `WidthPresets`, `DarkToggle`, `Viewport` |
 | `HtmlEditor.Inspector` | `Header`, `Empty`, `Variants`, `Body`, `Section`, `Category`, `Control`, `ClassInput`, `ClassList`, `Attributes` |
 | `HtmlEditor.Palette` | `Header`, `Grid`, `Item` |
+| `HtmlEditor.History` | `Undo`, `Redo` |
+
+`HtmlEditor.History` não depende de painel nenhum: coloque-o em qualquer toolbar dentro do `<HtmlEditor>`. Sem children ele renderiza `Undo` + `Redo`; com children você escolhe rótulos, ordem e partes extras (um contador, por exemplo). Para escrever seus próprios botões use `useHistory()` → `{ canUndo, canRedo, undo, redo }`. Os atalhos `Ctrl/⌘+Z` e `Ctrl/⌘+Shift+Z` (ou `Ctrl+Y`) continuam funcionando independentemente dos botões.
 
 `Category` e `Control` recebem um `id` das `CATEGORIES` exportadas — categorias: `layout`, `flex`, `spacing`, `sizing`, `typography`, `color`, `border`, `effects`; controles: `display`, `gap`, `p`, `text-size`, etc.
 
 Para trocar a aparência das linhas da árvore sem perder o drag and drop, passe `renderRow` para `Tree` e monte sua linha em volta de `HtmlEditor.Layers.Row`.
 
-Cada parte também é exportada solta (`LayersTree`, `InspectorCategory`, `CanvasViewport`…), e os contextos ficam acessíveis por `useLayersContext()`, `useInspectorContext()` e `useCanvasContext()` se você precisar escrever partes próprias.
+Cada parte também é exportada solta (`LayersTree`, `InspectorCategory`, `CanvasViewport`, `HistoryGroup`…), e os contextos ficam acessíveis por `useLayersContext()`, `useInspectorContext()`, `useCanvasContext()` e `useHistory()` se você precisar escrever partes próprias.
 
 ## Contrato de entrada e saída
 

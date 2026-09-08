@@ -1,36 +1,23 @@
-import { useCanRedo, useCanUndo, useEditor, useEditorSelector } from '../lib'
+import { HtmlEditor, useEditorSelector } from '../lib'
 import styles from './HistoryControls.module.css'
 
+/** Exemplo de composição: partes da lib com rótulos próprios + uma parte extra do playground. */
 export function HistoryControls() {
-  const { undo, redo } = useEditor()
-  const canUndo = useCanUndo()
-  const canRedo = useCanRedo()
+  return (
+    <HtmlEditor.History className={styles.bar}>
+      <HtmlEditor.History.Undo>↶ Desfazer</HtmlEditor.History.Undo>
+      <HtmlEditor.History.Redo>Refazer ↷</HtmlEditor.History.Redo>
+      <HistoryCounts />
+    </HtmlEditor.History>
+  )
+}
+
+function HistoryCounts() {
   const past = useEditorSelector((state) => state.history.past.length)
   const future = useEditorSelector((state) => state.history.future.length)
-
   return (
-    <div className={styles.bar}>
-      <button
-        type="button"
-        id="history-undo"
-        className={styles.button}
-        disabled={!canUndo}
-        onClick={undo}
-      >
-        Desfazer
-      </button>
-      <button
-        type="button"
-        id="history-redo"
-        className={styles.button}
-        disabled={!canRedo}
-        onClick={redo}
-      >
-        Refazer
-      </button>
-      <span className={styles.counts} id="history-counts">
-        {past} / {future}
-      </span>
-    </div>
+    <span className={styles.counts} id="history-counts">
+      {past} / {future}
+    </span>
   )
 }
