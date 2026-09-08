@@ -1,6 +1,6 @@
 import type { ItemMode } from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item'
 import type { NodeId } from '../../core/ids'
-import type { EditorDocument } from '../../core/model'
+import { contentChildrenOf, type EditorDocument } from '../../core/model'
 
 export type LayerRowInfo = {
   id: NodeId
@@ -21,7 +21,7 @@ export function flattenTree(
       const node = doc.nodes[id]
       if (!node) continue
 
-      const children = node.kind === 'element' ? node.children : []
+      const children = contentChildrenOf(doc, id)
       const hasChildren = children.length > 0
       const isExpanded = hasChildren && !collapsed[id]
       const isLast = index === ids.length - 1
@@ -37,11 +37,11 @@ export function flattenTree(
     }
   }
 
-  const root = doc.nodes[doc.rootId]
-  if (root && root.kind === 'element') walk(root.children, 0)
+  walk(contentChildrenOf(doc, doc.rootId), 0)
   return rows
 }
 
+/** Irmãos de `id` na ordem real do documento (inclui whitespace de layout — use para calcular índices de inserção). */
 export function siblingsOf(doc: EditorDocument, id: NodeId): NodeId[] {
   const parentId = doc.nodes[id]?.parentId
   if (!parentId) return []

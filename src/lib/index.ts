@@ -34,7 +34,8 @@ export type {
 } from './components/Layers/useLayerRow'
 export type { LayerRowProps } from './components/Layers/LayerRow'
 export { LayerLabel } from './components/Layers/LayerLabel'
-export { flattenTree } from './components/Layers/flatten'
+export { flattenTree, siblingsOf } from './components/Layers/flatten'
+export { contentChildrenOf, isLayoutWhitespace, labelOf } from './core/model'
 export type { LayerRowInfo } from './components/Layers/flatten'
 export { useLayersContext } from './components/Layers/context'
 

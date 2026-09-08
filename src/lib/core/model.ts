@@ -88,6 +88,29 @@ export function childrenOf(doc: EditorDocument, id: NodeId): NodeId[] {
 
 const EMPTY_CHILDREN: NodeId[] = []
 
+/**
+ * Texto só de espaço em branco que o parser preserva porque separa elementos inline
+ * (`<a>..</a>\n<a>..</a>`). Faz parte do documento e do HTML de saída, mas não é conteúdo
+ * que o usuário edita — a árvore de camadas e a navegação por teclado o ignoram.
+ */
+export function isLayoutWhitespace(node: AnyNode | undefined): boolean {
+  return node?.kind === 'text' && node.value.trim() === ''
+}
+
+/** Filhos de `id` sem o whitespace de layout. Devolve o mesmo array quando não há nada a filtrar. */
+export function contentChildrenOf(doc: EditorDocument, id: NodeId): NodeId[] {
+  const children = childrenOf(doc, id)
+  let filtered: NodeId[] | null = null
+  for (let index = 0; index < children.length; index += 1) {
+    if (!isLayoutWhitespace(doc.nodes[children[index]])) {
+      filtered?.push(children[index])
+      continue
+    }
+    filtered ??= children.slice(0, index)
+  }
+  return filtered ?? children
+}
+
 export function ancestorIdsOf(doc: EditorDocument, id: NodeId): NodeId[] {
   const out: NodeId[] = []
   let current = doc.nodes[id]?.parentId ?? null

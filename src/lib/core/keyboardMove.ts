@@ -1,5 +1,5 @@
 import type { NodeId } from './ids'
-import { canHaveChildren, childrenOf, type EditorDocument } from './model'
+import { canHaveChildren, childrenOf, contentChildrenOf, type EditorDocument } from './model'
 import type { DropPosition } from './store'
 
 export type MoveDirection = 'up' | 'down' | 'out' | 'in'
@@ -23,15 +23,18 @@ export function resolveKeyboardMove(
   if (!parentId) return null
 
   const siblings = childrenOf(doc, parentId)
-  const position = siblings.indexOf(id)
+  const visible = contentChildrenOf(doc, parentId)
+  const position = visible.indexOf(id)
   if (position === -1) return null
 
   if (direction === 'up') {
-    return position > 0 ? { parentId, index: position - 1 } : null
+    if (position === 0) return null
+    return { parentId, index: siblings.indexOf(visible[position - 1]) }
   }
 
   if (direction === 'down') {
-    return position < siblings.length - 1 ? { parentId, index: position + 2 } : null
+    if (position === visible.length - 1) return null
+    return { parentId, index: siblings.indexOf(visible[position + 1]) + 1 }
   }
 
   if (direction === 'out') {
@@ -44,7 +47,7 @@ export function resolveKeyboardMove(
   }
 
   if (position === 0) return null
-  const previousId = siblings[position - 1]
+  const previousId = visible[position - 1]
   const previous = doc.nodes[previousId]
   if (!previous || !canHaveChildren(previous)) return null
   return { parentId: previousId, index: previous.children.length }

@@ -163,3 +163,47 @@ describe('movimento por teclado aplicado no store', () => {
     expect(resolveKeyboardMove(doc(), p, 'out')).toBeNull()
   })
 })
+
+describe('resolveKeyboardMove com whitespace de layout', () => {
+  const NAV = '<nav>\n  <a id="a">A</a>\n  <a id="b">B</a>\n  <a id="c">C</a>\n</nav>'
+
+  function navIds() {
+    const doc = parseHtml(NAV)
+    const nav = childrenOf(doc, doc.rootId)[0]
+    const all = childrenOf(doc, nav)
+    const links = all.filter((id) => doc.nodes[id].kind === 'element')
+    return { doc, nav, all, links }
+  }
+
+  it('sobe pulando o whitespace entre os links', () => {
+    const { doc, nav, all, links } = navIds()
+    expect(resolveKeyboardMove(doc, links[1], 'up')).toEqual({ parentId: nav, index: all.indexOf(links[0]) })
+  })
+
+  it('desce pulando o whitespace entre os links', () => {
+    const { doc, nav, all, links } = navIds()
+    expect(resolveKeyboardMove(doc, links[0], 'down')).toEqual({
+      parentId: nav,
+      index: all.indexOf(links[1]) + 1,
+    })
+  })
+
+  it('não desce a partir do último link visível mesmo com whitespace depois', () => {
+    const { doc, links } = navIds()
+    expect(resolveKeyboardMove(doc, links[2], 'down')).toBeNull()
+  })
+
+  it('mover de fato troca a ordem visível', () => {
+    const store = createEditorStore(NAV)
+    const { nav, links } = (() => {
+      const doc = store.state.doc
+      const nav = childrenOf(doc, doc.rootId)[0]
+      return { nav, links: childrenOf(doc, nav).filter((id) => doc.nodes[id].kind === 'element') }
+    })()
+    const target = resolveKeyboardMove(store.state.doc, links[1], 'up')
+    expect(target).not.toBeNull()
+    store.actions.moveNode(links[1], target!)
+    const after = childrenOf(store.state.doc, nav).filter((id) => store.state.doc.nodes[id].kind === 'element')
+    expect(after).toEqual([links[1], links[0], links[2]])
+  })
+})
