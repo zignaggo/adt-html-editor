@@ -61,6 +61,9 @@ function getDesignSystem() {
   return designSystemPromise
 }
 
+// Compila o design system assim que o worker sobe, para o primeiro build não pagar esse custo.
+void getCompiler().catch(() => {})
+
 function describeValue(value: unknown): string | null {
   if (!value || typeof value !== 'object') return null
   const entry = value as { kind?: string; value?: string; fraction?: string | null }

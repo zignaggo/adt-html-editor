@@ -19,6 +19,8 @@ export type CanvasContextValue = {
   setPreset: (preset: CanvasWidthPreset) => void
   isDark: boolean
   setIsDark: (dark: boolean) => void
+  /** `false` enquanto o CSS do documento atual ainda não foi gerado. */
+  stylesReady: boolean
 }
 
 export const CanvasContext = createContext<CanvasContextValue | null>(null)

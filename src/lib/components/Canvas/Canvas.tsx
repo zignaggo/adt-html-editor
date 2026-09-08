@@ -21,7 +21,7 @@ export function Canvas({ className, children }: CanvasProps) {
   )
   const [isDark, setIsDark] = useState(false)
 
-  useCanvasStylesheet()
+  const stylesReady = useCanvasStylesheet()
 
   const context: CanvasContextValue = {
     width: preset.width,
@@ -29,6 +29,7 @@ export function Canvas({ className, children }: CanvasProps) {
     setPreset,
     isDark,
     setIsDark,
+    stylesReady,
   }
 
   return (

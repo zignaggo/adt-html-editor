@@ -60,7 +60,7 @@ export function CanvasDarkToggle({ children }: { children?: ReactNode }) {
 
 export function CanvasViewport({ className }: { className?: string }) {
   const { canvasRootRef } = useEditorContext()
-  const { width, isDark } = useCanvasContext()
+  const { width, isDark, stylesReady } = useCanvasContext()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const rootId = useRootId()
   const children = useChildren(rootId)
@@ -123,6 +123,8 @@ export function CanvasViewport({ className }: { className?: string }) {
           tabIndex={0}
           className={`adt-canvas${isDark ? ' adt-dark' : ''}`}
           data-adt-canvas=""
+          data-adt-styles={stylesReady ? 'ready' : 'pending'}
+          aria-busy={!stylesReady || undefined}
           onPointerMove={onPointerMove}
           onPointerLeave={() => setHovered(null)}
           onClick={(event) => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useEditorStoreApi } from '../components/Editor/context'
 import { buildCss } from './client'
 import { scopeCss } from './scopeCss'
@@ -14,9 +14,23 @@ function ensureStyleElement(): HTMLStyleElement {
   return element
 }
 
-export function useCanvasStylesheet() {
+function isSuperset(set: ReadonlySet<string>, subset: ReadonlySet<string>): boolean {
+  if (subset.size > set.size) return false
+  for (const entry of subset) if (!set.has(entry)) return false
+  return true
+}
+
+/**
+ * Mantém a folha de estilos do canvas em sincronia com as classes usadas no documento.
+ *
+ * Retorna `false` enquanto o documento atual ainda não tem CSS gerado — na montagem e
+ * sempre que o documento inteiro é trocado (`value`/`setHtml`). Adições incrementais
+ * (drop de um elemento, classe nova) não voltam para o estado pendente.
+ */
+export function useCanvasStylesheet(): boolean {
   const store = useEditorStoreApi()
-  const builtCountRef = useRef(-1)
+  const builtRef = useRef<ReadonlySet<string> | null>(null)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     const style = ensureStyleElement()
@@ -24,15 +38,17 @@ export function useCanvasStylesheet() {
     let inFlight = false
     let queued = false
 
-    const build = (classes: string[], count: number) =>
-      buildCss(classes).then(
+    const build = (classes: ReadonlySet<string>) =>
+      buildCss(Array.from(classes)).then(
         (css) => {
           if (disposed) return
-          builtCountRef.current = count
+          builtRef.current = classes
           style.textContent = scopeCss(css)
         },
         () => {
-          if (!disposed) style.textContent = ''
+          if (disposed) return
+          builtRef.current = classes
+          style.textContent = ''
         },
       )
 
@@ -44,15 +60,21 @@ export function useCanvasStylesheet() {
       }
 
       const used = store.getState().usedClasses
-      if (used.size === builtCountRef.current) return
+      if (used === builtRef.current) {
+        setReady(true)
+        return
+      }
 
       inFlight = true
-      void build(Array.from(used), used.size).finally(() => {
+      void build(used).finally(() => {
         inFlight = false
-        if (queued && !disposed) {
+        if (disposed) return
+        if (queued) {
           queued = false
           run()
+          return
         }
+        setReady(true)
       })
     }
 
@@ -60,6 +82,8 @@ export function useCanvasStylesheet() {
 
     const unsubscribe = store.subscribe((state, previous) => {
       if (state.usedClasses === previous.usedClasses) return
+      // Documento trocado por inteiro: o conjunto anterior não sobrevive → esconder até estilizar.
+      if (!isSuperset(state.usedClasses, previous.usedClasses)) setReady(false)
       run()
     })
 
@@ -68,4 +92,6 @@ export function useCanvasStylesheet() {
       unsubscribe()
     }
   }, [store])
+
+  return ready
 }

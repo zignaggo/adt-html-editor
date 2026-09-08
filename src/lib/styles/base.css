@@ -75,6 +75,15 @@
   font-variant-numeric: normal;
   text-wrap: auto;
   color: #0f172a;
+  transition-property: opacity;
+  transition-duration: var(--adt-duration, 180ms);
+  transition-timing-function: var(--adt-ease, ease);
+}
+
+/* Evita o flash sem estilo: o conteúdo só aparece quando o CSS do documento já foi injetado. */
+.adt-canvas[data-adt-styles='pending'] {
+  visibility: hidden;
+  opacity: 0;
 }
 
 .adt-canvas [data-adt-editing] {

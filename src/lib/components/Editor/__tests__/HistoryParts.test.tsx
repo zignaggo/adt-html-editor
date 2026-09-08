@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { useEffect } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { EditorStore } from '../../../core/store'
 import { useEditorStoreApi } from '../context'
@@ -6,7 +7,10 @@ import { EditorProvider } from '../EditorProvider'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from '../HistoryParts'
 
 function CaptureStore({ onStore }: { onStore: (store: EditorStore) => void }) {
-  onStore(useEditorStoreApi())
+  const store = useEditorStoreApi()
+  useEffect(() => {
+    onStore(store)
+  }, [onStore, store])
   return null
 }
 
