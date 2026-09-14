@@ -213,6 +213,31 @@ describe('editor store', () => {
       expect(store.state.collapsed[section]).toBeUndefined()
     })
 
+    it('selecting a node expands its collapsed ancestors', () => {
+      const section = firstByTag(store, 'section')
+      const [, p2] = idsByTag(store, 'p')
+      store.actions.toggleCollapsed(section)
+      store.actions.select(p2)
+      expect(store.state.selectedId).toBe(p2)
+      expect(store.state.collapsed[section]).toBeUndefined()
+    })
+
+    it('selecting keeps unrelated nodes collapsed', () => {
+      const section = firstByTag(store, 'section')
+      const aside = firstByTag(store, 'aside')
+      store.actions.toggleCollapsed(section)
+      store.actions.select(aside)
+      expect(store.state.collapsed[section]).toBe(true)
+    })
+
+    it('inserting into a collapsed parent expands it', () => {
+      const section = firstByTag(store, 'section')
+      store.actions.toggleCollapsed(section)
+      const created = store.actions.insertNode({ tag: 'span' }, { parentId: section, index: 0 })
+      expect(store.state.selectedId).toBe(created)
+      expect(store.state.collapsed[section]).toBeUndefined()
+    })
+
     it('removing the selected node clears the selection', () => {
       const section = firstByTag(store, 'section')
       store.actions.select(section)

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react'
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
+import type { NodeId } from '../../core/ids'
 import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
 import { useEditorSelector } from '../Editor/context'
@@ -74,6 +75,27 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
     observer.observe(element)
     return () => observer.disconnect()
   }, [isVirtual])
+
+  const revealRow = useEffectEvent((id: NodeId) => {
+    const element = scrollRef.current
+    if (!element) return
+    if (isVirtual) {
+      const index = rows.findIndex((row) => row.id === id)
+      if (index < 0) return
+      const top = index * ROW_HEIGHT
+      const bottom = top + ROW_HEIGHT
+      if (top < element.scrollTop) element.scrollTop = top
+      else if (bottom > element.scrollTop + element.clientHeight) {
+        element.scrollTop = bottom - element.clientHeight
+      }
+      return
+    }
+    element.querySelector(`[data-node-id="${id}"]`)?.scrollIntoView({ block: 'nearest' })
+  })
+
+  useEffect(() => {
+    if (selectedId) revealRow(selectedId)
+  }, [selectedId])
 
   const first = isVirtual ? Math.max(0, Math.floor(viewport.scrollTop / ROW_HEIGHT) - OVERSCAN) : 0
   const last = isVirtual

@@ -12,6 +12,7 @@ import {
 import { parseHtml } from './html/parse'
 import { serializeHtml } from './html/serialize'
 import {
+  ancestorIdsOf,
   canHaveChildren,
   childrenOf,
   classSetOf,
@@ -73,6 +74,19 @@ type Patch = Partial<EditorState>
 
 function snapshotOf(state: EditorState): Snapshot {
   return { doc: state.doc, selectedId: state.selectedId }
+}
+
+function expandedTo(state: EditorState, id: NodeId | null): Record<NodeId, true> {
+  if (!id) return state.collapsed
+  const hidden = ancestorIdsOf(state.doc, id).filter((ancestor) => state.collapsed[ancestor])
+  if (hidden.length === 0) return state.collapsed
+  const next = { ...state.collapsed }
+  for (const ancestor of hidden) delete next[ancestor]
+  return next
+}
+
+function revealing(state: EditorState, id: NodeId | null): Patch {
+  return { selectedId: id, collapsed: expandedTo(state, id) }
 }
 
 function withAddedClasses(
@@ -280,7 +294,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
             attach(nodes, created, at.parentId, at.index)
             return { ...doc, nodes }
           }, { classes: classesInTemplate(template) })
-          if (created) set({ selectedId: created })
+          if (created) set((state) => revealing(state, created))
         })
         return created
       },
@@ -344,7 +358,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
             return { ...doc, nodes }
           }, { classes: classSetOf(parsed) })
           const first = created[0] ?? null
-          if (first) set({ selectedId: first })
+          if (first) set((state) => revealing(state, first))
         })
         return created[0] ?? null
       },
@@ -410,7 +424,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
             attach(nodes, created, node.parentId, parent.children.indexOf(id) + 1)
             return { ...doc, nodes }
           }, { classes: duplicatedClasses })
-          if (created) set({ selectedId: created })
+          if (created) set((state) => revealing(state, created))
         })
         return created
       },
@@ -455,7 +469,9 @@ export function createEditorStore(initialHtml: string): EditorStore {
       },
 
       select(id) {
-        set((state) => (state.selectedId === id ? state : { selectedId: id, editingTextId: null }))
+        set((state) =>
+          state.selectedId === id ? state : { ...revealing(state, id), editingTextId: null },
+        )
       },
 
       toggleCollapsed(id) {
