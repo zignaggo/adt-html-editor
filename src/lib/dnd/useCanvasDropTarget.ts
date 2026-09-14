@@ -22,10 +22,11 @@ export function acceptsNesting(doc: EditorDocument, node: AnyNode | undefined): 
   })
 }
 
-export function useCanvasDropTarget(target: DragTargetRef, nodeId: NodeId) {
+export function useCanvasDropTarget(target: DragTargetRef, nodeId: NodeId, enabled = true) {
   const store = useEditorStoreApi()
 
   useEffect(() => {
+    if (!enabled) return
     const element = resolveTarget(target)
     if (!element) return
 
@@ -72,5 +73,5 @@ export function useCanvasDropTarget(target: DragTargetRef, nodeId: NodeId) {
         )
       },
     })
-  }, [target, nodeId, store])
+  }, [target, nodeId, store, enabled])
 }

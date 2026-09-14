@@ -46,8 +46,32 @@ export type {
   LayersState,
 } from './components/Layers/context'
 
-export { Canvas } from './components/Canvas/Canvas'
+export { Canvas, CanvasFixedPage } from './components/Canvas/Canvas'
 export type { CanvasProps } from './components/Canvas/Canvas'
+export type { FixedPageProps } from './fixed/FixedPage'
+export { Zoom as CanvasZoom } from './fixed/Zoom'
+export { DEFAULT_ZOOM_LEVELS } from './fixed/zoomLevels'
+export type { CanvasZoomLevel } from './fixed/zoomLevels'
+export { Guides as CanvasGuides } from './fixed/guides/Guides'
+export { LiveGhost as CanvasLiveGhost } from './fixed/ghost/LiveGhost'
+export { createLiveStrategy } from './fixed/ghost/liveStrategy'
+export { ImageGhost as CanvasImageGhost } from './fixed/ghost/ImageGhost'
+export { createImageStrategy } from './fixed/ghost/imageStrategy'
+export { useCanvasInteractions } from './components/Canvas/useCanvasInteractions'
+export type { CanvasInteractions } from './components/Canvas/useCanvasInteractions'
+export { createOutlineStrategy } from './fixed/ghost/strategy'
+export type { GhostStrategy } from './fixed/ghost/strategy'
+export { InspectorPosition } from './fixed/InspectorPosition'
+export { detectLayout, pageSizeOf, readViewportMeta } from './fixed/detect'
+export type { PageSize } from './fixed/detect'
+export { pageContainerOf } from './fixed/pageContainer'
+export { snapWithGuides } from './fixed/guides/computeGuides'
+export type { Guide } from './fixed/guides/computeGuides'
+export { positionDeclarations, readDeclaredPosition, sizeDeclarations } from './fixed/position'
+export { useFixedDraggable } from './fixed/useFixedDraggable'
+export { subscribeFixedDrag, fixedDragSession } from './fixed/fixedDragStore'
+export type { FixedDragSession } from './fixed/fixedDragStore'
+export type { FixedLayoutOptions } from './components/Editor/EditorProvider'
 export {
   CanvasDarkToggle,
   CanvasToolbar,
@@ -57,7 +81,7 @@ export {
 export { CanvasNode } from './components/Canvas/CanvasNode'
 export { SelectionOverlay } from './components/Canvas/SelectionOverlay'
 export { DEFAULT_WIDTH_PRESETS, useCanvasContext } from './components/Canvas/context'
-export type { CanvasWidthPreset } from './components/Canvas/context'
+export type { CanvasWidthPreset, CanvasZoom as CanvasZoomValue } from './components/Canvas/context'
 
 export { InspectorPanel } from './components/Inspector/InspectorPanel'
 export type { InspectorPanelProps } from './components/Inspector/InspectorPanel'
@@ -111,10 +135,18 @@ export {
   useRootId,
   useIsSelected,
   useIsCollapsed,
+  useIsLocked,
+  useLayoutMode,
+  useFixedLayout,
   useCanUndo,
   useCanRedo,
 } from './components/Editor/context'
-export type { EditorApi, StyleMode } from './components/Editor/context'
+export type {
+  EditorApi,
+  FixedLayoutConfig,
+  LayoutMode,
+  StyleMode,
+} from './components/Editor/context'
 
 export { parseHtml, looksLikeFullDocument } from './core/html/parse'
 export { serializeHtml } from './core/html/serialize'
@@ -127,6 +159,7 @@ export type {
   EditorState,
   EditorStore,
   NodeTemplate,
+  PlaceOptions,
 } from './core/store'
 
 export type { NodeId } from './core/ids'

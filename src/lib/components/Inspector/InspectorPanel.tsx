@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { CATEGORIES, type VariantId } from '../../tailwind/categories'
 import { useEditorSelector } from '../Editor/context'
+import { InspectorPosition } from '../../fixed/InspectorPosition'
 import { InspectorContext, type InspectorContextValue } from './context'
 import {
   InspectorAttributes,
@@ -52,6 +53,7 @@ function DefaultInspector() {
       <InspectorEmpty />
       <InspectorVariants />
       <InspectorBody>
+        <InspectorPosition />
         <InspectorSection title="Classes">
           <InspectorClassInput />
           <InspectorClassList />

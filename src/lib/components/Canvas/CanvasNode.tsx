@@ -1,9 +1,8 @@
 import { useRef, type ElementType } from 'react'
 import type { NodeId } from '../../core/ids'
 import { VOID_TAGS } from '../../core/model'
-import { useCanvasDropTarget } from '../../dnd/useCanvasDropTarget'
-import { useNodeDraggable } from '../../dnd/useNodeDraggable'
 import { useEditorSelector, useNode } from '../Editor/context'
+import { useCanvasNodeDnd } from './useCanvasNodeDnd'
 import { InlineText } from './InlineText'
 import { OpaquePlaceholder } from './OpaquePlaceholder'
 import { sanitizePreviewHtml } from './sanitizePreview'
@@ -26,8 +25,7 @@ export function CanvasNode({ id }: { id: NodeId }) {
     elementRef.current = element
   }
 
-  useNodeDraggable(elementRef, id, 'canvas', Boolean(node) && node?.kind !== 'text')
-  useCanvasDropTarget(elementRef, id)
+  useCanvasNodeDnd(elementRef, id, node)
   useDomAttributes(elementRef, node && 'attrs' in node ? node.attrs : undefined)
 
   if (!node) return null

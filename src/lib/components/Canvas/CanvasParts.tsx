@@ -1,21 +1,14 @@
-import {
-  useEffect,
-  useRef,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
-  type RefObject,
-} from 'react'
+import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
-import { setHovered } from '../../core/hover'
 import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
-import { useChildren, useEditor, useEditorContext, useEditorSelector, useRootId } from '../Editor/context'
+import { useChildren, useEditorContext, useRootId } from '../Editor/context'
 import { CanvasNode } from './CanvasNode'
 import { DEFAULT_WIDTH_PRESETS, useCanvasContext, type CanvasWidthPreset } from './context'
 import { SelectionOverlay } from './SelectionOverlay'
+import { useCanvasInteractions } from './useCanvasInteractions'
 import styles from './Canvas.module.css'
 
 export function CanvasToolbar({ children }: { children?: ReactNode }) {
@@ -64,8 +57,7 @@ export function CanvasViewport({ className }: { className?: string }) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const rootId = useRootId()
   const children = useChildren(rootId)
-  const { select, beginTextEdit, removeNode } = useEditor()
-  const selectedId = useEditorSelector((state) => state.selectedId)
+  const interactions = useCanvasInteractions()
 
   useEffect(() => {
     const element = scrollRef.current
@@ -79,35 +71,6 @@ export function CanvasViewport({ className }: { className?: string }) {
       autoScrollForElements({ element }),
     )
   }, [])
-
-  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    const target = (event.target as HTMLElement).closest('[data-adt-id]')
-    setHovered(target?.getAttribute('data-adt-id') ?? null)
-  }
-
-  const onKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
-    if ((event.target as HTMLElement).isContentEditable) return
-
-    if (event.key === 'Escape') {
-      select(null)
-      return
-    }
-
-    const focused = (event.target as HTMLElement).closest('[data-adt-id]')
-    const id = focused?.getAttribute('data-adt-id') ?? selectedId
-    if (!id) return
-
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      beginTextEdit(id)
-      return
-    }
-
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      event.preventDefault()
-      removeNode(id)
-    }
-  }
 
   return (
     <div
@@ -125,18 +88,11 @@ export function CanvasViewport({ className }: { className?: string }) {
           data-adt-canvas=""
           data-adt-styles={stylesReady ? 'ready' : 'pending'}
           aria-busy={!stylesReady || undefined}
-          onPointerMove={onPointerMove}
-          onPointerLeave={() => setHovered(null)}
-          onClick={(event) => {
-            const target = (event.target as HTMLElement).closest('[data-adt-id]')
-            select(target?.getAttribute('data-adt-id') ?? null)
-          }}
-          onDoubleClick={(event) => {
-            const target = (event.target as HTMLElement).closest('[data-adt-id]')
-            const id = target?.getAttribute('data-adt-id')
-            if (id) beginTextEdit(id)
-          }}
-          onKeyDown={onKeyDown}
+          onPointerMove={interactions.onPointerMove}
+          onPointerLeave={interactions.onPointerLeave}
+          onClick={interactions.onClick}
+          onDoubleClick={interactions.onDoubleClick}
+          onKeyDown={interactions.onKeyDown}
         >
           {children.map((childId) => (
             <CanvasNode key={childId} id={childId} />

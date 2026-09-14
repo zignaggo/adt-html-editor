@@ -1,12 +1,13 @@
 import { useReducer, useRef } from 'react'
 import { HtmlEditor, parseHtml, serializeHtml, type HtmlEditorHandle } from '../lib'
 import { CustomLayout } from './CustomLayout'
+import { FixedImageLayout } from './FixedImageLayout'
 import { FIXTURES } from './fixtures'
 import styles from './App.module.css'
 
 type RoundTrip = { ok: boolean; message: string } | null
 
-type LayoutMode = 'default' | 'custom'
+type LayoutMode = 'default' | 'custom' | 'fixed-image'
 
 type State = {
   layoutMode: LayoutMode
@@ -104,6 +105,7 @@ export function App() {
           >
             <option value="default">Default (3 panels)</option>
             <option value="custom">Custom composition</option>
+            <option value="fixed-image">Fixed layout · image ghost</option>
           </select>
         </label>
         <div className={styles.actions}>
@@ -134,6 +136,16 @@ export function App() {
             handleRef={handleRef}
             onChange={(html) => dispatch({ type: 'setOutput', value: html })}
           />
+        ) : state.layoutMode === 'fixed-image' ? (
+          <HtmlEditor
+            key={`fixed-${state.documentHtml}`}
+            defaultValue={state.documentHtml}
+            layout="fixed"
+            handleRef={handleRef}
+            onChange={(html) => dispatch({ type: 'setOutput', value: html })}
+          >
+            <FixedImageLayout />
+          </HtmlEditor>
         ) : (
           <HtmlEditor
             key={`custom-${state.documentHtml}`}

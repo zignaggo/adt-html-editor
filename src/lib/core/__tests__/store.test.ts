@@ -246,6 +246,56 @@ describe('editor store', () => {
     })
   })
 
+  describe('placeNode', () => {
+    it('writes the style and moves to the new parent in one history entry', () => {
+      const [p1] = idsByTag(store, 'p')
+      const aside = firstByTag(store, 'aside')
+      const placed = store.actions.placeNode(p1, {
+        style: 'position: absolute; left: 10px; top: 20px',
+        parentId: aside,
+      })
+      expect(placed).toBe(true)
+      expect(store.state.doc.nodes[p1].parentId).toBe(aside)
+      expect(childrenOf(store.state.doc, aside)).toEqual([p1])
+      expect(store.state.history.past).toHaveLength(1)
+      expect(store.actions.getHtml()).toBe(
+        '<section id="a"><p id="p2">two</p></section><aside id="b"><p id="p1" style="position: absolute; left: 10px; top: 20px">one</p></aside>',
+      )
+      store.actions.undo()
+      expect(store.state.doc.nodes[p1].parentId).toBe(firstByTag(store, 'section'))
+      expect(store.state.doc.nodes[p1]).not.toHaveProperty('attrs.style')
+    })
+
+    it('is a no-op when nothing changes', () => {
+      const [p1] = idsByTag(store, 'p')
+      store.actions.placeNode(p1, { style: 'left: 1px' })
+      expect(store.actions.placeNode(p1, { style: 'left: 1px' })).toBe(false)
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('coalesces nudges into one entry', () => {
+      const [p1] = idsByTag(store, 'p')
+      store.actions.placeNode(p1, { style: 'left: 1px', coalesce: true })
+      store.actions.placeNode(p1, { style: 'left: 2px', coalesce: true })
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('refuses to place a node inside its own subtree', () => {
+      const section = firstByTag(store, 'section')
+      const [p1] = idsByTag(store, 'p')
+      expect(store.actions.placeNode(section, { style: 'left: 0', parentId: p1 })).toBe(false)
+    })
+  })
+
+  it('setLocked toggles without touching history', () => {
+    const [p1] = idsByTag(store, 'p')
+    store.actions.setLocked(p1, true)
+    expect(store.state.locked[p1]).toBe(true)
+    store.actions.setLocked(p1, false)
+    expect(store.state.locked[p1]).toBeUndefined()
+    expect(store.state.history.past).toHaveLength(0)
+  })
+
   it('getHtml returns the serialized document', () => {
     expect(store.actions.getHtml()).toBe(
       '<section id="a"><p id="p1">one</p><p id="p2">two</p></section><aside id="b"></aside>',

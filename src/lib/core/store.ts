@@ -36,10 +36,18 @@ export type NodeTemplate = {
 
 export type DropPosition = { parentId: NodeId; index: number }
 
+export type PlaceOptions = {
+  style: string | null
+  parentId?: NodeId
+  index?: number
+  coalesce?: boolean
+}
+
 export type EditorState = {
   doc: EditorDocument
   selectedId: NodeId | null
   collapsed: Record<NodeId, true>
+  locked: Record<NodeId, true>
   usedClasses: ReadonlySet<string>
   history: History
   editingTextId: NodeId | null
@@ -55,9 +63,11 @@ export type EditorActions = {
   setClasses: (id: NodeId, classes: string[]) => void
   setAttr: (id: NodeId, name: string, value: string | null) => void
   setText: (id: NodeId, value: string) => void
+  placeNode: (id: NodeId, options: PlaceOptions) => boolean
   select: (id: NodeId | null) => void
   toggleCollapsed: (id: NodeId) => void
   setCollapsed: (id: NodeId, collapsed: boolean) => void
+  setLocked: (id: NodeId, locked: boolean) => void
   beginTextEdit: (id: NodeId | null) => void
   undo: () => void
   redo: () => void
@@ -132,6 +142,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
     doc: initialDoc,
     selectedId: null,
     collapsed: {},
+    locked: {},
     usedClasses: classSetOf(initialDoc),
     history: emptyHistory(),
     editingTextId: null,
@@ -277,6 +288,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
           doc,
           selectedId: null,
           collapsed: {},
+          locked: {},
           usedClasses: classSetOf(doc),
           history: emptyHistory(),
           editingTextId: null,
@@ -468,10 +480,72 @@ export function createEditorStore(initialHtml: string): EditorStore {
         }, { coalesceKey: `text:${id}` })
       },
 
+      placeNode(id, { style, parentId, index, coalesce = false }) {
+        const state = get()
+        const node = state.doc.nodes[id]
+        if (!node || !isStyled(node) || id === state.doc.rootId) return false
+        if (parentId !== undefined) {
+          if (isDescendantOf(state.doc, parentId, id)) return false
+          const targetParent = state.doc.nodes[parentId]
+          if (!targetParent || !canHaveChildren(targetParent)) return false
+        }
+
+        let placed = false
+        commit(
+          (doc) => {
+            const current = doc.nodes[id]
+            if (!current || !isStyled(current)) return null
+            const nodes = draftNodes(doc)
+            let changed = false
+
+            const nextStyle = style || null
+            if ((current.attrs.style ?? null) !== nextStyle) {
+              nodes[id] = withAttr(current, 'style', nextStyle)
+              changed = true
+            }
+
+            const fromParentId = current.parentId
+            if (parentId !== undefined && fromParentId) {
+              const fromParent = doc.nodes[fromParentId]
+              const toParent = doc.nodes[parentId]
+              if (fromParent?.kind === 'element' && toParent?.kind === 'element') {
+                const sameParent = fromParentId === parentId
+                const oldIndex = fromParent.children.indexOf(id)
+                const requested = index ?? toParent.children.length
+                const targetIndex =
+                  sameParent && oldIndex !== -1 && oldIndex < requested ? requested - 1 : requested
+                if (!sameParent || oldIndex !== targetIndex) {
+                  detach(nodes, id, fromParentId)
+                  attach(nodes, id, parentId, targetIndex)
+                  nodes[id] = { ...nodes[id], parentId } as AnyNode
+                  changed = true
+                }
+              }
+            }
+
+            if (!changed) return null
+            placed = true
+            return { ...doc, nodes }
+          },
+          { coalesceKey: coalesce ? `place:${id}` : undefined },
+        )
+        return placed
+      },
+
       select(id) {
         set((state) =>
           state.selectedId === id ? state : { ...revealing(state, id), editingTextId: null },
         )
+      },
+
+      setLocked(id, locked) {
+        set((state) => {
+          if (Boolean(state.locked[id]) === locked) return state
+          const next = { ...state.locked }
+          if (locked) next[id] = true
+          else delete next[id]
+          return { locked: next }
+        })
       },
 
       toggleCollapsed(id) {

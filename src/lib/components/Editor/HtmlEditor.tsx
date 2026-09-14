@@ -1,11 +1,16 @@
 import { useRef, type ReactNode } from 'react'
-import { Canvas } from '../Canvas/Canvas'
+import { Canvas, CanvasFixedPage } from '../Canvas/Canvas'
 import {
   CanvasDarkToggle,
   CanvasToolbar,
   CanvasViewport,
   CanvasWidthPresets,
 } from '../Canvas/CanvasParts'
+import { ImageGhost } from '../../fixed/ghost/ImageGhost'
+import { LiveGhost } from '../../fixed/ghost/LiveGhost'
+import { Guides } from '../../fixed/guides/Guides'
+import { InspectorPosition } from '../../fixed/InspectorPosition'
+import { Zoom } from '../../fixed/Zoom'
 import { InspectorPanel } from '../Inspector/InspectorPanel'
 import {
   InspectorAttributes,
@@ -105,6 +110,11 @@ const CanvasNamespace = Object.assign(Canvas, {
   WidthPresets: CanvasWidthPresets,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
+  FixedPage: CanvasFixedPage,
+  Zoom,
+  Guides,
+  LiveGhost,
+  ImageGhost,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {
@@ -118,6 +128,7 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Category: InspectorCategory,
   Control: InspectorControl,
   Attributes: InspectorAttributes,
+  Position: InspectorPosition,
 })
 
 const HistoryNamespace = Object.assign(HistoryGroup, {

@@ -177,6 +177,36 @@ When an existing element is dragged, its **current parent takes priority** so re
 
 Palette drags keep the plain zones above. The indicator is drawn by a single monitor from the target chosen this way, so it shows exactly where the element will land.
 
+## Fixed layout mode
+
+For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensions and elements are absolutely positioned, the editor switches to a second behaviour:
+
+```tsx
+<HtmlEditor layout="auto" fixedLayout={{ resolveAsset: (url) => `${cdn}/${url}` }}>
+  <HtmlEditor.Canvas>
+    <HtmlEditor.Canvas.Toolbar>
+      <HtmlEditor.History />
+      <HtmlEditor.Canvas.Zoom />
+    </HtmlEditor.Canvas.Toolbar>
+    <HtmlEditor.Canvas.FixedPage>
+      <HtmlEditor.Canvas.Guides />
+      <HtmlEditor.Canvas.LiveGhost />   {/* or <HtmlEditor.Canvas.ImageGhost /> */}
+    </HtmlEditor.Canvas.FixedPage>
+  </HtmlEditor.Canvas>
+  <HtmlEditor.Inspector>
+    <HtmlEditor.Inspector.Position />
+  </HtmlEditor.Inspector>
+</HtmlEditor>
+```
+
+- **Activation.** `layout="auto"` (default) picks `fixed` when the document has `<meta name="viewport" content="width=…, height=…">` in its `<head>`, or when at least 80% of the page container's children are absolutely positioned inline. `layout="fixed"` / `"flow"` force it. `DefaultLayout` follows the resolved mode.
+- **Page.** `Canvas.FixedPage` renders the page at its declared size, scaled by `Canvas.Zoom` (fit, 50, 100, 200%). The stylesheet from the document `<head>` (`<style>` and, with `resolveAsset`, `<link rel="stylesheet">`) is applied to the page with the same scoping used for Tailwind; `html`/`body`/`:root` selectors map to the page, `@font-face` stays global, `@page` is dropped.
+- **Dragging.** Elements move freely with 1 px precision (`fixedLayout.precision`). Coordinates are always converted to page units, so zoom and scroll never change the result. Smart guides snap to sibling edges and centers and to the page (`fixedLayout.snapThreshold`, in screen px; hold `Alt` to disable). Arrow keys nudge by 1 px, `Shift` + arrows by 10 px.
+- **Same level on drop.** Dropping an element, even one nested inside a group, places it as a child of the **page container** (the single top-level wrapper, or the body) and writes `position: absolute; left; top` in px into its `style`, removing `right`/`bottom`. Typography that would change by leaving a styled parent (font, size, line height, color, alignment) is copied inline first. By default the element goes to the end of the container (on top); `fixedLayout.keepStacking: true` inserts it right after its former top-level ancestor. `fixedLayout.pageContainer` overrides the container choice.
+- **Ghost strategies.** `Canvas.ImageGhost` uses the native drag preview: a rasterized clone of the element follows the pointer off the main thread while an outline marks the snapped destination. `Canvas.LiveGhost` (the default) disables the native preview and moves a live copy of the element in an overlay, so snapping and guides are exact at any zoom; cancelling animates it back. Both implement `GhostStrategy`, exported for custom ones.
+- **Inspector.** `Inspector.Position` shows X, Y, W, H (measured from the rendered page), stacking-order buttons (the tree order is the paint order) and a position lock that disables dragging for that element. The lock lives in editor state, not in the HTML.
+- **Output.** Only `style` attributes and node parents change, so all fidelity guarantees above hold. Palette drops and tree-to-page drops use the same placement.
+
 ## Shortcuts
 
 | Key | Action |

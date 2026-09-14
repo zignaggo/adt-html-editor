@@ -6,11 +6,50 @@ import {
   type ReactNode,
   type Ref,
 } from 'react'
+import { useSelector } from '@tanstack/react-store'
+import type { NodeId } from '../../core/ids'
 import type { EditorDocument } from '../../core/model'
 import { serializeHtml } from '../../core/html/serialize'
-import { createEditorStore } from '../../core/store'
-import { EditorContext, type EditorContextValue, type StyleMode } from './context'
+import { createEditorStore, type EditorState } from '../../core/store'
+import { detectLayout, pageSizeOf, type PageSize } from '../../fixed/detect'
+import { pageContainerOf } from '../../fixed/pageContainer'
+import {
+  EditorContext,
+  type EditorContextValue,
+  type FixedLayoutConfig,
+  type LayoutMode,
+  type StyleMode,
+} from './context'
 import { useEditorDropMonitor } from '../../dnd/useEditorDropMonitor'
+
+export type FixedLayoutOptions = {
+  page?: PageSize
+  pageContainer?: (doc: EditorDocument) => NodeId
+  precision?: number
+  snapThreshold?: number
+  keepStacking?: boolean
+  resolveAsset?: (url: string) => string
+}
+
+const DEFAULT_PAGE: PageSize = { width: 1200, height: 1600 }
+const DEFAULT_PRECISION = 1
+const DEFAULT_SNAP_THRESHOLD = 4
+
+type ResolvedLayout = {
+  layout: LayoutMode
+  pageWidth: number
+  pageHeight: number
+  pageContainerId: NodeId
+}
+
+function sameLayout(a: ResolvedLayout, b: ResolvedLayout): boolean {
+  return (
+    a.layout === b.layout &&
+    a.pageWidth === b.pageWidth &&
+    a.pageHeight === b.pageHeight &&
+    a.pageContainerId === b.pageContainerId
+  )
+}
 
 function createScheduler(delayMs: number) {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -43,9 +82,13 @@ export type EditorProviderProps = {
   onChange?: (html: string, doc: EditorDocument) => void
   changeDebounceMs?: number
   styleMode?: StyleMode
+  layout?: LayoutMode | 'auto'
+  fixedLayout?: FixedLayoutOptions
   handleRef?: Ref<HtmlEditorHandle>
   children: ReactNode
 }
+
+const NO_FIXED_OPTIONS: FixedLayoutOptions = {}
 
 export function EditorProvider({
   defaultValue = '',
@@ -53,6 +96,8 @@ export function EditorProvider({
   onChange,
   changeDebounceMs = 0,
   styleMode = 'tailwind',
+  layout = 'auto',
+  fixedLayout = NO_FIXED_OPTIONS,
   handleRef,
   children,
 }: EditorProviderProps) {
@@ -61,7 +106,38 @@ export function EditorProvider({
   const lastEmittedRef = useRef<string | null>(null)
   const onChangeRef = useRef(onChange)
 
-  const context: EditorContextValue = { store, styleMode, canvasRootRef }
+  const { pageContainer, page: pageOverride } = fixedLayout
+  const resolved = useSelector(
+    store,
+    (state: EditorState): ResolvedLayout => {
+      const { doc } = state
+      const page = pageOverride ?? pageSizeOf(doc) ?? DEFAULT_PAGE
+      return {
+        layout: layout === 'auto' ? detectLayout(doc) : layout,
+        pageWidth: page.width,
+        pageHeight: page.height,
+        pageContainerId: pageContainer ? pageContainer(doc) : pageContainerOf(doc),
+      }
+    },
+    { compare: sameLayout },
+  )
+
+  const fixedConfig: FixedLayoutConfig = {
+    page: { width: resolved.pageWidth, height: resolved.pageHeight },
+    pageContainerId: resolved.pageContainerId,
+    precision: fixedLayout.precision ?? DEFAULT_PRECISION,
+    snapThreshold: fixedLayout.snapThreshold ?? DEFAULT_SNAP_THRESHOLD,
+    keepStacking: fixedLayout.keepStacking ?? false,
+    resolveAsset: fixedLayout.resolveAsset,
+  }
+
+  const context: EditorContextValue = {
+    store,
+    styleMode,
+    layout: resolved.layout,
+    fixedLayout: fixedConfig,
+    canvasRootRef,
+  }
 
   useEffect(() => {
     onChangeRef.current = onChange

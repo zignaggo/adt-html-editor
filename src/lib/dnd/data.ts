@@ -9,6 +9,7 @@ const paletteDragKey = Symbol('adt:palette-drag')
 const treeTargetKey = Symbol('adt:tree-target')
 const canvasTargetKey = Symbol('adt:canvas-target')
 const surfaceTargetKey = Symbol('adt:surface-target')
+const fixedPageTargetKey = Symbol('adt:fixed-page-target')
 
 export type NodeDrag = {
   [nodeDragKey]: true
@@ -39,6 +40,10 @@ export type CanvasTarget = {
 export type SurfaceTarget = {
   [surfaceTargetKey]: true
   surface: DragSurface
+}
+
+export type FixedPageTarget = {
+  [fixedPageTargetKey]: true
 }
 
 type Data = Record<string | symbol, unknown>
@@ -81,6 +86,14 @@ export function surfaceTarget(input: Omit<SurfaceTarget, typeof surfaceTargetKey
 
 export function isSurfaceTarget(data: Data): data is SurfaceTarget {
   return data[surfaceTargetKey] === true
+}
+
+export function fixedPageTarget(): FixedPageTarget {
+  return { [fixedPageTargetKey]: true }
+}
+
+export function isFixedPageTarget(data: Data): data is FixedPageTarget {
+  return data[fixedPageTargetKey] === true
 }
 
 export function isEditorDrag(data: Data): boolean {

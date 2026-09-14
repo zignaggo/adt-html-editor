@@ -7,9 +7,22 @@ import type { EditorActions, EditorState, EditorStore } from '../../core/store'
 
 export type StyleMode = 'tailwind' | 'inline-css'
 
+export type LayoutMode = 'flow' | 'fixed'
+
+export type FixedLayoutConfig = {
+  page: { width: number; height: number }
+  pageContainerId: NodeId
+  precision: number
+  snapThreshold: number
+  keepStacking: boolean
+  resolveAsset?: (url: string) => string
+}
+
 export type EditorContextValue = {
   store: EditorStore
   styleMode: StyleMode
+  layout: LayoutMode
+  fixedLayout: FixedLayoutConfig
   canvasRootRef: { current: HTMLElement | null }
 }
 
@@ -48,6 +61,18 @@ export function useIsSelected(id: NodeId): boolean {
 
 export function useIsCollapsed(id: NodeId): boolean {
   return useEditorSelector((state) => Boolean(state.collapsed[id]))
+}
+
+export function useIsLocked(id: NodeId): boolean {
+  return useEditorSelector((state) => Boolean(state.locked[id]))
+}
+
+export function useLayoutMode(): LayoutMode {
+  return useEditorContext().layout
+}
+
+export function useFixedLayout(): FixedLayoutConfig {
+  return useEditorContext().fixedLayout
 }
 
 export function useCanUndo(): boolean {

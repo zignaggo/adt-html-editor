@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1000, height=1400">
+<title>Fixed layout · stylesheet positions</title>
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { width: 1000px; height: 1400px; background: #0f172a; color: #e2e8f0; font-family: "Helvetica Neue", Arial, sans-serif; overflow: hidden; }
+  .page { position: relative; width: 1000px; height: 1400px; }
+  .band { position: absolute; left: 0; top: 0; width: 1000px; height: 180px; background: #1e293b; }
+  .kicker { position: absolute; left: 80px; top: 60px; margin: 0; font-size: 18px; letter-spacing: .3em; text-transform: uppercase; color: #94a3b8; }
+  .title { position: absolute; left: 80px; top: 240px; margin: 0; width: 840px; font-size: 88px; line-height: .95; font-weight: 700; }
+  .lead { position: absolute; left: 80px; top: 460px; margin: 0; width: 520px; font-size: 24px; line-height: 1.45; color: #cbd5e1; }
+  .figure { position: absolute; left: 640px; top: 440px; width: 280px; height: 280px; border-radius: 32px; background: radial-gradient(circle at 30% 30%, #38bdf8, #0ea5e9 55%, #0369a1); }
+  .group { position: absolute; left: 80px; top: 820px; width: 840px; height: 420px; padding: 48px; box-sizing: border-box; border-radius: 28px; background: #111c33; font-size: 20px; line-height: 1.6; color: #a5b4fc; }
+  .group h2 { margin: 0 0 12px; font-size: 34px; color: #e0e7ff; }
+  .group p { margin: 0; }
+  .folio { position: absolute; right: 80px; bottom: 60px; font-size: 16px; color: #64748b; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="band"></div>
+  <p class="kicker">Field notes · Vol. II</p>
+  <h1 class="title">Blue Hour Over the Harbor</h1>
+  <p class="lead">Every evening the cranes fall silent for eleven minutes, and the water turns the color of a gas flame.</p>
+  <div class="figure"></div>
+  <div class="group">
+    <h2>What the tide keeps</h2>
+    <p>Rope, glass, a single oar. The fishermen say the harbor returns exactly one object per season, never the one you lost.</p>
+  </div>
+  <span class="folio">17</span>
+</div>
+</body>
+</html>
