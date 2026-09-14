@@ -1,93 +1,93 @@
-# Plano — Fixed layout mode
+# Plan — Fixed layout mode
 
-Modo do editor para livros de layout fixo (EPUB FXL e afins): páginas com dimensões declaradas e elementos posicionados de forma absoluta para reproduzir a página impressa. O modo atual (fluxo, Tailwind, reordenação por hitbox) continua existindo; o fixed layout é um segundo comportamento do canvas, do drag and drop e do inspector, escolhido por documento.
+Editor mode for fixed-layout books (EPUB FXL and similar): pages with declared dimensions and absolutely positioned elements that reproduce the printed page. The current mode (flow, Tailwind, hitbox reordering) keeps existing; fixed layout is a second behaviour of the canvas, the drag and drop and the inspector, chosen per document.
 
-Prioridades, nesta ordem: **1) arrastar sem glitch e com precisão de 1 px, 2) fidelidade visual ao livro original, 3) tudo o resto.**
+Priorities, in this order: **1) glitch-free dragging with 1 px precision, 2) visual fidelity to the original book, 3) everything else.**
 
-Os padrões aplicados vêm dos skills `pragmatic-dnd-core`, `pragmatic-dnd-react`, `vercel-composition-patterns`, `vercel-react-best-practices` e `react-doctor`. Cada seção cita a regra que a justifica quando não for óbvio.
+The patterns applied come from the `pragmatic-dnd-core`, `pragmatic-dnd-react`, `vercel-composition-patterns`, `vercel-react-best-practices` and `react-doctor` skills. Each section cites the rule that justifies it when it is not obvious.
 
 ---
 
-## 0. O que muda em relação ao modo de fluxo
+## 0. What changes compared to flow mode
 
-| Tema | Fluxo (hoje) | Fixed layout |
+| Topic | Flow (today) | Fixed layout |
 |---|---|---|
-| Página | Largura por preset, altura pelo conteúdo | Largura × altura fixas vindas do documento; zoom por `transform: scale()` |
-| Posição de um elemento | Dada pela ordem no DOM | `position: absolute; left; top` em `px`, escrita no atributo `style` |
-| Drop de um elemento existente | Reordena/aninha conforme zona (borda/centro) e prioridade ao pai | Move para o **container da página** (primeiro pai da estrutura) e grava a nova posição; todos os elementos ficam no mesmo nível |
-| Indicador | Linha/caixa de destino | Ghost do próprio elemento na posição final + guias de alinhamento |
-| Preview nativo | Chip com tag e classes | Duas estratégias: **imagem** (preview nativo rasterizado) ou **cópia renderizada** (ghost vivo em camada própria) |
-| Ordem na árvore | Ordem de leitura | Ordem de empilhamento (último = por cima); a árvore vira controle de z-order |
-| CSS do documento | Só Tailwind compilado | `<style>` e `<link>` do `<head>` são aplicados no canvas, com escopo, para a página parecer o livro |
-| Inspector | Categorias Tailwind | Seção **Position** (X, Y, W, H, z-order, travar) além do que já existe para `style` inline |
+| Page | Width from a preset, height from content | Fixed width × height from the document; zoom through `transform: scale()` |
+| Element position | Given by DOM order | `position: absolute; left; top` in `px`, written into the `style` attribute |
+| Dropping an existing element | Reorders/nests by zone (edge/center) with priority to the parent | Moves to the **page container** (first parent in the structure) and records the new position; every element sits at the same level |
+| Indicator | Target line/box | Ghost of the element itself at the final position + alignment guides |
+| Native preview | Chip with tag and classes | Two strategies: **image** (rasterized native preview) or **rendered copy** (live ghost in its own layer) |
+| Tree order | Reading order | Stacking order (last = on top); the tree becomes the z-order control |
+| Document CSS | Compiled Tailwind only | `<style>` and `<link>` from the `<head>` are applied to the canvas, scoped, so the page looks like the book |
+| Inspector | Tailwind categories | **Position** section (X, Y, W, H, z-order, lock) besides what already exists for inline `style` |
 
-Nada muda no contrato de entrada e saída: a saída continua sendo o mesmo HTML, com `style` atualizado e nós movidos. As garantias de fidelidade do `PLAN.md` §0 valem integralmente.
+Nothing changes in the input/output contract: the output is still the same HTML, with updated `style` and moved nodes. The fidelity guarantees of `plan.md` §0 hold in full.
 
 ---
 
-## 1. Decisões de arquitetura
+## 1. Architecture decisions
 
-| Tema | Decisão | Por quê |
+| Topic | Decision | Why |
 |---|---|---|
-| Ativação | Prop `layout="flow" \| "fixed" \| "auto"` no `<HtmlEditor>`, padrão `auto` | Detecção cobre a maioria; a prop explícita cobre fixtures fora do padrão. |
-| Detecção `auto` | Documento completo **e** `<meta name="viewport" content="width=…, height=…">` no `<head>` (regra do EPUB FXL). Fallback: raiz com ≥ 80% dos filhos elemento com `position: absolute` computado após o primeiro layout | A meta é a fonte canônica do tamanho da página; o fallback pega HTML exportado de PDF sem meta. |
-| Tamanho da página | Da meta viewport; sem meta, do bounding box do container da página; sem nada, 1200 × 1600 e aviso | Sempre existe um tamanho estável para o zoom e para as coordenadas. |
-| Container da página | Função `pageContainerOf(doc)`: se a raiz tem exatamente um filho elemento, é ele; senão, a raiz. Substituível via prop `fixedLayout.pageContainer` | FXL costuma ter um `<div class="page">` único; quando não tem, o `<body>` é o plano. |
-| Coordenadas | Tudo em **unidades da página** (px do documento), nunca em px de tela. Conversão: `(clientX − pageRect.left) / scale`, `scale` medido por `pageRect.width / page.width` a cada frame | Zoom, scroll e auto-scroll ficam corretos por construção; leitura de rect é uma por frame. |
-| Onde a posição é gravada | Sempre `left`/`top` em `px` inteiros (opção `fixedLayout.precision: 1 \| 0.5 \| 0.1`) no atributo `style`, preservando as demais declarações e a ordem (`parseInlineStyle`/`formatInlineStyle` já existentes) | Inline vence classes do `<head>`; a saída fica legível e estável. |
-| Elementos posicionados por `right`/`bottom`, `%` ou `transform: translate` | No primeiro movimento, o valor é **congelado** em `left`/`top` px a partir do rect medido; `right`/`bottom` são removidos; `translate` é mantido e o delta é aplicado a `left`/`top` | Um só modelo de escrita; o elemento não pula porque o rect medido já inclui tudo. |
-| Reparent ao soltar | `moveNode(id, { parentId: pageContainer, index })` + `setAttr(style)` na **mesma entrada de histórico** (nova ação `placeNode`) | Undo desfaz movimento e posição juntos. |
-| Índice ao reparentar | Por padrão, no fim (fica por cima). Opção `fixedLayout.keepStacking: true` insere logo após o ancestral de nível superior de origem | Fim é o que o usuário espera ao "puxar" algo; a opção preserva a pintura original. |
-| Herança ao reparentar | Antes de mover, comparar `font-family`, `font-size`, `line-height`, `color`, `text-align`, `letter-spacing` computados no pai antigo e no container; o que diverge vira declaração inline (**freeze de herança**) | Sair de um pai estilizado não pode mudar a aparência do texto. |
-| Ghost | Estratégia registrada no `CanvasContext` por **parts explícitas** `Canvas.ImageGhost` e `Canvas.LiveGhost` (padrão `LiveGhost`); sem prop booleana | `architecture-avoid-boolean-props`, `patterns-explicit-variants`. |
-| Estado transiente do drag | `fixedDragStore` imperativo (posição do ghost, guias ativas), escrita direta de `transform` como o `DropIndicator` faz hoje | Zero re-render por frame (`rerender-use-ref-transient-values`). |
-| Carregamento | Todo o módulo `src/lib/fixed/**` entra por `React.lazy`/`import()` quando o modo é `fixed` | `bundle-conditional`, `bundle-dynamic-imports`: quem só usa fluxo não paga. |
-| DnD | Continua `@atlaskit/pragmatic-drag-and-drop` (element adapter) para uniformidade com árvore e paleta. Movimento em página usa `onDrag` do `draggable` + um único `dropTargetForElements` no container da página | Um sistema de eventos só; `pickDropTarget` e hitboxes ficam desligados no modo fixo. |
-| Plano B para o movimento | Se o spike (§6) mostrar cadência insuficiente do `dragover` nativo, o movimento **dentro** da página passa a pointer events (`pointerdown/move/up` + `setPointerCapture`), mantendo pdnd para paleta → página e árvore → página | Precisão manda; a decisão é tomada com medição, não com opinião. |
+| Activation | `layout="flow" \| "fixed" \| "auto"` prop on `<HtmlEditor>`, default `auto` | Detection covers most cases; the explicit prop covers non-standard fixtures. |
+| `auto` detection | Full document **and** `<meta name="viewport" content="width=…, height=…">` in the `<head>` (the EPUB FXL rule). Fallback: root with ≥ 80% of element children with computed `position: absolute` after the first layout | The meta is the canonical source of the page size; the fallback catches HTML exported from PDF without the meta. |
+| Page size | From the viewport meta; without it, from the page container's bounding box; with nothing, 1200 × 1600 and a warning | There is always a stable size for zoom and coordinates. |
+| Page container | `pageContainerOf(doc)` function: if the root has exactly one element child, that is it; otherwise the root. Replaceable through the `fixedLayout.pageContainer` prop | FXL usually has a single `<div class="page">`; when it does not, the `<body>` is the plane. |
+| Coordinates | Everything in **page units** (document px), never screen px. Conversion: `(clientX − pageRect.left) / scale`, `scale` measured as `pageRect.width / page.width` on every frame | Zoom, scroll and auto-scroll are correct by construction; one rect read per frame. |
+| Where the position is written | Always `left`/`top` in integer `px` (`fixedLayout.precision: 1 \| 0.5 \| 0.1` option) in the `style` attribute, preserving the other declarations and their order (existing `parseInlineStyle`/`formatInlineStyle`) | Inline beats `<head>` classes; the output stays readable and stable. |
+| Elements positioned by `right`/`bottom`, `%` or `transform: translate` | On the first move the value is **frozen** into `left`/`top` px from the measured rect; `right`/`bottom` are removed; `translate` is kept and the delta goes to `left`/`top` | One write model only; the element does not jump because the measured rect already includes everything. |
+| Reparent on drop | `moveNode(id, { parentId: pageContainer, index })` + `setAttr(style)` in the **same history entry** (new `placeNode` action) | Undo reverts move and position together. |
+| Index when reparenting | By default at the end (on top). `fixedLayout.keepStacking: true` option inserts right after the source's top-level ancestor | The end is what the user expects when "pulling" something out; the option preserves the original paint order. |
+| Inheritance when reparenting | Before moving, compare computed `font-family`, `font-size`, `line-height`, `color`, `text-align`, `letter-spacing` in the old parent and in the container; what differs becomes an inline declaration (**inheritance freeze**) | Leaving a styled parent must not change the text's appearance. |
+| Ghost | Strategy registered in the `CanvasContext` through **explicit parts** `Canvas.ImageGhost` and `Canvas.LiveGhost` (default `LiveGhost`); no boolean prop | `architecture-avoid-boolean-props`, `patterns-explicit-variants`. |
+| Transient drag state | Imperative `fixedDragStore` (ghost position, active guides), direct `transform` writes like the `DropIndicator` does today | Zero re-render per frame (`rerender-use-ref-transient-values`). |
+| Loading | The whole `src/lib/fixed/**` module comes in through `React.lazy`/`import()` when the mode is `fixed` | `bundle-conditional`, `bundle-dynamic-imports`: whoever only uses flow does not pay. |
+| DnD | Still `@atlaskit/pragmatic-drag-and-drop` (element adapter) for uniformity with the tree and the palette. Movement on the page uses the `draggable`'s `onDrag` + a single `dropTargetForElements` on the page container | One event system only; `pickDropTarget` and hitboxes are off in fixed mode. |
+| Plan B for movement | If the spike (§6) shows insufficient native `dragover` cadence, movement **inside** the page switches to pointer events (`pointerdown/move/up` + `setPointerCapture`), keeping pdnd for palette → page and tree → page | Precision rules; the decision is made with measurements, not opinions. |
 
 ---
 
-## 2. Estrutura de pastas
+## 2. Folder structure
 
 ```
 src/lib/fixed/
   detect.ts            # detectLayout(doc) → 'fixed' | 'flow'; readViewportMeta(head) → { width, height } | null
   geometry.ts          # toPage(client, pageRect, scale), snap(), roundTo(precision), rectsToGuides()
   position.ts          # readPosition(el), freezePosition(node, rect), writePosition(node, x, y) → StyleWrite[]
-  inheritance.ts       # freezeInheritance(el, newParentEl) → declarações a copiar
+  inheritance.ts       # freezeInheritance(el, newParentEl) → declarations to copy
   pageContainer.ts     # pageContainerOf(doc, override?)
-  fixedDragStore.ts    # ghost transform, guias, elemento em drag (imperativo, sem React)
-  useFixedDraggable.ts # draggable() por elemento posicionado; onDrag → fixedDragStore
+  fixedDragStore.ts    # ghost transform, guides, dragged element (imperative, no React)
+  useFixedDraggable.ts # draggable() per positioned element; onDrag → fixedDragStore
   useFixedPageDropTarget.ts
   useFixedDropMonitor.ts
   ghost/
-    ImageGhost.tsx     # registra estratégia 'image' (setCustomNativeDragPreview)
-    LiveGhost.tsx      # registra estratégia 'live' (disableNativeDragPreview + camada viva)
-    GhostLayer.tsx     # camada absoluta sobre a página onde o LiveGhost desenha
-    snapshot.ts        # cloneForPreview(el, scale) usado pelo ImageGhost
+    ImageGhost.tsx     # registers the 'image' strategy (setCustomNativeDragPreview)
+    LiveGhost.tsx      # registers the 'live' strategy (disableNativeDragPreview + live layer)
+    GhostLayer.tsx     # absolute layer over the page where the LiveGhost draws
+    snapshot.ts        # cloneForPreview(el, scale) used by the ImageGhost
   guides/
-    Guides.tsx         # overlay de guias inteligentes (SVG), lê do fixedDragStore
-    computeGuides.ts   # bordas e centros dos irmãos, threshold em unidades de página
+    Guides.tsx         # smart guides overlay (SVG), reads from fixedDragStore
+    computeGuides.ts   # sibling edges and centers, threshold in page units
   stylesheet/
-    documentCss.ts     # extrai <style> e <link> do envelope.head
-    useDocumentStylesheet.ts  # injeta com escopo (reusa scopeCss), resolve URLs via resolveAsset
-  FixedPage.tsx        # part Canvas.FixedPage (página com tamanho fixo + zoom + GhostLayer + Guides)
-  Zoom.tsx             # part Canvas.Zoom (fit, 50, 100, 200)
-  InspectorPosition.tsx# part Inspector.Position
+    documentCss.ts     # extracts <style> and <link> from envelope.head
+    useDocumentStylesheet.ts  # injects scoped (reuses scopeCss), resolves URLs through resolveAsset
+  FixedPage.tsx        # Canvas.FixedPage part (fixed-size page + zoom + GhostLayer + Guides)
+  Zoom.tsx             # Canvas.Zoom part (fit, 50, 100, 200)
+  InspectorPosition.tsx# Inspector.Position part
   __tests__/
 ```
 
-Módulos puros (`detect`, `geometry`, `position`, `inheritance`, `pageContainer`, `computeGuides`, `documentCss`) sem React e sem DOM além de `DOMRect`, testáveis em jsdom.
+Pure modules (`detect`, `geometry`, `position`, `inheritance`, `pageContainer`, `computeGuides`, `documentCss`) without React and without DOM beyond `DOMRect`, testable in jsdom.
 
 ---
 
-## 3. Design detalhado
+## 3. Detailed design
 
-### 3.1 Contexto e composição
+### 3.1 Context and composition
 
-`EditorContextValue` ganha `layout: 'flow' | 'fixed'` (já resolvido, nunca `auto`) e `fixedLayout: { page: { width; height }, pageContainerId, precision, keepStacking, resolveAsset }`.
+`EditorContextValue` gains `layout: 'flow' | 'fixed'` (already resolved, never `auto`) and `fixedLayout: { page: { width; height }, pageContainerId, precision, keepStacking, resolveAsset }`.
 
-`CanvasContextValue` passa ao formato `state / actions / meta` (`state-context-interface`), mantendo os campos atuais por compatibilidade:
+`CanvasContextValue` moves to the `state / actions / meta` shape (`state-context-interface`), keeping the current fields for compatibility:
 
 ```ts
 type CanvasState = { width; presetId; isDark; stylesReady; zoom: number; scale: number }
@@ -95,7 +95,7 @@ type CanvasActions = { setPreset; setIsDark; setZoom; registerGhost(strategy: Gh
 type CanvasMeta = { pageRef: RefObject<HTMLElement | null>; registerGhostLayer(el: HTMLElement | null): void }
 ```
 
-Parts novas, todas opcionais e sem props booleanas:
+New parts, all optional and without boolean props:
 
 ```tsx
 <HtmlEditor layout="auto" fixedLayout={{ resolveAsset: (url) => cdn(url) }}>
@@ -106,7 +106,7 @@ Parts novas, todas opcionais e sem props booleanas:
     </HtmlEditor.Canvas.Toolbar>
     <HtmlEditor.Canvas.FixedPage>
       <HtmlEditor.Canvas.Guides />
-      <HtmlEditor.Canvas.LiveGhost />      {/* ou <HtmlEditor.Canvas.ImageGhost /> */}
+      <HtmlEditor.Canvas.LiveGhost />      {/* or <HtmlEditor.Canvas.ImageGhost /> */}
     </HtmlEditor.Canvas.FixedPage>
   </HtmlEditor.Canvas>
   <HtmlEditor.Inspector>
@@ -116,48 +116,48 @@ Parts novas, todas opcionais e sem props booleanas:
 </HtmlEditor>
 ```
 
-`Canvas.Viewport` (fluxo) e `Canvas.FixedPage` (fixo) são variantes explícitas. O `DefaultLayout` escolhe pela `layout` resolvida. `Canvas.WidthPresets` renderiza nada em modo fixo; `Canvas.Zoom` renderiza nada em modo fluxo.
+`Canvas.Viewport` (flow) and `Canvas.FixedPage` (fixed) are explicit variants. `DefaultLayout` picks by the resolved `layout`. `Canvas.WidthPresets` renders nothing in fixed mode; `Canvas.Zoom` renders nothing in flow mode.
 
-### 3.2 Página e zoom
+### 3.2 Page and zoom
 
-`FixedPage` renderiza:
+`FixedPage` renders:
 
 ```
-.scroll (overflow: auto, auto-scroll do pdnd)
-  .stage (padding, centraliza)
-    .page  (width/height da página em px, transform: scale(zoom), transform-origin: 0 0)
-      .adt-canvas  (raiz editável, position: relative, overflow: hidden)
+.scroll (overflow: auto, pdnd auto-scroll)
+  .stage (padding, centers)
+    .page  (page width/height in px, transform: scale(zoom), transform-origin: 0 0)
+      .adt-canvas  (editable root, position: relative, overflow: hidden)
         <CanvasNode …/>
       GhostLayer   (position: absolute; inset: 0; pointer-events: none)
-    Guides (SVG absoluto sobre a stage, coordenadas de tela)
+    Guides (absolute SVG over the stage, screen coordinates)
 ```
 
-`scale` real é medido (`pageRect.width / page.width`) e não assumido igual ao `zoom`, para tolerar `devicePixelRatio` fracionário e wrappers com `transform` do próprio livro. Zoom "fit" recalcula em `ResizeObserver` do `.scroll`.
+The real `scale` is measured (`pageRect.width / page.width`) and not assumed equal to `zoom`, to tolerate fractional `devicePixelRatio` and the book's own `transform` wrappers. "Fit" zoom recomputes in a `ResizeObserver` on `.scroll`.
 
-O `SelectionOverlay` já usa `getBoundingClientRect`; funciona sem mudança. Os handles de redimensionar ficam fora do escopo desta versão (§7).
+`SelectionOverlay` already uses `getBoundingClientRect`; it works unchanged. Resize handles are out of scope for this version (§7).
 
-### 3.3 CSS do documento
+### 3.3 Document CSS
 
-`documentCss.ts` extrai do `envelope.head` cada `<style>` e cada `<link rel="stylesheet" href>`. `useDocumentStylesheet` injeta uma `<style data-adt-document>` no `document.head`:
+`documentCss.ts` extracts every `<style>` and every `<link rel="stylesheet" href>` from `envelope.head`. `useDocumentStylesheet` injects a `<style data-adt-document>` into `document.head`:
 
-- Escopo com `@scope (.adt-canvas)` e fallback por prefixo, reusando `scopeCss`. Seletores `html`, `body`, `:root` são reescritos para `.adt-canvas`.
-- `@font-face` fica **fora** do escopo (regra global) com URLs reescritas por `resolveAsset`.
-- `<link>` é buscado com `fetch` só se `resolveAsset` devolver URL; sem resolvedor, é ignorado com aviso no console em dev.
-- `url(...)` relativos em `background`, `src` de `<img>` e `<link>` passam por `resolveAsset`. Sem resolvedor, ficam como estão.
-- Sanitização igual à dos nós opacos (remove `expression()`, `javascript:` e `@import` para origens não resolvidas).
+- Scoped with `@scope (.adt-canvas)` and a prefix fallback, reusing `scopeCss`. `html`, `body` and `:root` selectors are rewritten to `.adt-canvas`.
+- `@font-face` stays **outside** the scope (global rule) with URLs rewritten through `resolveAsset`.
+- `<link>` is fetched with `fetch` only if `resolveAsset` returns a URL; without a resolver it is ignored with a console warning in dev.
+- Relative `url(...)` in `background`, `<img>` `src` and `<link>` go through `resolveAsset`. Without a resolver they stay as they are.
+- Same sanitization as opaque nodes (removes `expression()`, `javascript:` and `@import` for unresolved origins).
 
-Isso também melhora o modo de fluxo em documentos completos; fica atrás de `layout="fixed"` nesta fase e vira opção geral depois.
+This also improves flow mode for full documents; it sits behind `layout="fixed"` in this phase and becomes a general option later.
 
-### 3.4 Posição: leitura, congelamento e escrita
+### 3.4 Position: reading, freezing and writing
 
-- **Leitura** para o inspector e para o início do drag: `readPosition(el, pageEl, scale)` devolve `{ x, y, w, h }` em unidades de página a partir dos rects. Nunca faz parse de CSS para saber onde o elemento está.
-- **Congelamento** (`freezePosition`): se o `style` inline não tem `left`/`top` em px, ou tem `right`/`bottom`, ou há `%`, o primeiro `placeNode` grava `position: absolute; left: Xpx; top: Ypx`, remove `right`/`bottom`, mantém `width`/`height` se existiam e mantém `transform`. Elementos `position: fixed` são tratados como `absolute`.
-- **Escrita** (`writePosition`): `inlineCssAdapter.write` para `left` e `top` com `roundTo(precision)`. Uma escrita de `style` só, coalescida por `attr:${id}:style` (já existe).
-- Ordem de operações do `placeNode(id, { x, y, parentId, index })` no store: freeze de herança → freeze de posição → `setAttr(style)` → `moveNode` se o pai muda, tudo dentro de um único `commit` (nova opção `batch` no `commit`, ou uma ação que compõe as duas mutações no mesmo `draftNodes`).
+- **Reading** for the inspector and for the drag start: `readPosition(el, pageEl, scale)` returns `{ x, y, w, h }` in page units from the rects. It never parses CSS to know where the element is.
+- **Freezing** (`freezePosition`): if the inline `style` has no `left`/`top` in px, or has `right`/`bottom`, or has `%`, the first `placeNode` writes `position: absolute; left: Xpx; top: Ypx`, removes `right`/`bottom`, keeps `width`/`height` if they existed and keeps `transform`. `position: fixed` elements are treated as `absolute`.
+- **Writing** (`writePosition`): `inlineCssAdapter.write` for `left` and `top` with `roundTo(precision)`. A single `style` write, coalesced by `attr:${id}:style` (already exists).
+- Order of operations of `placeNode(id, { x, y, parentId, index })` in the store: inheritance freeze → position freeze → `setAttr(style)` → `moveNode` if the parent changes, all inside a single `commit` (new `batch` option on `commit`, or one action composing both mutations on the same `draftNodes`).
 
-### 3.5 Drag dentro da página (pixel perfect)
+### 3.5 Dragging inside the page (pixel perfect)
 
-`useFixedDraggable(el, id)` registra `draggable()` em cada filho elemento do container da página **e** em elementos aninhados (para permitir puxar algo de dentro de um grupo para o nível da página):
+`useFixedDraggable(el, id)` registers `draggable()` on every element child of the page container **and** on nested elements (to allow pulling something out of a group to the page level):
 
 ```ts
 draggable({
@@ -169,7 +169,7 @@ draggable({
       id: nodeId,
       grab: toPage(location.initial.input, pageRect(), scale()) - readPosition(element).xy,
       origin: readPosition(element),
-      siblings: cacheSiblingRects(),        // js-cache-function-results: uma leitura por drag
+      siblings: cacheSiblingRects(),        // js-cache-function-results: one read per drag
     })
     ghost.strategy.start(element)
     if (ghost.strategy.hidesNativePreview) preventUnhandled.start()
@@ -178,7 +178,7 @@ draggable({
     const pointer = toPage(location.current.input, pageRect(), scale())
     const raw = pointer - grab
     const { position, guides } = snapWithGuides(raw, size, siblings, threshold / scale)
-    fixedDragStore.update(position, guides)   // ghost.transform e Guides leem daqui, sem React
+    fixedDragStore.update(position, guides)   // ghost.transform and Guides read from here, no React
   },
   onDrop: ({ location }) => {
     const cancelled = location.current.dropTargets.length === 0
@@ -190,139 +190,139 @@ draggable({
 })
 ```
 
-Regras para não haver glitch:
+Rules for a glitch-free drag:
 
-- O elemento original **nunca** é movido, escondido nem desmontado durante o drag (Chrome cancela o drag nativo se a fonte sai do DOM). Ele recebe `data-dragging` e uma opacidade reduzida via CSS; a posição final só é aplicada no `onDrop`.
-- O ghost e as guias mudam só por `transform`, com `will-change: transform` e `pointer-events: none`. Nenhum layout é invalidado por frame.
-- `pageRect` é lido uma vez por frame (um `getBoundingClientRect`), o resto vem do cache de rects dos irmãos feito no `onDragStart`; o cache é invalidado por scroll e zoom.
-- `user-select: none` na página durante o drag; `<img>` e `<a>` aninhados recebem `draggable="false"` na renderização do canvas em modo fixo, para o drag nativo da imagem não roubar o gesto.
-- `getDropEffect: () => 'move'` no container da página, para o cursor não piscar entre copy/move.
-- Ponteiro saindo da janela: o pdnd para de emitir `onDrag`; o ghost congela na última posição e o `onDrop` posterior decide (drop fora da página = cancelamento, sem efeito).
-- Teclado: setas movem 1 px, Shift+setas 10 px, tudo por `placeNode` com coalescência de 500 ms para virar uma entrada de histórico. É o caminho pixel-perfect quando o mouse não basta.
-- Snap: grade de 1 px por padrão (`precision`); guias inteligentes em bordas e centros dos irmãos e da página, threshold de 4 px de tela convertido para unidades de página. Alt desliga o snap durante o drag (lido de `location.current.input.altKey`).
+- The original element is **never** moved, hidden or unmounted during the drag (Chrome cancels the native drag if the source leaves the DOM). It receives `data-dragging` and a reduced opacity through CSS; the final position is applied only in `onDrop`.
+- Ghost and guides change only through `transform`, with `will-change: transform` and `pointer-events: none`. No layout is invalidated per frame.
+- `pageRect` is read once per frame (one `getBoundingClientRect`); the rest comes from the sibling rect cache built in `onDragStart`; the cache is invalidated by scroll and zoom.
+- `user-select: none` on the page during the drag; nested `<img>` and `<a>` get `draggable="false"` in the canvas render in fixed mode, so the image's native drag does not steal the gesture.
+- `getDropEffect: () => 'move'` on the page container, so the cursor does not flicker between copy/move.
+- Pointer leaving the window: pdnd stops emitting `onDrag`; the ghost freezes at the last position and the later `onDrop` decides (drop outside the page = cancel, no effect).
+- Keyboard: arrows move 1 px, Shift+arrows 10 px, all through `placeNode` with 500 ms coalescing into one history entry. It is the pixel-perfect path when the mouse is not enough.
+- Snap: 1 px grid by default (`precision`); smart guides on sibling and page edges and centers, 4 screen px threshold converted to page units. Alt disables snapping during the drag (read from `location.current.input.altKey`).
 
-### 3.6 Reparent para o container da página
+### 3.6 Reparenting to the page container
 
-Quando o elemento arrastado está aninhado (ex.: `div.group > p`), ao soltar ele vai para `pageContainerId`:
+When the dragged element is nested (e.g. `div.group > p`), on drop it goes to `pageContainerId`:
 
-1. `freezeInheritance(el, pageEl)` compara estilos computados no pai atual e no container; diferenças entram no `style`.
-2. Posição final calculada em unidades de página já é relativa ao container, porque `readPosition` mede contra a página; não há conversão adicional.
-3. Índice: fim do container, ou logo após o ancestral de nível superior se `keepStacking`.
-4. Se o pai antigo ficar vazio e for um wrapper sem estilo próprio (sem `style`, sem `class`, sem `id`), ele **não** é removido automaticamente; fica visível na árvore como vazio. Remoção automática seria uma perda silenciosa.
+1. `freezeInheritance(el, pageEl)` compares computed styles in the current parent and in the container; differences go into `style`.
+2. The final position computed in page units is already relative to the container, because `readPosition` measures against the page; no extra conversion.
+3. Index: end of the container, or right after the top-level ancestor when `keepStacking`.
+4. If the old parent becomes empty and is a wrapper with no styling of its own (no `style`, no `class`, no `id`), it is **not** removed automatically; it stays visible in the tree as empty. Automatic removal would be a silent loss.
 
-Drops vindos da paleta e da árvore no modo fixo usam o mesmo `placeNode`: paleta insere em `pointer − metade do tamanho padrão do template`; árvore sobre a página reparenta e posiciona no ponteiro. A árvore continua aceitando reordenação entre irmãos como controle de z-order, e o `pickDropTarget` do modo fluxo não roda quando `layout === 'fixed'`.
+Palette and tree drops in fixed mode use the same `placeNode`: the palette inserts at `pointer − half of the template's default size`; the tree over the page reparents and positions at the pointer. The tree keeps accepting sibling reordering as the z-order control, and the flow mode `pickDropTarget` does not run when `layout === 'fixed'`.
 
-### 3.7 Ghost — versão A: imagem (preview nativo)
+### 3.7 Ghost — version A: image (native preview)
 
-`ImageGhost` registra `{ id: 'image', hidesNativePreview: false, generatePreview, start, end }`:
+`ImageGhost` registers `{ id: 'image', hidesNativePreview: false, generatePreview, start, end }`:
 
-- `generatePreview` usa `setCustomNativeDragPreview` com `render({ container })`: `cloneForPreview(element, scale)` faz `cloneNode(true)`, copia `width`/`height` computados, aplica `transform: scale(scale)` e `transform-origin: 0 0`, remove `data-adt-id` e `contenteditable`, marca `<img>` como `draggable=false`. Para um `<img>` puro, o clone é o próprio `<img>` (o browser usa a bitmap decodificada). O container recebe `getOffset: preserveOffsetOnSource({ element, input })`, então o ponteiro segura o ghost exatamente onde pegou.
-- Enquanto o preview nativo é uma foto tirada no início, a **posição final** é mostrada por um retângulo fino (`outline`) desenhado pela `GhostLayer` na posição snapada, mais as guias. Assim o usuário vê tanto a "foto" quanto o encaixe exato.
-- Vantagens: renderização fora da main thread, zero custo por frame, sem risco de flicker. Limitações documentadas: o SO pode aplicar transparência e sombra; Chrome limita o tamanho do preview (fallback: se o clone escalado passar de 2000 px em um eixo, reduzir a escala do clone e manter o retângulo de destino correto); a foto não reflete zoom alterado durante o drag.
+- `generatePreview` uses `setCustomNativeDragPreview` with `render({ container })`: `cloneForPreview(element, scale)` does `cloneNode(true)`, copies computed `width`/`height`, applies `transform: scale(scale)` and `transform-origin: 0 0`, removes `data-adt-id` and `contenteditable`, marks `<img>` as `draggable=false`. For a bare `<img>`, the clone is the `<img>` itself (the browser uses the decoded bitmap). The container gets `getOffset: preserveOffsetOnSource({ element, input })`, so the pointer holds the ghost exactly where it grabbed it.
+- While the native preview is a snapshot taken at the start, the **final position** is shown by a thin rectangle (`outline`) drawn by the `GhostLayer` at the snapped position, plus the guides. The user sees both the "photo" and the exact fit.
+- Advantages: rendering off the main thread, zero cost per frame, no flicker risk. Documented limitations: the OS may apply transparency and shadow; Chrome limits the preview size (fallback: if the scaled clone exceeds 2000 px on one axis, reduce the clone scale and keep the target rectangle correct); the photo does not reflect zoom changed during the drag.
 
-### 3.8 Ghost — versão B: cópia renderizada (ghost vivo)
+### 3.8 Ghost — version B: rendered copy (live ghost)
 
-`LiveGhost` registra `{ id: 'live', hidesNativePreview: true, … }`:
+`LiveGhost` registers `{ id: 'live', hidesNativePreview: true, … }`:
 
-- `generatePreview` chama `disableNativeDragPreview(nativeSetDragImage)`; `onDragStart` chama `preventUnhandled.start()` para suprimir a animação de "voltar" do drag nativo cancelado.
-- `start(element)` monta na `GhostLayer` uma cópia do elemento. Duas formas, escolhidas pela estratégia: `cloneNode(true)` (barato, perde estado React, suficiente porque o ghost não é interativo) é o padrão; `createRoot(container).render(<CanvasNode id />)` fica como opção para quando o clone perder algo renderizado por React (ex.: placeholders de nós opacos). A cópia recebe `position: absolute; left: 0; top: 0; width; height; pointer-events: none; will-change: transform`.
-- `fixedDragStore.update` escreve `transform: translate3d(x, y, 0)` em unidades de página (a `GhostLayer` está dentro da `.page`, então o `scale` já se aplica). O elemento original fica com `opacity: .35` e `outline` tracejado marcando a origem.
-- Vantagens: encaixe e guias exatos ao vivo, nítido em qualquer zoom, sem transparência imposta pelo SO. Custo: um `transform` por frame na main thread; medido no spike (§6) com 300 elementos.
-- Cancelamento (Esc ou drop fora da página): a cópia anima de volta à origem em 120 ms com `transition: transform` e é removida; respeita `prefers-reduced-motion`.
+- `generatePreview` calls `disableNativeDragPreview(nativeSetDragImage)`; `onDragStart` calls `preventUnhandled.start()` to suppress the cancelled native drag's "fly back" animation.
+- `start(element)` mounts a copy of the element in the `GhostLayer`. Two forms, chosen by the strategy: `cloneNode(true)` (cheap, loses React state, enough because the ghost is not interactive) is the default; `createRoot(container).render(<CanvasNode id />)` remains an option for when the clone loses something rendered by React (e.g. opaque node placeholders). The copy receives `position: absolute; left: 0; top: 0; width; height; pointer-events: none; will-change: transform`.
+- `fixedDragStore.update` writes `transform: translate3d(x, y, 0)` in page units (the `GhostLayer` lives inside `.page`, so the `scale` already applies). The original element gets `opacity: .35` and a dashed `outline` marking the origin.
+- Advantages: exact live fit and guides, crisp at any zoom, no OS-imposed transparency. Cost: one `transform` per frame on the main thread; measured in the spike (§6) with 300 elements.
+- Cancellation (Esc or drop outside the page): the copy animates back to the origin in 120 ms with `transition: transform` and is removed; respects `prefers-reduced-motion`.
 
-Ambas as estratégias implementam a mesma interface `GhostStrategy`; o `useFixedDraggable` só conhece a interface (`state-decouple-implementation`).
+Both strategies implement the same `GhostStrategy` interface; `useFixedDraggable` only knows the interface (`state-decouple-implementation`).
 
 ### 3.9 Inspector — Position
 
-`Inspector.Position` mostra X, Y, W, H (px inteiros, `font-variant-numeric: tabular-nums`), z-order (índice no container com botões "trazer para frente"/"enviar para trás" que chamam `moveNode`) e "travar posição" (atributo `data-adt-locked` **não**: travar precisa ficar fora da saída, então vai para um `Set<NodeId>` no estado do editor, não no documento). Inputs escrevem no `onBlur`/Enter via `placeNode`, com coalescência.
+`Inspector.Position` shows X, Y, W, H (integer px, `font-variant-numeric: tabular-nums`), z-order (index in the container with "bring forward"/"send backward" buttons calling `moveNode`) and "lock position" (**not** a `data-adt-locked` attribute: locking must stay out of the output, so it goes into a `Set<NodeId>` in editor state, not in the document). Inputs write on `onBlur`/Enter through `placeNode`, with coalescing.
 
-Leitura de X, Y, W, H vem de um `ResizeObserver`/`MutationObserver` sobre o elemento selecionado (mesmo esquema do `SelectionOverlay`), não do parse do `style`, para refletir o que está renderizado.
-
----
-
-## 4. Regras de performance (aplicadas em todas as fases)
-
-- Zero re-render de React por frame de drag: ghost, guias e retângulo de destino são atualizados por store imperativo e `style.transform` (`rerender-use-ref-transient-values`, `js-batch-dom-css`).
-- Uma leitura de `getBoundingClientRect` da página por frame; rects dos irmãos em cache por drag (`js-cache-function-results`); guias calculadas em um único loop sobre os irmãos (`js-combine-iterations`, saída antecipada quando o snap já casou nos dois eixos).
-- `useEffectEvent` para ler `zoom`, `precision` e estratégia de ghost dentro dos callbacks do pdnd sem reregistrar `draggable` (`rerender-dependencies`, `advanced-effect-event-deps`).
-- Componentes de overlay (`GhostLayer`, `Guides`) não assinam o store do editor; só o `fixedDragStore` (`rerender-defer-reads`).
-- `src/lib/fixed/**` carregado sob demanda; o bundle do modo fluxo não cresce (`bundle-conditional`).
-- CSS do documento injetado uma vez por documento, refeito só quando `envelope.head` muda.
-- Aceite medido com `npx react-doctor scan <url>` gravando um drag de 5 s em página com 300 elementos posicionados: nenhum frame > 16 ms atribuído ao editor; `npx react-doctor --scope changed` em 100 a cada fase.
+X, Y, W, H are read from a `ResizeObserver`/`MutationObserver` on the selected element (same scheme as `SelectionOverlay`), not from parsing `style`, to reflect what is rendered.
 
 ---
 
-## 5. Fases
+## 4. Performance rules (applied in every phase)
 
-### Fase F0 — Spikes (1 dia)
-- [ ] Cadência do `onDrag` do pdnd em Chrome, Firefox e Safari com um `translate3d` por evento; comparar com pointer events. Decide o plano B do §1.
-- [ ] `disableNativeDragPreview` + `preventUnhandled` em Safari e Firefox: confirmar que não sobra ghost nativo nem animação de retorno.
-- [ ] Limite de tamanho do preview nativo em Chrome com clone escalado a 200%.
-- [ ] Fixtures reais: pelo menos dois livros FXL (um com `<style>` no head e posições por classe; outro com `style` inline e `%`) em `src/playground/fixtures/fixed/`.
-- **Pronto quando**: as três medições estão anotadas neste arquivo e as decisões do §1 confirmadas ou trocadas.
+- Zero React re-render per drag frame: ghost, guides and target rectangle are updated through the imperative store and `style.transform` (`rerender-use-ref-transient-values`, `js-batch-dom-css`).
+- One page `getBoundingClientRect` read per frame; sibling rects cached per drag (`js-cache-function-results`); guides computed in a single loop over the siblings (`js-combine-iterations`, early exit once the snap matched on both axes).
+- `useEffectEvent` to read `zoom`, `precision` and the ghost strategy inside pdnd callbacks without re-registering `draggable` (`rerender-dependencies`, `advanced-effect-event-deps`).
+- Overlay components (`GhostLayer`, `Guides`) do not subscribe to the editor store; only to `fixedDragStore` (`rerender-defer-reads`).
+- `src/lib/fixed/**` loaded on demand; the flow mode bundle does not grow (`bundle-conditional`).
+- Document CSS injected once per document, rebuilt only when `envelope.head` changes.
+- Acceptance measured with `npx react-doctor scan <url>` recording a 5 s drag on a page with 300 positioned elements: no frame > 16 ms attributed to the editor; `npx react-doctor --scope changed` at 100 in every phase.
 
-### Fase F1 — Detecção, página e CSS do documento (2 dias)
-- [ ] `detect.ts`, `readViewportMeta`, `pageContainerOf`; prop `layout` e `fixedLayout` no `EditorProvider`; `layout` resolvido no contexto.
-- [ ] `FixedPage`, `Zoom` (fit/50/100/200), `scale` medido, `CanvasContext` em `state/actions/meta` mantendo campos antigos.
-- [ ] `documentCss.ts` + `useDocumentStylesheet` com escopo, `@font-face` global, `resolveAsset`.
-- [ ] `<img>`/`<a>` com `draggable="false"` no canvas em modo fixo.
-- [ ] Testes: detecção (com e sem meta), tamanho da página, extração e escopo do CSS (snapshot), `html/body → .adt-canvas`.
-- **Pronto quando**: os fixtures FXL abrem no playground visualmente iguais ao browser abrindo o arquivo original, em 100% de zoom, com diferença ≤ 1 px nas posições dos elementos (medido por script que compara rects).
+---
 
-### Fase F2 — Modelo de posição e `placeNode` (1–2 dias)
+## 5. Phases
+
+### Phase F0 — Spikes (1 day)
+- [ ] pdnd `onDrag` cadence in Chrome, Firefox and Safari with one `translate3d` per event; compare with pointer events. Decides the plan B of §1.
+- [ ] `disableNativeDragPreview` + `preventUnhandled` in Safari and Firefox: confirm no native ghost or return animation is left.
+- [ ] Native preview size limit in Chrome with a clone scaled to 200%.
+- [ ] Real fixtures: at least two FXL books (one with `<style>` in the head and positions by class; another with inline `style` and `%`) in `src/playground/fixtures/fixed/`.
+- **Done when**: the three measurements are recorded in this file and the §1 decisions confirmed or replaced.
+
+### Phase F1 — Detection, page and document CSS (2 days)
+- [ ] `detect.ts`, `readViewportMeta`, `pageContainerOf`; `layout` and `fixedLayout` props on `EditorProvider`; resolved `layout` in the context.
+- [ ] `FixedPage`, `Zoom` (fit/50/100/200), measured `scale`, `CanvasContext` in `state/actions/meta` keeping the old fields.
+- [ ] `documentCss.ts` + `useDocumentStylesheet` with scope, global `@font-face`, `resolveAsset`.
+- [ ] `<img>`/`<a>` with `draggable="false"` in the canvas in fixed mode.
+- [ ] Tests: detection (with and without meta), page size, CSS extraction and scoping (snapshot), `html/body → .adt-canvas`.
+- **Done when**: the FXL fixtures open in the playground visually identical to the browser opening the original file, at 100% zoom, with ≤ 1 px difference in element positions (measured by a script comparing rects).
+
+### Phase F2 — Position model and `placeNode` (1–2 days)
 - [ ] `geometry.ts` (`toPage`, `roundTo`, `snap`), `position.ts` (`readPosition`, `freezePosition`, `writePosition`), `inheritance.ts`.
-- [ ] Ação `placeNode` no store: freeze + `style` + `moveNode` em um commit, coalescência `place:${id}`.
-- [ ] Setas do teclado no canvas em modo fixo (1 px / 10 px).
-- [ ] Testes: freeze de `right/bottom`, `%`, `translate`; herança congelada só quando diverge; um `placeNode` = uma entrada de histórico; round-trip idempotente dos fixtures após várias `placeNode`.
-- **Pronto quando**: mover por teclado e por inspector grava `left/top` inteiros corretos e a saída continua passando no round-trip.
+- [ ] `placeNode` action in the store: freeze + `style` + `moveNode` in one commit, `place:${id}` coalescing.
+- [ ] Keyboard arrows on the canvas in fixed mode (1 px / 10 px).
+- [ ] Tests: freeze of `right/bottom`, `%`, `translate`; inheritance frozen only when it differs; one `placeNode` = one history entry; idempotent fixture round-trip after several `placeNode`.
+- **Done when**: moving by keyboard and by inspector writes correct integer `left/top` and the output keeps passing the round-trip.
 
-### Fase F3 — Drag na página com ghost vivo (2–3 dias)
-- [ ] `fixedDragStore`, `useFixedDraggable`, `useFixedPageDropTarget`, `useFixedDropMonitor`; `pickDropTarget` e hitbox desligados em modo fixo.
-- [ ] `GhostLayer` + `LiveGhost` (clone), retângulo de origem, cancelamento com animação, `preventUnhandled`.
-- [ ] `Guides` + `computeGuides` (bordas e centros, página incluída), Alt desliga snap.
-- [ ] Reparent para o container da página com `keepStacking` opcional; drops de paleta e de árvore.
-- [ ] Testes: `computeGuides` e `snap` puros; monitor com eventos sintéticos (mesma técnica usada na prioridade ao pai) verificando posição final, reparent e cancelamento.
-- **Pronto quando**: arrastar qualquer elemento, inclusive aninhado, e soltar em 100% e 200% de zoom resulta em `left/top` iguais à posição do ghost no frame do drop, sem salto visual, e o elemento fica filho do container da página.
+### Phase F3 — Dragging on the page with the live ghost (2–3 days)
+- [ ] `fixedDragStore`, `useFixedDraggable`, `useFixedPageDropTarget`, `useFixedDropMonitor`; `pickDropTarget` and hitbox off in fixed mode.
+- [ ] `GhostLayer` + `LiveGhost` (clone), origin rectangle, animated cancellation, `preventUnhandled`.
+- [ ] `Guides` + `computeGuides` (edges and centers, page included), Alt disables snap.
+- [ ] Reparent to the page container with optional `keepStacking`; palette and tree drops.
+- [ ] Tests: pure `computeGuides` and `snap`; monitor with synthetic events (same technique used for parent priority) checking final position, reparent and cancellation.
+- **Done when**: dragging any element, nested included, and dropping at 100% and 200% zoom results in `left/top` equal to the ghost position on the drop frame, with no visual jump, and the element becomes a child of the page container.
 
-### Fase F4 — Ghost por imagem (1 dia)
-- [ ] `ImageGhost` com `cloneForPreview`, `preserveOffsetOnSource`, fallback de tamanho.
-- [ ] Retângulo de destino snapado na `GhostLayer` enquanto o preview nativo segue o ponteiro.
-- [ ] Toggle no playground para alternar as duas estratégias no mesmo fixture.
-- **Pronto quando**: as duas estratégias produzem a mesma posição final para o mesmo gesto (teste sintético) e a versão imagem não desenha nada na main thread por frame além do retângulo.
+### Phase F4 — Image ghost (1 day)
+- [ ] `ImageGhost` with `cloneForPreview`, `preserveOffsetOnSource`, size fallback.
+- [ ] Snapped target rectangle in the `GhostLayer` while the native preview follows the pointer.
+- [ ] Playground toggle to switch between the two strategies on the same fixture.
+- **Done when**: both strategies produce the same final position for the same gesture (synthetic test) and the image version draws nothing on the main thread per frame besides the rectangle.
 
-### Fase F5 — Inspector Position e z-order pela árvore (1–2 dias)
-- [ ] `Inspector.Position` (X, Y, W, H, z-order, travar); travados não registram `draggable`.
-- [ ] Árvore: rótulo de ordem de empilhamento em modo fixo; reordenar na árvore = z-order.
-- [ ] Live region: "movido para X, Y".
-- **Pronto quando**: editar X no inspector, arrastar e usar setas convergem para o mesmo `style`; `react-doctor design` sem erros nos componentes novos.
+### Phase F5 — Inspector Position and z-order through the tree (1–2 days)
+- [ ] `Inspector.Position` (X, Y, W, H, z-order, lock); locked elements do not register `draggable`.
+- [ ] Tree: stacking-order label in fixed mode; reordering in the tree = z-order.
+- [ ] Live region: "moved to X, Y".
+- **Done when**: editing X in the inspector, dragging and using arrows converge to the same `style`; `react-doctor design` without errors in the new components.
 
-### Fase F6 — Endurecimento (1 dia)
-- [ ] `react-doctor scan` com 300 elementos; corrigir hot paths.
-- [ ] Auditoria de acessibilidade das parts novas (foco, `aria-pressed` no zoom, contraste das guias).
-- [ ] README: seção "Fixed layout mode" com as parts, a prop `layout`, `resolveAsset` e as limitações.
-- **Pronto quando**: `bun run test`, `lint`, `typecheck` e `react-doctor --scope changed` em 100; README atualizado.
+### Phase F6 — Hardening (1 day)
+- [ ] `react-doctor scan` with 300 elements; fix hot paths.
+- [ ] Accessibility audit of the new parts (focus, `aria-pressed` on zoom, guide contrast).
+- [ ] README: "Fixed layout mode" section with the parts, the `layout` prop, `resolveAsset` and the limitations.
+- **Done when**: `bun run test`, `lint`, `typecheck` and `react-doctor --scope changed` at 100; README updated.
 
 ---
 
-## 6. Riscos e spikes
+## 6. Risks and spikes
 
-| Risco | Impacto | Mitigação / spike |
+| Risk | Impact | Mitigation / spike |
 |---|---|---|
-| `dragover` nativo com cadência baixa ou irregular em algum browser | F3 | Spike F0; plano B com pointer events só para o movimento dentro da página. |
-| CSS do `<head>` com seletores que o `scopeCss` não cobre (`html[lang]`, `:root` com variáveis, `@page`, `@import`) | F1 | Snapshots por fixture; lista explícita de reescritas; `@page` descartado; `@import` só com `resolveAsset`. |
-| Fontes e imagens relativas sem base URL | F1 | `resolveAsset` obrigatório para fidelidade; sem ele, aviso em dev e placeholders com o tamanho declarado (`width`/`height` do `<img>`) para o layout não desmontar. |
-| Elementos com `transform: rotate/scale` próprios | F2–F3 | `left/top` recebem o delta; o rect medido é só para o ghost e para as guias, que usam o bounding box. Documentar que o snap é no bounding box. |
-| Wrapper do livro com `transform: scale()` responsivo dentro do body | F1–F3 | `scale` medido, não assumido; `toPage` usa o rect do container da página, não da `.page`. |
-| Herança perdida ao reparentar | F3 | Freeze de herança (§3.4) com lista fechada de propriedades; teste com fixture de texto dentro de grupo estilizado. |
-| Chrome cancela o drag se a fonte sai do DOM | F3 | Fonte nunca desmonta; `CanvasNode` mantém a chave estável; `placeNode` só no `onDrop`. |
-| Preview nativo grande demais ou transparente no SO | F4 | Fallback de escala do clone; retângulo de destino sempre desenhado pela `GhostLayer`; documentar. |
-| Drop fora da janela ou em outra aplicação | F3 | `dropTargets.length === 0` no `onDrop` = cancelamento; `preventUnhandled` só ativo com `LiveGhost`. |
-| Muitos elementos (páginas de revista com 500+ nós) | F3 | Cache de rects por drag; guias só com irmãos visíveis no viewport; medir com `react-doctor scan`. |
-| Detecção `auto` errando em HTML exportado de PDF sem meta | F1 | Fallback por `position: absolute` computado após o primeiro layout; prop `layout="fixed"` sempre disponível. |
-| Touch | Geral | Igual ao `PLAN.md`: desktop-first; pointer events do plano B já abriria caminho para touch depois. |
+| Native `dragover` with low or irregular cadence in some browser | F3 | Spike F0; plan B with pointer events only for movement inside the page. |
+| `<head>` CSS with selectors `scopeCss` does not cover (`html[lang]`, `:root` with variables, `@page`, `@import`) | F1 | Snapshots per fixture; explicit rewrite list; `@page` dropped; `@import` only with `resolveAsset`. |
+| Relative fonts and images without a base URL | F1 | `resolveAsset` required for fidelity; without it, dev warning and placeholders with the declared size (`<img>` `width`/`height`) so the layout does not fall apart. |
+| Elements with their own `transform: rotate/scale` | F2–F3 | `left/top` receive the delta; the measured rect is only for the ghost and the guides, which use the bounding box. Document that snapping is on the bounding box. |
+| Book wrapper with responsive `transform: scale()` inside the body | F1–F3 | Measured `scale`, not assumed; `toPage` uses the page container's rect, not `.page`'s. |
+| Inheritance lost when reparenting | F3 | Inheritance freeze (§3.4) with a closed property list; test with a fixture of text inside a styled group. |
+| Chrome cancels the drag if the source leaves the DOM | F3 | The source never unmounts; `CanvasNode` keeps a stable key; `placeNode` only in `onDrop`. |
+| Native preview too large or made transparent by the OS | F4 | Clone scale fallback; target rectangle always drawn by the `GhostLayer`; document it. |
+| Drop outside the window or in another application | F3 | `dropTargets.length === 0` in `onDrop` = cancel; `preventUnhandled` active only with `LiveGhost`. |
+| Many elements (magazine pages with 500+ nodes) | F3 | Rect cache per drag; guides only for siblings visible in the viewport; measure with `react-doctor scan`. |
+| `auto` detection failing on HTML exported from PDF without meta | F1 | Fallback on computed `position: absolute` after the first layout; `layout="fixed"` prop always available. |
+| Touch | General | Same as `plan.md`: desktop-first; the plan B pointer events would already pave the way for touch later. |
 
 ---
 
-## 7. Fora de escopo (desta versão)
+## 7. Out of scope (this version)
 
-Redimensionar e girar por handles, seleção múltipla, alinhamento/distribuição em lote, edição de `<head>`, páginas duplas (spread) lado a lado, suporte a touch, exportação de PDF.
+Resizing and rotating through handles, multi-selection, batch alignment/distribution, `<head>` editing, side-by-side two-page spreads, touch support, PDF export.

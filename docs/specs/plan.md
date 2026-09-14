@@ -1,108 +1,108 @@
-# Plano — adt-html-editor
+# Plan — adt-html-editor
 
-Biblioteca React de edição visual de HTML com drag and drop, painel de árvore de elementos (esquerda), canvas (centro) e painel de estilos (direita). Estilização via classes Tailwind primeiro; CSS puro depois. Consumida por outro projeto via `file:`/`bun link`, sem publicação no npm.
+React library for visual HTML editing with drag and drop, an element tree panel (left), a canvas (center) and a styles panel (right). Styling through Tailwind classes first; plain CSS later. Consumed by another project via `file:`/`bun link`, no npm publishing.
 
-Prioridades, nesta ordem: **1) drag and drop confiável e fluido, 2) performance com documentos grandes, 3) tudo o resto.**
+Priorities, in this order: **1) reliable and fluid drag and drop, 2) performance with large documents, 3) everything else.**
 
 ---
 
-## 0. Pré-requisito: HTML entra, HTML sai
+## 0. Prerequisite: HTML in, HTML out
 
-O editor é um passo de um workflow: recebe uma string HTML, o usuário edita, e o workflow recebe de volta uma string HTML. Esse contrato manda em tudo o que vem depois.
+The editor is one step of a workflow: it receives an HTML string, the user edits, and the workflow gets an HTML string back. That contract rules everything that follows.
 
-### Contrato
+### Contract
 
 ```ts
 <HtmlEditor
-  defaultValue={html}                       // não controlado
-  value={html}                              // ou controlado: reparse quando muda por fora
+  defaultValue={html}                       // uncontrolled
+  value={html}                              // or controlled: reparse when it changes from outside
   onChange={(html: string, doc: Document) => void}
   ref={editorRef}                           // editorRef.current.getHtml() / setHtml() / getDocument()
 />
 ```
 
-- `onChange` dispara a cada ação confirmada (drop, classe aplicada, atributo, texto ao sair do `contentEditable`, undo/redo). Nunca por frame de drag nem por tecla digitada.
-- Serialização é síncrona e barata (DOM `innerHTML` a partir do modelo; 2.000 nós < 5 ms). Prop opcional `changeDebounceMs` para quem preferir.
-- `getHtml()` no ref para o workflow puxar o resultado no momento que quiser (ex.: botão "Concluir").
-- `value` mudando por fora substitui o documento inteiro, limpa histórico e seleção. Documentado como comportamento esperado.
+- `onChange` fires on every confirmed action (drop, class applied, attribute, text on leaving `contentEditable`, undo/redo). Never per drag frame nor per typed key.
+- Serialization is synchronous and cheap (DOM `innerHTML` from the model; 2,000 nodes < 5 ms). Optional `changeDebounceMs` prop for those who prefer it.
+- `getHtml()` on the ref so the workflow can pull the result whenever it wants (e.g. a "Finish" button).
+- `value` changing from outside replaces the whole document and clears history and selection. Documented as expected behaviour.
 
-### Formatos aceitos
+### Accepted formats
 
-| Entrada | Como é tratada | Saída |
+| Input | How it is handled | Output |
 |---|---|---|
-| Fragmento (`<section>…</section><p>…</p>`) | Filhos diretos viram filhos do nó raiz virtual | Fragmento |
-| Documento completo (`<!doctype html><html><head>…</head><body>…</body></html>`) | Edita só o conteúdo de `<body>`; `<!doctype>`, `<html>` (attrs), `<head>` inteiro e attrs de `<body>` são guardados como texto opaco | Documento completo, com `<head>` idêntico ao original |
-| Detecção | Presença de `<html`, `<head` ou `<body` na entrada | — |
+| Fragment (`<section>…</section><p>…</p>`) | Direct children become children of the virtual root node | Fragment |
+| Full document (`<!doctype html><html><head>…</head><body>…</body></html>`) | Only the `<body>` content is edited; `<!doctype>`, `<html>` (attrs), the whole `<head>` and `<body>` attrs are kept as opaque text | Full document, with a `<head>` identical to the original |
+| Detection | Presence of `<html`, `<head` or `<body` in the input | — |
 
-### Garantias de fidelidade
+### Fidelity guarantees
 
-- **Equivalência de DOM, não de bytes.** `serialize(parse(html))` produz um HTML cujo DOM é igual ao da entrada; indentação e quebras de linha originais não são preservadas. Teste de idempotência obrigatório: `serialize(parse(serialize(parse(x)))) === serialize(parse(x))` para todos os fixtures.
-- Preservados: todos os atributos (`id`, `style`, `data-*`, `aria-*`, `href`…) na ordem original; ordem das classes; tags desconhecidas e custom elements; comentários HTML (nó `comment`, visível na árvore, não editável); entidades (escape correto via serializador DOM, não concatenação de string).
-- `<script>`, `<style>`, `<svg>`, `<iframe>`, `<template>` dentro do body: nós **opacos**. Aparecem na árvore, podem ser movidos/removidos, não aceitam filhos, o conteúdo interno é reemitido byte a byte.
-- Nós de texto só com whitespace entre elementos de bloco são descartados no parse (não aparecem na árvore); whitespace dentro de texto real é mantido. `<pre>`, `<textarea>` e opacos preservam whitespace integral.
-- Nada do editor vaza para a saída: `data-adt-id`, classes de seleção e overlays existem só no canvas renderizado, nunca no modelo.
-- `class` é o único atributo com tratamento especial (vira `classes: string[]`); no serialize volta para `class="a b c"`. Se não houver classes, o atributo é omitido.
+- **DOM equivalence, not byte equivalence.** `serialize(parse(html))` produces HTML whose DOM equals the input's; original indentation and line breaks are not preserved. Mandatory idempotence test: `serialize(parse(serialize(parse(x)))) === serialize(parse(x))` for every fixture.
+- Preserved: every attribute (`id`, `style`, `data-*`, `aria-*`, `href`…) in the original order; class order; unknown tags and custom elements; HTML comments (`comment` node, visible in the tree, not editable); entities (correct escaping through the DOM serializer, not string concatenation).
+- `<script>`, `<style>`, `<svg>`, `<iframe>`, `<template>` inside the body: **opaque** nodes. They show in the tree, can be moved/removed, accept no children, and their inner content is re-emitted byte for byte.
+- Whitespace-only text nodes between block elements are dropped on parse (they do not appear in the tree); whitespace inside real text is kept. `<pre>`, `<textarea>` and opaque nodes preserve whitespace in full.
+- Nothing from the editor leaks into the output: `data-adt-id`, selection classes and overlays exist only in the rendered canvas, never in the model.
+- `class` is the only attribute with special handling (it becomes `classes: string[]`); on serialize it goes back to `class="a b c"`. With no classes, the attribute is omitted.
 
 ### Playground
 
-O playground simula o workflow: textarea de entrada → editor → textarea de saída atualizada por `onChange`, com botão "Rodar round-trip" que valida a idempotência do fixture carregado. Fixtures reais do workflow devem ir em `src/playground/fixtures/` antes da Fase 1.
+The playground simulates the workflow: input textarea → editor → output textarea updated by `onChange`, with a "Run round-trip" button that validates the idempotence of the loaded fixture. Real workflow fixtures must go into `src/playground/fixtures/` before Phase 1.
 
 ---
 
-## 1. Decisões de arquitetura
+## 1. Architecture decisions
 
-| Tema | Decisão | Por quê |
+| Topic | Decision | Why |
 |---|---|---|
-| Stack | Vite 8 + React 19 + TS + React Compiler (já configurado) | Compiler elimina a maior parte de `memo`/`useCallback` manual. |
-| DnD | `@atlaskit/pragmatic-drag-and-drop` (element adapter) + `-hitbox` + `-auto-scroll` + `-live-region` | Nativo, sem re-render por frame, sem provider; preview renderizado fora da main thread. |
-| Modelo do documento | Mapa plano normalizado `Record<NodeId, Node>` + `children: NodeId[]` | Lookup O(1), mover nó = 2 splices, assinatura por nó, undo barato por structural sharing. |
-| Store | `@tanstack/store` (uma `Store<EditorState, EditorActions>` por instância de editor) exposta por Context; hooks com `useSelector` | Re-render granular por nó; sem estado global; compatível com Compiler. |
-| Estado transiente de drag | Store separada (`dragStore`) + escrita direta de `style` no indicador | Frames de drag nunca re-renderizam a árvore ou o canvas. |
-| Canvas | **Mesmo documento** (sem iframe), subtree `.adt-canvas`, CSS Tailwind gerado em runtime dentro de `@scope (.adt-canvas)` | Mantém tree ↔ canvas ↔ paleta no mesmo `window`, onde o DnD nativo funciona sem gambiarras. Iframe quebraria o pdnd na fronteira. |
-| Responsivo no canvas | Pós-processar CSS gerado: `@media (width >= X)` → `@container adt-canvas (width >= X)`; `.adt-canvas { container: adt-canvas / inline-size }` | Faz `md:`/`lg:` responderem à largura do canvas, não da janela do editor. |
-| Compilação Tailwind | `tailwindcss` v4 `compile()` rodando em **Web Worker**, carregado sob demanda | JIT real para qualquer classe, fora da main thread, sem varrer o DOM do editor. |
-| Parse/autocomplete de classes | `__unstable__loadDesignSystem` (mesmo worker): `parseCandidate`, `getClassList` | Fonte única de verdade para agrupar classes, validar e sugerir. |
-| Conflito de classes | `tailwind-merge` | Já resolve `p-4` vs `px-2`, variantes, valores arbitrários. |
-| Estilos do editor (UI) | CSS Modules + tokens em CSS variables (`--adt-*`) | Zero colisão com o Tailwind do consumidor ou do canvas; CSS único em `dist/style.css`. |
-| API pública | Compound components + provider (`<HtmlEditor>` / `.Layers` / `.Canvas` / `.Inspector`) | Consumidor monta o layout que quiser; segue `architecture-compound-components`. |
-| Build | Vite `build.lib` (ESM), `react`/`react-dom` como peerDependencies, playground separado em `src/playground` | Lib e app de teste no mesmo repo sem misturar. |
+| Stack | Vite 8 + React 19 + TS + React Compiler (already configured) | The Compiler removes most manual `memo`/`useCallback`. |
+| DnD | `@atlaskit/pragmatic-drag-and-drop` (element adapter) + `-hitbox` + `-auto-scroll` + `-live-region` | Native, no re-render per frame, no provider; preview rendered off the main thread. |
+| Document model | Flat normalized map `Record<NodeId, Node>` + `children: NodeId[]` | O(1) lookup, moving a node = 2 splices, per-node subscription, cheap undo through structural sharing. |
+| Store | `@tanstack/store` (one `Store<EditorState, EditorActions>` per editor instance) exposed through Context; hooks with `useSelector` | Granular re-render per node; no global state; Compiler-friendly. |
+| Transient drag state | Separate store (`dragStore`) + direct `style` writes on the indicator | Drag frames never re-render the tree or the canvas. |
+| Canvas | **Same document** (no iframe), `.adt-canvas` subtree, Tailwind CSS generated at runtime inside `@scope (.adt-canvas)` | Keeps tree ↔ canvas ↔ palette in the same `window`, where native DnD works without hacks. An iframe would break pdnd at the boundary. |
+| Responsive canvas | Post-process the generated CSS: `@media (width >= X)` → `@container adt-canvas (width >= X)`; `.adt-canvas { container: adt-canvas / inline-size }` | Makes `md:`/`lg:` respond to the canvas width, not the editor window. |
+| Tailwind compilation | `tailwindcss` v4 `compile()` running in a **Web Worker**, loaded on demand | Real JIT for any class, off the main thread, without scanning the editor DOM. |
+| Class parsing/autocomplete | `__unstable__loadDesignSystem` (same worker): `parseCandidate`, `getClassList` | Single source of truth to group, validate and suggest classes. |
+| Class conflicts | `tailwind-merge` | Already resolves `p-4` vs `px-2`, variants, arbitrary values. |
+| Editor (UI) styles | CSS Modules + tokens in CSS variables (`--adt-*`) | Zero collision with the consumer's or the canvas's Tailwind; single CSS file in `dist/style.css`. |
+| Public API | Compound components + provider (`<HtmlEditor>` / `.Layers` / `.Canvas` / `.Inspector`) | The consumer builds whatever layout it wants; follows `architecture-compound-components`. |
+| Build | Vite `build.lib` (ESM), `react`/`react-dom` as peerDependencies, separate playground in `src/playground` | Library and test app in the same repo without mixing. |
 
-### O que foi descartado
+### What was discarded
 
-- **Iframe no canvas**: isolamento perfeito, mas drag da árvore para dentro do iframe vira "external drag" (dados só no drop, sem hover), e drag iniciado no canvas não chega ao pdnd do pai. Se um dia for necessário, a fronteira `CanvasHost` (§3.3) é o único ponto a trocar.
-- **`@tailwindcss/browser` via `<script>`**: varre o documento inteiro por MutationObserver (incluindo a UI do editor) e não dá controle de escopo.
-- **dnd-kit / react-dnd**: baseados em pointer events com estado React por frame; mais pesados para árvores grandes.
+- **Iframe in the canvas**: perfect isolation, but dragging from the tree into the iframe becomes an "external drag" (data only on drop, no hover), and a drag started in the canvas never reaches the parent's pdnd. If it is ever needed, the `CanvasHost` boundary (§3.3) is the only place to swap.
+- **`@tailwindcss/browser` via `<script>`**: scans the whole document with a MutationObserver (including the editor UI) and offers no scope control.
+- **dnd-kit / react-dnd**: based on pointer events with React state per frame; heavier for large trees.
 
 ---
 
-## 2. Estrutura de pastas
+## 2. Folder structure
 
 ```
 src/
   lib/
-    index.ts                      # exports públicos
+    index.ts                      # public exports
     core/
-      model.ts                    # Node, NodeId, Document, helpers puros
+      model.ts                    # Node, NodeId, Document, pure helpers
       store.ts                    # createEditorStore (@tanstack/store) + actions
-      history.ts                  # undo/redo (pilha de snapshots do mapa)
+      history.ts                  # undo/redo (stack of map snapshots)
       html/parse.ts               # HTML string -> Document (DOMParser)
       html/serialize.ts           # Document -> HTML string
       ids.ts
     dnd/
       data.ts                     # symbol type guards: isNodeDrag, isPaletteDrag
-      dragStore.ts                # estado transiente (indicador, alvo atual)
+      dragStore.ts                # transient state (indicator, current target)
       useNodeDraggable.ts
       useTreeDropTarget.ts        # attachInstruction (tree-item hitbox)
       useCanvasDropTarget.ts      # attachClosestEdge
-      useEditorDropMonitor.ts     # monitor único que aplica moveNode/insertNode
+      useEditorDropMonitor.ts     # single monitor that applies moveNode/insertNode
       preview.tsx                 # setCustomNativeDragPreview
       resolveDrop.ts              # (target, instruction|edge) -> { parentId, index }
     tailwind/
       worker.ts                   # compile(), build(), parseCandidate, getClassList
-      client.ts                   # RPC com o worker, debounce, cache de classes
+      client.ts                   # RPC with the worker, debounce, class cache
       scopeCss.ts                 # @scope + media->container rewrite
-      categories.ts               # famílias de utilitários -> controles do Inspector
-      useCanvasStylesheet.ts      # injeta <style> gerado
+      categories.ts               # utility families -> Inspector controls
+      useCanvasStylesheet.ts      # injects the generated <style>
     components/
       Editor/EditorProvider.tsx
       Layers/{LayersPanel,LayerRow,TreeDropIndicator}.tsx
@@ -110,16 +110,16 @@ src/
       Inspector/{InspectorPanel,ClassChips,ClassCombobox,VariantBar}.tsx
       Inspector/controls/{Display,Spacing,Sizing,Typography,Color,Border}.tsx
       Palette/{Palette,PaletteItem}.tsx
-    styles/tokens.css + *.module.css ao lado de cada componente
+    styles/tokens.css + *.module.css next to each component
   playground/
     main.tsx, App.tsx, fixtures/*.html
 ```
 
 ---
 
-## 3. Design detalhado
+## 3. Detailed design
 
-### 3.1 Modelo
+### 3.1 Model
 
 ```ts
 type NodeId = string
@@ -131,65 +131,65 @@ type Envelope    = { kind: 'fragment' } | { kind: 'document'; doctype: string; h
 type Document    = { rootId: NodeId; nodes: Record<NodeId, AnyNode>; envelope: Envelope }
 ```
 
-`Envelope` guarda o que fica fora do body como texto opaco, para o serialize devolver o documento completo idêntico fora da área editada (ver §0).
+`Envelope` keeps whatever lives outside the body as opaque text, so serialize returns the full document identical outside the edited area (see §0).
 
-Ações da store (todas imutáveis, cada uma gera 1 entrada de histórico): `insertNode`, `moveNode(id, parentId, index)`, `removeNode`, `duplicateNode`, `setClasses`, `setAttr`, `setText`, `select`, `toggleCollapsed`, `undo`, `redo`.
+Store actions (all immutable, each one produces 1 history entry): `insertNode`, `moveNode(id, parentId, index)`, `removeNode`, `duplicateNode`, `setClasses`, `setAttr`, `setText`, `select`, `toggleCollapsed`, `undo`, `redo`.
 
-`moveNode` valida ciclo (destino não pode ser descendente da origem) usando um `Set` de ancestrais.
+`moveNode` validates cycles (the target cannot be a descendant of the source) using a `Set` of ancestors.
 
-Selectors por nó: `useNode(id)` assina só `nodes[id]`; `useChildren(id)` assina só `nodes[id].children`. Mudar a classe de um nó re-renderiza um único `CanvasNode` e uma única `LayerRow`.
+Per-node selectors: `useNode(id)` subscribes only to `nodes[id]`; `useChildren(id)` only to `nodes[id].children`. Changing a node's class re-renders a single `CanvasNode` and a single `LayerRow`.
 
 ### 3.2 Drag and drop (pdnd)
 
-**Dados tipados** (`dnd/data.ts`): chave `Symbol` + type guard, nunca cast.
+**Typed data** (`dnd/data.ts`): `Symbol` key + type guard, never a cast.
 
 ```ts
-{ [nodeKey]: true, nodeId }           // arrastar nó existente (árvore ou canvas)
-{ [paletteKey]: true, template }      // arrastar da paleta
+{ [nodeKey]: true, nodeId }           // dragging an existing node (tree or canvas)
+{ [paletteKey]: true, template }      // dragging from the palette
 ```
 
-**Origens (`draggable`)**
-- `LayerRow`: `element` = a linha inteira. `getInitialData` com `nodeId`. Preview customizado (chip com `<tag>` + resumo de classes) via `setCustomNativeDragPreview` + `pointerOutsideOfPreview`.
-- `CanvasNode`: mesmo `draggable`. Nunca usar `canDrag` para bloquear (cancela o drag do pai); nó raiz simplesmente não registra `draggable`.
-- `PaletteItem`: `getInitialData` com o template.
+**Sources (`draggable`)**
+- `LayerRow`: `element` = the whole row. `getInitialData` with `nodeId`. Custom preview (chip with `<tag>` + class summary) via `setCustomNativeDragPreview` + `pointerOutsideOfPreview`.
+- `CanvasNode`: same `draggable`. Never use `canDrag` to block (it cancels the parent's drag); the root node simply does not register a `draggable`.
+- `PaletteItem`: `getInitialData` with the template.
 
-**Alvos (`dropTargetForElements`)**
-- `LayerRow`: `getData` com `attachInstruction` do `@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item` (instruções `reorder-above` / `reorder-below` / `make-child` / `reparent`), `getIsSticky: () => true` para cobrir gaps entre linhas, `canDrop` rejeita ancestral-em-descendente. *Verificar a assinatura atual de `attachInstruction` na doc do pacote antes de implementar.*
-- `CanvasNode`: `getData` com `attachClosestEdge`; `allowedEdges` derivado do layout do pai (`flex-row` → `left/right`, senão `top/bottom`). Containers vazios aceitam "inside".
-- Contêiner da árvore e o `.adt-canvas` são alvos estáveis de fallback: garantem um evento `drop` real mesmo quando a linha arrastada foi desmontada (virtualização).
+**Targets (`dropTargetForElements`)**
+- `LayerRow`: `getData` with `attachInstruction` from `@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item` (instructions `reorder-above` / `reorder-below` / `make-child` / `reparent`), `getIsSticky: () => true` to cover gaps between rows, `canDrop` rejects ancestor-into-descendant. *Check the current `attachInstruction` signature in the package docs before implementing.*
+- `CanvasNode`: `getData` with `attachClosestEdge`; `allowedEdges` derived from the parent's layout (`flex-row` → `left/right`, otherwise `top/bottom`). Empty containers accept "inside".
+- The tree container and `.adt-canvas` are stable fallback targets: they guarantee a real `drop` event even when the dragged row was unmounted (virtualization).
 
-**Monitor único** (`useEditorDropMonitor`, no provider): `canMonitor` filtra pelos type guards; `onDrop` lê `location.current.dropTargets[0]`, chama `resolveDrop` e despacha `moveNode`/`insertNode`. Nenhum alvo individual muda a store.
+**Single monitor** (`useEditorDropMonitor`, in the provider): `canMonitor` filters through the type guards; `onDrop` reads `location.current.dropTargets[0]`, calls `resolveDrop` and dispatches `moveNode`/`insertNode`. No individual target mutates the store.
 
-**Indicadores**: um componente `TreeDropIndicator` e um `CanvasDropIndicator`, ambos posicionados por `getBoundingClientRect` do alvo, atualizados por `onDropTargetChange` via `dragStore`. Só o indicador re-renderiza; as linhas não. Feedback de "dragging" na origem via `data-state` e CSS.
+**Indicators**: one `TreeDropIndicator` component and one `CanvasDropIndicator`, both positioned from the target's `getBoundingClientRect`, updated by `onDropTargetChange` through `dragStore`. Only the indicator re-renders; rows do not. "Dragging" feedback on the source via `data-state` and CSS.
 
-**Auto-scroll**: `autoScrollForElements` no scroll da árvore e no canvas.
+**Auto-scroll**: `autoScrollForElements` on the tree scroller and on the canvas.
 
-**Acessibilidade**: mover por teclado (`Alt+↑/↓` reordena, `Alt+←/→` reparenta) e anúncios com `-live-region`.
+**Accessibility**: keyboard moves (`Alt+↑/↓` reorders, `Alt+←/→` reparents) and announcements with `-live-region`.
 
 ### 3.3 Canvas
 
-- `Canvas` renderiza `CanvasNode(rootId)` recursivamente dentro de `.adt-canvas`. Cada `CanvasNode` cria o elemento real (`createElement(tag)`) com `className={classes.join(' ')}` e `data-adt-id`.
-- Hover e seleção: **um** `SelectionOverlay` absoluto (não uma borda por nó), reposicionado com `ResizeObserver` + `scroll` do canvas. Hover via `pointerover` delegado no contêiner (lê `data-adt-id` mais próximo).
-- Interface `CanvasHost { root: HTMLElement; elementFromPoint; getRect }` — único ponto de acoplamento se um dia for para iframe.
-- `useCanvasStylesheet`: coleta o `Set` de classes do documento (mantido incrementalmente na store), envia ao worker só quando aparecem classes novas, injeta o CSS retornado em `<style data-adt-canvas>`.
+- `Canvas` renders `CanvasNode(rootId)` recursively inside `.adt-canvas`. Each `CanvasNode` creates the real element (`createElement(tag)`) with `className={classes.join(' ')}` and `data-adt-id`.
+- Hover and selection: **one** absolute `SelectionOverlay` (not a border per node), repositioned with `ResizeObserver` + canvas `scroll`. Hover through delegated `pointerover` on the container (reads the closest `data-adt-id`).
+- `CanvasHost { root: HTMLElement; elementFromPoint; getRect }` interface — the only coupling point should the canvas ever move into an iframe.
+- `useCanvasStylesheet`: collects the document's class `Set` (kept incrementally in the store), sends it to the worker only when new classes appear, injects the returned CSS in `<style data-adt-canvas>`.
 
-### 3.4 Worker Tailwind
+### 3.4 Tailwind worker
 
-- Entrada: `compile()` de um CSS com `@layer theme, base, utilities`, importando `tailwindcss/theme.css`, `tailwindcss/preflight.css` e `tailwindcss/utilities.css` nas respectivas layers, mais `@custom-variant dark (&:where(.adt-dark, .adt-dark *))`. `loadStylesheet` resolve os `.css` do pacote via import `?raw`.
-- Mensagens: `build(candidates: string[]) → css`, `parse(className) → { root, value, variants, valid }`, `classList() → string[]`.
-- `scopeCss`: envolve em `@scope (.adt-canvas)` e reescreve as media queries de breakpoint para container queries.
-- Carregamento lazy (só quando o primeiro `<Canvas>` monta); cache de resultados por classe.
+- Input: `compile()` of a CSS with `@layer theme, base, utilities`, importing `tailwindcss/theme.css`, `tailwindcss/preflight.css` and `tailwindcss/utilities.css` into their layers, plus `@custom-variant dark (&:where(.adt-dark, .adt-dark *))`. `loadStylesheet` resolves the package's `.css` files through `?raw` imports.
+- Messages: `build(candidates: string[]) → css`, `parse(className) → { root, value, variants, valid }`, `classList() → string[]`.
+- `scopeCss`: wraps in `@scope (.adt-canvas)` and rewrites breakpoint media queries into container queries.
+- Lazy loading (only when the first `<Canvas>` mounts); results cached per class.
 
-### 3.5 Inspector (modo Tailwind)
+### 3.5 Inspector (Tailwind mode)
 
-- `VariantBar`: base | sm | md | lg | xl | hover | focus | dark. Todo controle aplica o prefixo ativo.
-- `ClassChips`: lista das classes do nó, filtrada pela variante ativa, com remover e reordenar.
-- `ClassCombobox`: input livre com autocomplete (`getClassList` + `useDeferredValue` no filtro); Enter aplica via `twMerge`.
-- Controles por família (`categories.ts` mapeia família → controle): Display, Flex/Grid, Spacing (`p/m/gap` com escala + arbitrário), Sizing, Typography, Color (bg/text/border com paleta do tema), Border/Radius, Effects. Cada controle lê o valor atual via `parseCandidate` e escreve com `twMerge(existing, next)`.
-- Edição de texto inline no canvas (`contentEditable` no `TextNode` selecionado, commit no blur).
-- Interface `StyleAdapter` (`tailwind` agora, `inline-css` depois) para o modo CSS puro.
+- `VariantBar`: base | sm | md | lg | xl | hover | focus | dark. Every control applies the active prefix.
+- `ClassChips`: the node's class list, filtered by the active variant, with remove and reorder.
+- `ClassCombobox`: free input with autocomplete (`getClassList` + `useDeferredValue` on the filter); Enter applies through `twMerge`.
+- Controls per family (`categories.ts` maps family → control): Display, Flex/Grid, Spacing (`p/m/gap` with scale + arbitrary), Sizing, Typography, Color (bg/text/border with the theme palette), Border/Radius, Effects. Each control reads the current value via `parseCandidate` and writes with `twMerge(existing, next)`.
+- Inline text editing in the canvas (`contentEditable` on the selected `TextNode`, commit on blur).
+- `StyleAdapter` interface (`tailwind` now, `inline-css` later) for the plain CSS mode.
 
-### 3.6 API pública
+### 3.6 Public API
 
 ```tsx
 <HtmlEditor defaultValue={html} onChange={(html) => ...} styleMode="tailwind">
@@ -198,98 +198,98 @@ Selectors por nó: `useNode(id)` assina só `nodes[id]`; `useChildren(id)` assin
   <HtmlEditor.Inspector />
 </HtmlEditor>
 
-<HtmlEditor.DefaultLayout defaultValue={html} onChange={...} />   // atalho 3 painéis
+<HtmlEditor.DefaultLayout defaultValue={html} onChange={...} />   // 3-panel shortcut
 ```
 
-Contrato completo de entrada/saída (`value`, `onChange`, `ref.getHtml()`, formatos) em §0.
+Full input/output contract (`value`, `onChange`, `ref.getHtml()`, formats) in §0.
 
-Também exportados: `parseHtml`, `serializeHtml`, `useEditor()` (headless), tipos. `parseHtml`/`serializeHtml` são puros e podem ser usados pelo workflow fora do React (ex.: validar ou pré-processar o HTML antes de abrir o editor).
-
----
-
-## 4. Regras de performance (aplicadas em todas as fases)
-
-- Frames de drag nunca passam por `setState` de lista: indicador e overlay escrevem `style` direto (`rerender-use-ref-transient-values`).
-- Store por nó, selectors primitivos, `functional setState` (`rerender-*`).
-- `getData`/`canDrop` puros e baratos; ancestrais calculados com `once` no início do drag.
-- Imports do pdnd só por entry point; worker Tailwind e `tailwind-merge` carregados lazy (`bundle-*`).
-- Linhas da árvore e nós do canvas com `content-visibility: auto`; virtualização da árvore (`@tanstack/react-virtual`) quando a lista visível passar de ~300 linhas.
-- `startTransition` ao aplicar classes vindas do combobox; `useDeferredValue` no filtro de autocomplete.
-- Sem componentes definidos dentro de componentes; sem barrel `index.ts` interno além do público.
-- Orçamento: 2.000 nós, drag a 60 fps, aplicar classe → CSS visível em < 50 ms, `npx react-doctor` sem regressão (hook de Stop já configurado).
+Also exported: `parseHtml`, `serializeHtml`, `useEditor()` (headless), types. `parseHtml`/`serializeHtml` are pure and can be used by the workflow outside React (e.g. to validate or pre-process the HTML before opening the editor).
 
 ---
 
-## 5. Fases
+## 4. Performance rules (applied in every phase)
 
-### Fase 0 — Fundação (1 dia)
-- [x] Instalar: `@atlaskit/pragmatic-drag-and-drop`, `-hitbox`, `-auto-scroll`, `-live-region`, `@tanstack/store`, `@tanstack/react-store`, `tiny-invariant`, `tailwindcss`, `tailwind-merge`; dev: `vitest`, `@testing-library/react`, `@atlaskit/pragmatic-drag-and-drop-unit-testing`, `@tanstack/react-virtual` (fase 6).
-- [x] Reorganizar `src/` em `lib/` e `playground/`; `vite.config.ts` com `build.lib`; `package.json` com `exports`, `peerDependencies`, `files`.
-- [x] `tokens.css`, tema claro/escuro, remover assets do template.
-- **Pronto quando**: `bun run build` gera `dist/index.js` + `dist/style.css`; playground roda.
-
-### Fase 1 — Núcleo do documento (1–2 dias)
-- [x] `model.ts`, `store.ts` com todas as ações, `history.ts`.
-- [x] `parse.ts`: fragmento e documento completo (envelope), nós `comment` e `opaque`, descarte de whitespace insignificante, `class` → `classes`.
-- [x] `serialize.ts`: construção via DOM (`innerHTML`) para escape correto; reemissão do envelope; `rawInnerHtml` dos opacos byte a byte.
-- [x] `EditorProvider` com `value`/`defaultValue`/`onChange`/`ref` (§0), ainda sem UI.
-- [x] Testes unitários: move com ciclo, undo/redo, idempotência de round-trip em todos os fixtures, equivalência de DOM (`isEqualNode`) entre entrada e saída, ausência de `data-adt-*` na saída.
-- **Pronto quando**: 100% das ações testadas sem UI e todos os fixtures reais do workflow passam no round-trip.
-
-### Fase 2 — Painel de camadas + DnD (o marco principal, 3–4 dias)
-- [x] `LayersPanel` com linhas planas derivadas do documento (respeitando collapsed), indentação por nível, expandir/colapsar, seleção.
-- [x] `useNodeDraggable`, `useTreeDropTarget` com `attachInstruction`, `TreeDropIndicator`, preview customizado, stickiness.
-- [x] `useEditorDropMonitor` + `resolveDrop` (todas as instruções).
-- [x] Auto-scroll, teclado, live region.
-- [x] Testes de `resolveDrop` contra o pacote `-hitbox` real (o pacote `-unit-testing` só entrega polyfills) + drag nativo verificado no browser.
-- **Pronto quando**: reordenar/reparentar em árvore de 1.000 nós sem frame > 16 ms (medir com `react-doctor scan`).
-
-### Fase 3 — Canvas (3 dias)
-- [x] `Canvas`, `CanvasNode`, `SelectionOverlay` (hover + seleção), clique seleciona e sincroniza com a árvore (scroll into view).
-- [x] Worker Tailwind + `scopeCss` + `useCanvasStylesheet`; variantes responsivas via container query; toggle dark.
-- [x] `useCanvasDropTarget` com closest-edge e "inside"; `CanvasDropIndicator`; drag iniciado no canvas.
-- [x] Controle de largura do canvas (presets mobile/tablet/desktop).
-- **Pronto quando**: soltar da árvore no canvas e vice-versa funciona com indicador correto; `md:flex` reage à largura do canvas.
-
-### Fase 4 — Inspector Tailwind (3 dias)
-- [x] `VariantBar`, `ClassChips`, `ClassCombobox` com autocomplete.
-- [x] `categories.ts` + controles (Display, Flex/Grid, Spacing, Sizing, Typography, Color, Border, Effects).
-- [x] Resolução de conflitos com `tailwind-merge`; leitura do valor atual via `parseCandidate`.
-- [x] Atributos básicos (`id`, `href`, `src`, `alt`) e edição de texto inline.
-- **Pronto quando**: qualquer classe válida é aplicável por controle ou por texto e aparece no canvas em < 50 ms.
-
-### Fase 5 — Paleta e operações (2 dias)
-- [x] `Palette` com templates (div, section, h1–h6, p, img, button, a, ul/li) arrastáveis para árvore e canvas.
-- [x] Deletar, duplicar, copiar/colar (clipboard interno), atalhos (Del, Ctrl+D, Ctrl+Z/Y).
-- [ ] Drop externo de texto/HTML com `dropTargetForExternal` (opcional).
-
-### Fase 6 — Performance (2 dias)
-- [x] Virtualizar a árvore (janela própria de altura fixa, sem `@tanstack/react-virtual`); alvo estável de drop no contêiner.
-- [x] Perfil com `npx react-doctor scan` em documento de 2.000 nós; corrigir hot paths.
-- [x] `npx react-doctor --verbose` completo, score ≥ 90.
-
-### Fase 7 — Endurecimento e empacotamento (2 dias)
-- [x] Auditoria com web-design-guidelines (foco visível, contraste, alvos ≥ 24 px, `prefers-reduced-motion`, labels).
-- [x] `StyleAdapter` para CSS puro (esqueleto + controles básicos de `style`).
-- [x] README de uso da lib.
-- [ ] Testar consumo real via `file:` no outro projeto (precisa do outro repo).
+- Drag frames never go through a list `setState`: indicator and overlay write `style` directly (`rerender-use-ref-transient-values`).
+- Per-node store, primitive selectors, `functional setState` (`rerender-*`).
+- `getData`/`canDrop` pure and cheap; ancestors computed with `once` at drag start.
+- pdnd imports only through entry points; Tailwind worker and `tailwind-merge` loaded lazily (`bundle-*`).
+- Tree rows and canvas nodes with `content-visibility: auto`; tree virtualization (`@tanstack/react-virtual`) once the visible list exceeds ~300 rows.
+- `startTransition` when applying classes from the combobox; `useDeferredValue` on the autocomplete filter.
+- No components defined inside components; no internal barrel `index.ts` besides the public one.
+- Budget: 2,000 nodes, drag at 60 fps, applying a class → visible CSS in < 50 ms, `npx react-doctor` without regressions (Stop hook already configured).
 
 ---
 
-## 6. Riscos e spikes (fazer antes das fases que dependem deles)
+## 5. Phases
 
-| Risco | Impacto | Mitigação / spike |
+### Phase 0 — Foundation (1 day)
+- [x] Install: `@atlaskit/pragmatic-drag-and-drop`, `-hitbox`, `-auto-scroll`, `-live-region`, `@tanstack/store`, `@tanstack/react-store`, `tiny-invariant`, `tailwindcss`, `tailwind-merge`; dev: `vitest`, `@testing-library/react`, `@atlaskit/pragmatic-drag-and-drop-unit-testing`, `@tanstack/react-virtual` (phase 6).
+- [x] Reorganize `src/` into `lib/` and `playground/`; `vite.config.ts` with `build.lib`; `package.json` with `exports`, `peerDependencies`, `files`.
+- [x] `tokens.css`, light/dark theme, remove template assets.
+- **Done when**: `bun run build` produces `dist/index.js` + `dist/style.css`; the playground runs.
+
+### Phase 1 — Document core (1–2 days)
+- [x] `model.ts`, `store.ts` with every action, `history.ts`.
+- [x] `parse.ts`: fragment and full document (envelope), `comment` and `opaque` nodes, insignificant whitespace dropped, `class` → `classes`.
+- [x] `serialize.ts`: built through the DOM (`innerHTML`) for correct escaping; envelope re-emission; opaque `rawInnerHtml` byte for byte.
+- [x] `EditorProvider` with `value`/`defaultValue`/`onChange`/`ref` (§0), still without UI.
+- [x] Unit tests: move with cycle, undo/redo, round-trip idempotence on every fixture, DOM equivalence (`isEqualNode`) between input and output, no `data-adt-*` in the output.
+- **Done when**: 100% of the actions tested without UI and every real workflow fixture passes the round-trip.
+
+### Phase 2 — Layers panel + DnD (the main milestone, 3–4 days)
+- [x] `LayersPanel` with flat rows derived from the document (respecting collapsed), indentation per level, expand/collapse, selection.
+- [x] `useNodeDraggable`, `useTreeDropTarget` with `attachInstruction`, `TreeDropIndicator`, custom preview, stickiness.
+- [x] `useEditorDropMonitor` + `resolveDrop` (every instruction).
+- [x] Auto-scroll, keyboard, live region.
+- [x] `resolveDrop` tests against the real `-hitbox` package (the `-unit-testing` package only ships polyfills) + native drag verified in the browser.
+- **Done when**: reordering/reparenting in a 1,000-node tree without a frame > 16 ms (measured with `react-doctor scan`).
+
+### Phase 3 — Canvas (3 days)
+- [x] `Canvas`, `CanvasNode`, `SelectionOverlay` (hover + selection), click selects and syncs with the tree (scroll into view).
+- [x] Tailwind worker + `scopeCss` + `useCanvasStylesheet`; responsive variants through container queries; dark toggle.
+- [x] `useCanvasDropTarget` with closest-edge and "inside"; `CanvasDropIndicator`; drag started in the canvas.
+- [x] Canvas width control (mobile/tablet/desktop presets).
+- **Done when**: dropping from the tree into the canvas and back works with the correct indicator; `md:flex` reacts to the canvas width.
+
+### Phase 4 — Tailwind Inspector (3 days)
+- [x] `VariantBar`, `ClassChips`, `ClassCombobox` with autocomplete.
+- [x] `categories.ts` + controls (Display, Flex/Grid, Spacing, Sizing, Typography, Color, Border, Effects).
+- [x] Conflict resolution with `tailwind-merge`; current value read via `parseCandidate`.
+- [x] Basic attributes (`id`, `href`, `src`, `alt`) and inline text editing.
+- **Done when**: any valid class can be applied through a control or as text and shows in the canvas in < 50 ms.
+
+### Phase 5 — Palette and operations (2 days)
+- [x] `Palette` with templates (div, section, h1–h6, p, img, button, a, ul/li) draggable into tree and canvas.
+- [x] Delete, duplicate, copy/paste (internal clipboard), shortcuts (Del, Ctrl+D, Ctrl+Z/Y).
+- [ ] External text/HTML drop with `dropTargetForExternal` (optional).
+
+### Phase 6 — Performance (2 days)
+- [x] Virtualize the tree (own fixed-height window, without `@tanstack/react-virtual`); stable drop target on the container.
+- [x] Profile with `npx react-doctor scan` on a 2,000-node document; fix hot paths.
+- [x] Full `npx react-doctor --verbose`, score ≥ 90.
+
+### Phase 7 — Hardening and packaging (2 days)
+- [x] Audit with web-design-guidelines (visible focus, contrast, targets ≥ 24 px, `prefers-reduced-motion`, labels).
+- [x] `StyleAdapter` for plain CSS (skeleton + basic `style` controls).
+- [x] Library usage README.
+- [ ] Test real consumption via `file:` in the other project (needs the other repo).
+
+---
+
+## 6. Risks and spikes (do them before the phases that depend on them)
+
+| Risk | Impact | Mitigation / spike |
 |---|---|---|
-| API do `hitbox/tree-item` diferente do lembrado | Fase 2 | Spike de 1 h lendo a doc do pacote instalado antes de codar `useTreeDropTarget`. |
-| `tailwindcss` `compile()` no browser/worker (resolução dos `.css` internos, tamanho ~300 KB) | Fase 3 | Spike de 2 h: worker mínimo que compila `["flex","p-4","md:grid"]`. Se falhar, plano B: `@tailwindcss/browser` restrito ao `.adt-canvas` por fork do scanner. |
-| Reescrita `@media` → `@container` deixar escapar variantes (`max-md:`, `min-[...]`) | Fase 3 | Cobrir com testes de snapshot do CSS gerado. |
-| `@scope` sem suporte em browser alvo do consumidor | Fase 3 | Verificar alvo; fallback: prefixar seletores com `.adt-canvas ` via reescrita. |
-| `DOMParser` normaliza HTML inválido ou frouxo (fecha `<p>` implícito, insere `<tbody>`, reordena `<head>`/`<body>`) e a saída diverge da entrada | Fase 1 e o workflow | Rodar os fixtures reais cedo; documentar que a saída é HTML válido equivalente. Se o workflow exigir preservar HTML não normalizado, trocar por parser tolerante (`parse5`) no parse. |
-| DnD nativo em touch | Geral | Aceito para v1 (desktop-first); avaliar polyfill depois. |
-| React Compiler + efeitos do pdnd | Fase 2 | Efeitos com deps mínimas (`nodeId`), cleanup sempre retornado; remount mid-drag é seguro por reconciliação. |
+| `hitbox/tree-item` API different from what is remembered | Phase 2 | 1 h spike reading the installed package docs before coding `useTreeDropTarget`. |
+| `tailwindcss` `compile()` in the browser/worker (resolution of internal `.css`, ~300 KB) | Phase 3 | 2 h spike: minimal worker compiling `["flex","p-4","md:grid"]`. If it fails, plan B: `@tailwindcss/browser` restricted to `.adt-canvas` by forking the scanner. |
+| `@media` → `@container` rewrite letting variants slip (`max-md:`, `min-[...]`) | Phase 3 | Cover with snapshot tests of the generated CSS. |
+| `@scope` unsupported in the consumer's target browser | Phase 3 | Check the target; fallback: prefix selectors with `.adt-canvas ` through a rewrite. |
+| `DOMParser` normalizes invalid or loose HTML (closes implicit `<p>`, inserts `<tbody>`, reorders `<head>`/`<body>`) and the output diverges from the input | Phase 1 and the workflow | Run the real fixtures early; document that the output is equivalent valid HTML. If the workflow requires preserving non-normalized HTML, switch to a tolerant parser (`parse5`) on parse. |
+| Native DnD on touch | General | Accepted for v1 (desktop-first); evaluate a polyfill later. |
+| React Compiler + pdnd effects | Phase 2 | Effects with minimal deps (`nodeId`), cleanup always returned; remount mid-drag is safe through reconciliation. |
 
 ---
 
-## 7. Fora de escopo (v1)
+## 7. Out of scope (v1)
 
-Publicação no npm, colaboração em tempo real, edição de `<head>`/scripts, componentes reutilizáveis (símbolos), modo CSS puro completo, suporte a touch.
+npm publishing, real-time collaboration, `<head>`/script editing, reusable components (symbols), full plain CSS mode, touch support.

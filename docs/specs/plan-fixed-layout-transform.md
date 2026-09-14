@@ -1,218 +1,218 @@
-# Plano — Redimensionar e rotacionar no fixed layout mode
+# Plan — Resize and rotate in fixed layout mode
 
-Extensão do fixed layout mode (`PLAN-fixed-layout.md`): alças de redimensionamento nas bordas e cantos do elemento selecionado, alça de rotação, campos numéricos no inspector e atalhos de teclado. Tudo gravado no atributo `style` (`width`, `height`, `transform: rotate()`), preservando o restante das declarações.
+Extension of fixed layout mode (`plan-fixed-layout.md`): resize handles on the edges and corners of the selected element, a rotate handle, numeric fields in the inspector and keyboard shortcuts. Everything is written into the `style` attribute (`width`, `height`, `transform: rotate()`), preserving the other declarations.
 
-Prioridades, nesta ordem: **1) gesto preciso e sem glitch, 2) fidelidade do que já está no livro (transform, origem, tamanhos), 3) tudo o resto.**
+Priorities, in this order: **1) precise, glitch-free gesture, 2) fidelity to what is already in the book (transform, origin, sizes), 3) everything else.**
 
-Padrões aplicados: `pragmatic-dnd-core`/`pragmatic-dnd-react` (o que **não** usar pdnd para e como coexistir), `vercel-composition-patterns` (parts explícitas, estado no provider), `vercel-react-best-practices` (zero re-render por frame, refs para valores transientes, cache de medidas) e `react-doctor` como critério de aceite.
+Patterns applied: `pragmatic-dnd-core`/`pragmatic-dnd-react` (what **not** to use pdnd for and how to coexist), `vercel-composition-patterns` (explicit parts, state in the provider), `vercel-react-best-practices` (zero re-render per frame, refs for transient values, measurement caching) and `react-doctor` as the acceptance criterion.
 
 ---
 
-## 0. O que existe hoje e o que muda
+## 0. What exists today and what changes
 
-| Tema | Hoje | Com esta feature |
+| Topic | Today | With this feature |
 |---|---|---|
-| Seleção no canvas | `SelectionOverlay` desenha a bounding box do elemento | Uma nova part `Canvas.Handles` desenha a **caixa de layout** do elemento com a mesma rotação, e sobre ela as alças |
-| Mover | Drag nativo via pdnd, ghost, guias | Inalterado; passa a usar a caixa de layout (não a bounding box) para elementos rotacionados |
-| Tamanho | Só pelo inspector (`W`, `H`) | Alças de borda e canto, `Shift` trava proporção, `Alt` redimensiona pelo centro, snap das bordas nas guias |
-| Rotação | Inexistente | Alça acima do topo, `Shift` snap de 15°, campo "Angle" no inspector, `[` e `]` no teclado |
-| Escrita no modelo | `placeNode({ style })` | Mesma ação; os gestos escrevem **uma vez**, no `pointerup` |
-| Ghost do drag | Clone sem `transform` | Clone mantém `rotate()`/`scale()` do original |
+| Canvas selection | `SelectionOverlay` draws the element's bounding box | A new `Canvas.Handles` part draws the element's **layout box** with the same rotation, and the handles on top of it |
+| Move | Native drag through pdnd, ghost, guides | Unchanged; starts using the layout box (not the bounding box) for rotated elements |
+| Size | Inspector only (`W`, `H`) | Edge and corner handles, `Shift` keeps the ratio, `Alt` resizes from the center, edge snapping to the guides |
+| Rotation | None | Handle above the top, `Shift` snaps to 15°, "Angle" field in the inspector, `[` and `]` on the keyboard |
+| Writing to the model | `placeNode({ style })` | Same action; gestures write **once**, on `pointerup` |
+| Drag ghost | Clone without `transform` | Clone keeps the original's `rotate()`/`scale()` |
 
-Contrato de entrada e saída intacto: só `style` muda. As garantias de fidelidade dos planos anteriores continuam valendo.
+Input/output contract untouched: only `style` changes. The fidelity guarantees of the previous plans still hold.
 
 ---
 
-## 1. Decisões de arquitetura
+## 1. Architecture decisions
 
-| Tema | Decisão | Por quê |
+| Topic | Decision | Why |
 |---|---|---|
-| Mecanismo dos gestos | **Pointer events** (`pointerdown` na alça, `setPointerCapture`, `pointermove`, `pointerup`/`pointercancel`), não pdnd | Redimensionar e rotacionar são gestos contínuos sobre um único elemento, sem alvo de drop. O drag nativo é throttled, perde eventos fora da janela e não entrega ângulo. O skill pdnd cita "resizing" como uso do element adapter, mas aqui a precisão manda. Pointer events dão touch de graça. |
-| Coexistência com pdnd | As alças ficam numa camada acima do elemento; `pointerdown` na alça chama `preventDefault()` e o drag nativo nunca começa porque o ponteiro não está sobre o `draggable` | Zero mudança no `useFixedDraggable`. Durante um gesto, `fixedDragStore` fica intocado. |
-| Pré-visualização | **Imperativa no próprio elemento** (`element.style.width/height/transform`) durante o gesto; commit único com `placeNode` no `pointerup` | Texto precisa refluir para o usuário ver o resultado; um ghost não mostra isso. Um só commit = uma entrada de histórico e zero re-render por frame (`rerender-use-ref-transient-values`). `useDomAttributes` reaplica o `style` do modelo no commit, então o DOM converge. |
-| Cancelamento | `Esc` ou `pointercancel` restaura o `style` inline original do elemento a partir do snapshot tirado no `pointerdown` | Sem passar pelo store. |
-| Caixa de referência | **Caixa de layout** (`offsetWidth/Height` e posição acumulada por `offsetLeft/Top` até a origem de coordenadas), nunca a bounding box | A bounding box de um elemento rotacionado é maior que o elemento. Toda a geometria de alças, drag e inspector usa a caixa de layout mais a rotação. |
-| Onde a rotação mora | `transform` inline. Lista de funções é parseada; `rotate()` é atualizado ou inserido **ao final**; `translate`, `scale`, `skew` e `matrix` existentes são mantidos | Livros FXL usam `transform` para escala responsiva e posicionamento fino. Sobrescrever apagaria isso. |
-| Leitura do ângulo | `rotate()` declarado inline quando existe; senão decomposição da matriz computada (`atan2(b, a)`), separando escala | O inline é a fonte de verdade editável; a matriz cobre rotação vinda de classes no `<head>`. |
-| Origem da rotação | Respeita `transform-origin` computado. Se não é `50% 50%`, o cálculo de âncora e da alça usa a origem real | Não introduzir `transform-origin` no `style` a menos que o usuário rotacione um elemento sem origem definida (aí grava `center center` explicitamente para a saída ser determinística). |
-| Redimensionar rotacionado | Delta do ponteiro é levado ao espaço local do elemento (rotação de `−θ`), aplicado a `width`/`height`, e `left`/`top` são recalculados para o **ponto âncora** (canto ou borda oposta) ficar parado na página | É o que o usuário espera; sem isso o elemento "anda" ao redimensionar. Matemática pura, testável. |
-| Unidades | `px` inteiros por padrão (`fixedLayout.precision`); ângulo com 0,1° | Coerente com posição. |
-| Elementos `display: inline` | Ao redimensionar, grava `display: inline-block` junto | `width`/`height` não têm efeito em inline. Documentado. |
-| `<img>` | Escreve `width`/`height` em CSS; atributos `width`/`height` do HTML permanecem | CSS vence os atributos; nada é perdido. |
-| Altura automática | Toggle "Auto height" no inspector remove `height` do `style` | Caixas de texto reflow por conteúdo continuam possíveis. |
-| Estado transiente | Store imperativo `transformGestureStore` (tipo do gesto, alça, ângulo/tamanho corrente) para badge e guias | Igual ao `fixedDragStore`; overlay e badge assinam sem React. |
-| Composição | `Canvas.Handles` (root, sem props booleanas) com sub-parts `Canvas.Handles.Resize` e `Canvas.Handles.Rotate`; `Inspector.Transform` com `Angle`, `AspectLock`, `AutoHeight`; sem children renderiza tudo | `architecture-compound-components`, `patterns-explicit-variants`. Quem não quer rotação não renderiza `Handles.Rotate`. |
-| Elementos aninhados | Alças operam na caixa de layout relativa ao `offsetParent` e escrevem no `style` do próprio elemento; ancestrais rotacionados/escalados ficam **fora de escopo** (alças desabilitadas com dica) | Composição de matrizes de ancestrais é o caso raro que mais complica; drag já leva o elemento ao nível da página, onde tudo funciona. |
-| Carregamento | Dentro do chunk `FixedPage` (lazy) | `bundle-conditional`. |
+| Gesture mechanism | **Pointer events** (`pointerdown` on the handle, `setPointerCapture`, `pointermove`, `pointerup`/`pointercancel`), not pdnd | Resizing and rotating are continuous gestures on a single element, with no drop target. Native drag is throttled, loses events outside the window and gives no angle. The pdnd skill lists "resizing" as a use of the element adapter, but here precision rules. Pointer events give touch for free. |
+| Coexistence with pdnd | Handles live in a layer above the element; `pointerdown` on a handle calls `preventDefault()` and the native drag never starts because the pointer is not over the `draggable` | Zero changes to `useFixedDraggable`. During a gesture, `fixedDragStore` stays untouched. |
+| Preview | **Imperative on the element itself** (`element.style.width/height/transform`) during the gesture; single commit with `placeNode` on `pointerup` | Text must reflow for the user to see the result; a ghost cannot show that. One commit = one history entry and zero re-render per frame (`rerender-use-ref-transient-values`). `useDomAttributes` reapplies the model's `style` on commit, so the DOM converges. |
+| Cancellation | `Esc` or `pointercancel` restores the element's original inline `style` from the snapshot taken on `pointerdown` | Without going through the store. |
+| Reference box | **Layout box** (`offsetWidth/Height` and position accumulated through `offsetLeft/Top` up to the coordinate origin), never the bounding box | The bounding box of a rotated element is larger than the element. All handle, drag and inspector geometry uses the layout box plus the rotation. |
+| Where the rotation lives | Inline `transform`. The function list is parsed; `rotate()` is updated or inserted **at the end**; existing `translate`, `scale`, `skew` and `matrix` are kept | FXL books use `transform` for responsive scaling and fine positioning. Overwriting would erase that. |
+| Angle reading | Inline `rotate()` when declared; otherwise decomposition of the computed matrix (`atan2(b, a)`), separating scale | The inline value is the editable source of truth; the matrix covers rotation coming from `<head>` classes. |
+| Rotation origin | Respects the computed `transform-origin`. If it is not `50% 50%`, the anchor and handle math use the real origin | Do not introduce `transform-origin` into `style` unless the user rotates an element without a defined origin (then write `center center` explicitly so the output is deterministic). |
+| Resizing a rotated element | The pointer delta is taken into the element's local space (rotation by `−θ`), applied to `width`/`height`, and `left`/`top` are recomputed so the **anchor point** (opposite corner or edge) stays still on the page | It is what the user expects; without it the element "walks" while resizing. Pure, testable math. |
+| Units | Integer `px` by default (`fixedLayout.precision`); angle with 0.1° | Consistent with position. |
+| `display: inline` elements | Resizing also writes `display: inline-block` | `width`/`height` have no effect on inline. Documented. |
+| `<img>` | Writes `width`/`height` in CSS; the HTML `width`/`height` attributes remain | CSS beats the attributes; nothing is lost. |
+| Auto height | "Auto height" toggle in the inspector removes `height` from `style` | Text boxes that reflow with content remain possible. |
+| Transient state | Imperative `transformGestureStore` (gesture kind, handle, current angle/size) for the badge and the guides | Same as `fixedDragStore`; overlay and badge subscribe without React. |
+| Composition | `Canvas.Handles` (root, no boolean props) with `Canvas.Handles.Resize` and `Canvas.Handles.Rotate` sub-parts; `Inspector.Transform` with `Angle`, `AspectLock`, `AutoHeight`; without children it renders everything | `architecture-compound-components`, `patterns-explicit-variants`. Whoever does not want rotation does not render `Handles.Rotate`. |
+| Nested elements | Handles operate on the layout box relative to the `offsetParent` and write to the element's own `style`; rotated/scaled ancestors are **out of scope** (handles disabled with a hint) | Composing ancestor matrices is the rare case that complicates the most; dragging already takes the element to the page level, where everything works. |
+| Loading | Inside the `FixedPage` chunk (lazy) | `bundle-conditional`. |
 
 ---
 
-## 2. Estrutura de pastas
+## 2. Folder structure
 
 ```
 src/lib/fixed/
   transform/
-    layoutBox.ts          # readLayoutBox(el, origin) → { x, y, width, height } sem transform
-    transformValue.ts     # parseTransform(str) → funções; withRotation(str, deg); rotationOf(el, style)
+    layoutBox.ts          # readLayoutBox(el, origin) → { x, y, width, height } without transform
+    transformValue.ts     # parseTransform(str) → functions; withRotation(str, deg); rotationOf(el, style)
     rotation.ts           # angleFromPointer(center, pointer), snapAngle(deg, step), normalizeAngle
     resize.ts             # resizeBox({ box, angle, origin, handle, delta, keepRatio, fromCenter, min }) → box
-    handles.ts            # HANDLES: 8 alças + rotate; posição de cada alça na caixa local
+    handles.ts            # HANDLES: 8 handles + rotate; position of each handle on the local box
     transformGestureStore.ts
-    useResizeGesture.ts   # pointer events de uma alça de tamanho
-    useRotateGesture.ts   # pointer events da alça de rotação
-    gestureCommit.ts      # applyPreview(el, box, angle) e commit(store, id, style)
-    Handles.tsx           # Canvas.Handles root + Resize + Rotate (overlay imperativo)
+    useResizeGesture.ts   # pointer events of a size handle
+    useRotateGesture.ts   # pointer events of the rotate handle
+    gestureCommit.ts      # applyPreview(el, box, angle) and commit(store, id, style)
+    Handles.tsx           # Canvas.Handles root + Resize + Rotate (imperative overlay)
     Handles.module.css
-    AngleBadge.tsx        # badge com ângulo/tamanho durante o gesto
+    AngleBadge.tsx        # badge with angle/size during the gesture
     InspectorTransform.tsx
-    useTransformKeys.ts   # [ ] rotação; Ctrl/⌘+setas tamanho
+    useTransformKeys.ts   # [ ] rotation; Ctrl/⌘+arrows size
   __tests__/
     layoutBox.test.ts transformValue.test.ts rotation.test.ts resize.test.ts handles.test.ts
-    Handles.test.tsx  (pointer events em jsdom)
+    Handles.test.tsx  (pointer events in jsdom)
 ```
 
-Módulos puros (`transformValue`, `rotation`, `resize`, `handles`) sem DOM; `layoutBox` só usa `offset*`.
+Pure modules (`transformValue`, `rotation`, `resize`, `handles`) without DOM; `layoutBox` only uses `offset*`.
 
 ---
 
-## 3. Design detalhado
+## 3. Detailed design
 
-### 3.1 Caixa de layout e rotação
+### 3.1 Layout box and rotation
 
-`readLayoutBox(element, originElement)` acumula `offsetLeft/offsetTop` pela cadeia de `offsetParent` até `originElement`, soma `clientLeft/clientTop` dos pais, e usa `offsetWidth/offsetHeight`. Não passa por `getBoundingClientRect`, então não sofre com o `transform` do elemento nem com o zoom da página (valores já estão em unidades da página).
+`readLayoutBox(element, originElement)` accumulates `offsetLeft/offsetTop` along the `offsetParent` chain up to `originElement`, adds the parents' `clientLeft/clientTop`, and uses `offsetWidth/offsetHeight`. It does not go through `getBoundingClientRect`, so it suffers neither from the element's `transform` nor from the page zoom (values are already in page units).
 
-`rotationOf(element, style)`: `parseTransform(style.transform)` → se há `rotate(Xdeg|rad|turn)`, converte para graus; senão `getComputedStyle(element).transform` → matriz → `atan2(b, a)`; `scaleOf` idem (`hypot(a, b)`, `hypot(c, d)`) para a alça desenhar a caixa escalada sem tocar na escala.
+`rotationOf(element, style)`: `parseTransform(style.transform)` → if there is a `rotate(Xdeg|rad|turn)`, convert to degrees; otherwise `getComputedStyle(element).transform` → matrix → `atan2(b, a)`; `scaleOf` likewise (`hypot(a, b)`, `hypot(c, d)`) so the handle can draw the scaled box without touching the scale.
 
-`withRotation(style, deg)`: reescreve a lista de funções mantendo ordem; `rotate()` atualizado no lugar ou anexado; `deg` normalizado para `(-180, 180]` com uma casa decimal; ângulo `0` remove o `rotate()` (e o `transform` inteiro se ficar vazio).
+`withRotation(style, deg)`: rewrites the function list keeping order; `rotate()` updated in place or appended; `deg` normalized to `(-180, 180]` with one decimal; angle `0` removes the `rotate()` (and the whole `transform` if it becomes empty).
 
-### 3.2 Overlay de alças (`Canvas.Handles`)
+### 3.2 Handles overlay (`Canvas.Handles`)
 
-Um único elemento por vez (o selecionado). Renderiza uma `div.frame` dentro da `GhostLayer`-irmã (mesma camada absoluta em unidades da página), posicionada por `left/top/width/height` = caixa de layout e `transform: rotate(θ)` com `transform-origin` igual ao do elemento. Dentro da frame, 8 alças (`nw n ne e se s sw w`) e a alça `rotate` (acima do `n`, ligada por uma haste). Cursor de cada alça gira com θ (tabela de 8 cursores escolhida por `(direção + θ) mod 360`).
+A single element at a time (the selected one). Renders a `div.frame` inside the sibling `GhostLayer` (same absolute layer in page units), positioned by `left/top/width/height` = layout box and `transform: rotate(θ)` with a `transform-origin` equal to the element's. Inside the frame, 8 handles (`nw n ne e se s sw w`) and the `rotate` handle (above `n`, connected by a stem). Each handle's cursor rotates with θ (table of 8 cursors chosen by `(direction + θ) mod 360`).
 
-Atualização imperativa, como o `SelectionOverlay`: assina o store (seleção), `MutationObserver` (attrs/childList na raiz) e `ResizeObserver`, tudo coalescido em um `requestAnimationFrame`. Nenhum estado React por frame. Esconde-se durante um drag do pdnd (`subscribeFixedDrag`) e durante edição de texto.
+Imperative updates, like `SelectionOverlay`: subscribes to the store (selection), `MutationObserver` (attrs/childList on the root) and `ResizeObserver`, all coalesced into one `requestAnimationFrame`. No React state per frame. Hides itself during a pdnd drag (`subscribeFixedDrag`) and during text editing.
 
-Acessibilidade: alças são `button` com `aria-label` ("Resize from top-left", "Rotate"), `tabIndex=-1`; o teclado cobre o mesmo (3.5). Alvo mínimo de 24 px de tela: tamanho em unidades da página é `24 / scale`, recalculado quando o zoom muda.
+Accessibility: handles are `button`s with `aria-label` ("Resize from top-left", "Rotate"), `tabIndex=-1`; the keyboard covers the same (3.5). Minimum 24 px screen target: the size in page units is `24 / scale`, recomputed when the zoom changes.
 
-### 3.3 Gesto de redimensionar
+### 3.3 Resize gesture
 
 ```
-pointerdown(alça h):
+pointerdown(handle h):
   snapshot = { style: el.getAttribute('style'), box: readLayoutBox(el), angle, origin, ratio: w/h, display }
   el.setPointerCapture(pointerId); gestureStore.begin({ kind: 'resize', handle: h, id })
 pointermove:
-  delta = toPage(pointer) − toPage(pointerDown)          // unidades da página
-  local = rotate(delta, −angle)                          // espaço do elemento
+  delta = toPage(pointer) − toPage(pointerDown)          // page units
+  local = rotate(delta, −angle)                          // element space
   box' = resizeBox({ box, angle, origin, handle: h, delta: local, keepRatio: shift, fromCenter: alt, min: 1 })
-  box' = snapEdges(box', siblings, page, threshold)      // só quando angle === 0 (bordas alinháveis)
-  applyPreview(el, roundTo(box', precision), angle)      // width/height/left/top inline direto no DOM
+  box' = snapEdges(box', siblings, page, threshold)      // only when angle === 0 (alignable edges)
+  applyPreview(el, roundTo(box', precision), angle)      // width/height/left/top inline straight into the DOM
   gestureStore.update({ size })                          // badge "W × H"
 pointerup:
   style = sizeDeclarations(positionDeclarations(snapshot.style, box'.x, box'.y), box'.w, box'.h)
-  se display era inline → withDeclarations(style, { display: 'inline-block' })
-  store.actions.placeNode(id, { style })                 // uma entrada de histórico
+  if display was inline → withDeclarations(style, { display: 'inline-block' })
+  store.actions.placeNode(id, { style })                 // one history entry
 pointercancel / Esc:
   el.setAttribute('style', snapshot.style)
 ```
 
-`resizeBox` (puro): calcula o novo tamanho a partir do delta local e da alça; recalcula `x, y` para que o ponto âncora — canto/borda oposta à alça, em coordenadas da página, considerando a rotação em torno da origem — permaneça no mesmo lugar. Com `fromCenter`, o centro é a âncora. Com `keepRatio`, o eixo dominante do delta manda e o outro segue a razão do snapshot. Mínimo 1 px; alças de borda só mexem em um eixo.
+`resizeBox` (pure): computes the new size from the local delta and the handle; recomputes `x, y` so the anchor point — the corner/edge opposite the handle, in page coordinates, accounting for the rotation around the origin — stays in the same place. With `fromCenter`, the center is the anchor. With `keepRatio`, the dominant axis of the delta rules and the other follows the snapshot ratio. Minimum 1 px; edge handles only touch one axis.
 
-Rects dos irmãos para snap são lidos uma vez no `pointerdown` (`js-cache-function-results`) e invalidados por scroll/zoom.
+Sibling rects for snapping are read once on `pointerdown` (`js-cache-function-results`) and invalidated by scroll/zoom.
 
-### 3.4 Gesto de rotacionar
+### 3.4 Rotate gesture
 
 ```
-pointerdown(alça rotate):
-  center = ponto de origem do transform em coordenadas da página (caixa + transform-origin)
-  startAngle = angleFromPointer(center, pointer) − rotationAtual
+pointerdown(rotate handle):
+  center = transform origin point in page coordinates (box + transform-origin)
+  startAngle = angleFromPointer(center, pointer) − currentRotation
 pointermove:
   deg = angleFromPointer(center, pointer) − startAngle
   deg = shift ? snapAngle(deg, 15) : roundTo(deg, 0.1)
   applyPreview(el, box, deg); gestureStore.update({ angle: deg })   // badge "12.5°"
 pointerup:
-  placeNode(id, { style: withRotation(snapshot.style, deg) })       // + transform-origin explícito se não havia
+  placeNode(id, { style: withRotation(snapshot.style, deg) })       // + explicit transform-origin if there was none
 ```
 
-Snap adicional sem `Shift`: dentro de 1° de múltiplos de 90° gruda (comportamento comum em editores), desligável com `Alt`.
+Extra snap without `Shift`: within 1° of a multiple of 90° it sticks (common editor behaviour), disabled with `Alt`.
 
-### 3.5 Teclado e inspector
+### 3.5 Keyboard and inspector
 
-- `Ctrl/⌘ + setas`: largura/altura ±1 px (`Shift` = 10 px), âncora no canto superior esquerdo. Não colide com `Alt+setas` (árvore) nem com as setas simples (posição).
-- `[` e `]`: rotação ∓1°; com `Shift`, ∓15°. `Ctrl/⌘+0` fora do zoom já é usado? Não; `Ctrl/⌘+Shift+R` "reset rotation" fica no inspector, não no teclado, para não brigar com o browser.
-- Coalescência: repetição da tecla vira uma entrada (`placeNode` com `coalesce: true`).
-- `Inspector.Transform`: `Angle` (número, °), `Aspect lock` (afeta alças e campos W/H), `Auto height` (remove `height`), `Reset rotation`. `Inspector.Position` continua com X, Y, W, H; W/H passam a respeitar o aspect lock.
+- `Ctrl/⌘ + arrows`: width/height ±1 px (`Shift` = 10 px), anchored at the top-left corner. Does not collide with `Alt+arrows` (tree) nor with plain arrows (position).
+- `[` and `]`: rotation ∓1°; with `Shift`, ∓15°. Is `Ctrl/⌘+0` already used outside zoom? No; `Ctrl/⌘+Shift+R` "reset rotation" lives in the inspector, not on the keyboard, to avoid fighting the browser.
+- Coalescing: key repeat becomes one entry (`placeNode` with `coalesce: true`).
+- `Inspector.Transform`: `Angle` (number, °), `Aspect lock` (affects handles and the W/H fields), `Auto height` (removes `height`), `Reset rotation`. `Inspector.Position` keeps X, Y, W, H; W/H start respecting the aspect lock.
 
-### 3.6 Ajustes no que já existe
+### 3.6 Adjustments to what already exists
 
-- `fixedDrag.ts`: origem do drag e snap usam `readLayoutBox` (não `readBox`); a posição final é `left/top = box + delta`, então elementos rotacionados não pulam. As guias continuam usando a bounding box para alinhar visualmente.
-- `snapshot.ts` (`cloneForPreview`): preserva `transform` original, aplicando só o `scale` do zoom por fora (wrapper), para o ghost do drag mostrar a rotação.
-- `SelectionOverlay`: em modo fixo, cede lugar ao `Canvas.Handles` (não desenha os dois). Em fluxo, inalterado.
-- `InspectorPosition`: W/H com aspect lock; medidas via `readLayoutBox`.
-- `HtmlEditor` namespace: `Canvas.Handles`, `Canvas.Handles.Resize`, `Canvas.Handles.Rotate`, `Inspector.Transform`. `DefaultCanvas` em modo fixo inclui `Handles` completo.
-
----
-
-## 4. Regras de performance
-
-- Zero re-render de React por frame: preview escreve direto em `element.style`; overlay e badge são atualizados por `transform`/`style` a partir dos stores imperativos.
-- Um `readLayoutBox` por frame no máximo; rects de irmãos, ângulo inicial, origem e razão de aspecto vêm do snapshot do `pointerdown`.
-- Handlers de `pointermove` em `useEffect` com `setPointerCapture`, removidos no `pointerup`; nada global permanente (`client-event-listeners`).
-- `useEffectEvent`/ref "latest" para ler `precision`, `snapThreshold` e `scale` dentro dos handlers sem re-registrar (`advanced-use-latest`).
-- Escrita de `style` agrupada em uma atribuição por frame (`js-batch-dom-css`).
-- Aceite: `npx react-doctor scan` gravando 5 s de redimensionamento de uma caixa de texto com 300 irmãos, sem frame > 16 ms atribuído ao editor; `react-doctor --scope changed` em 100.
+- `fixedDrag.ts`: drag origin and snapping use `readLayoutBox` (not `readBox`); the final position is `left/top = box + delta`, so rotated elements do not jump. Guides keep using the bounding box for visual alignment.
+- `snapshot.ts` (`cloneForPreview`): preserves the original `transform`, applying only the zoom `scale` outside (wrapper), so the drag ghost shows the rotation.
+- `SelectionOverlay`: in fixed mode it yields to `Canvas.Handles` (does not draw both). In flow, unchanged.
+- `InspectorPosition`: W/H with aspect lock; measurements through `readLayoutBox`.
+- `HtmlEditor` namespace: `Canvas.Handles`, `Canvas.Handles.Resize`, `Canvas.Handles.Rotate`, `Inspector.Transform`. `DefaultCanvas` in fixed mode includes the full `Handles`.
 
 ---
 
-## 5. Fases
+## 4. Performance rules
 
-### Fase T0 — Geometria pura e leitura de transform (1 dia)
+- Zero React re-render per frame: the preview writes straight into `element.style`; overlay and badge are updated through `transform`/`style` from the imperative stores.
+- At most one `readLayoutBox` per frame; sibling rects, initial angle, origin and aspect ratio come from the `pointerdown` snapshot.
+- `pointermove` handlers in `useEffect` with `setPointerCapture`, removed on `pointerup`; nothing global stays permanently (`client-event-listeners`).
+- `useEffectEvent`/"latest" ref to read `precision`, `snapThreshold` and `scale` inside handlers without re-registering (`advanced-use-latest`).
+- `style` writes grouped into one assignment per frame (`js-batch-dom-css`).
+- Acceptance: `npx react-doctor scan` recording 5 s of resizing a text box with 300 siblings, no frame > 16 ms attributed to the editor; `react-doctor --scope changed` at 100.
+
+---
+
+## 5. Phases
+
+### Phase T0 — Pure geometry and transform reading (1 day)
 - [ ] `layoutBox.ts`, `transformValue.ts`, `rotation.ts`, `resize.ts`, `handles.ts`.
-- [ ] Testes: parse/reescrita de `transform` com funções mistas e unidades (`deg`, `rad`, `turn`); decomposição de matriz com escala; `resizeBox` em 0°, 45°, 90° e −30° com âncora parada (tolerância 0,01 px), `keepRatio`, `fromCenter`, mínimo; snap de ângulo.
-- **Pronto quando**: 100% dos casos de `resizeBox` mantêm o ponto âncora e `withRotation(withRotation(s, a), b) === withRotation(s, b)`.
+- [ ] Tests: `transform` parse/rewrite with mixed functions and units (`deg`, `rad`, `turn`); matrix decomposition with scale; `resizeBox` at 0°, 45°, 90° and −30° with a still anchor (0.01 px tolerance), `keepRatio`, `fromCenter`, minimum; angle snapping.
+- **Done when**: 100% of the `resizeBox` cases keep the anchor point and `withRotation(withRotation(s, a), b) === withRotation(s, b)`.
 
-### Fase T1 — Drag consciente de rotação (0,5 dia)
-- [ ] `fixedDrag.ts` usa `readLayoutBox`; ghost preserva `transform`.
-- [ ] Fixture `fixed-rotated.html` com elementos rotacionados e escalados por classe e inline.
-- **Pronto quando**: arrastar um elemento a 30° não altera `transform` e o `left/top` gravado é `original + delta`.
+### Phase T1 — Rotation-aware drag (0.5 day)
+- [ ] `fixedDrag.ts` uses `readLayoutBox`; the ghost preserves `transform`.
+- [ ] `fixed-rotated.html` fixture with elements rotated and scaled by class and inline.
+- **Done when**: dragging an element at 30° does not change `transform` and the written `left/top` is `original + delta`.
 
-### Fase T2 — Alças de redimensionar (2 dias)
-- [ ] `Handles.tsx` (root + `Resize`), `useResizeGesture`, `gestureCommit`, `transformGestureStore`, `AngleBadge` (mostra W × H).
-- [ ] `Shift` proporção, `Alt` centro, snap de bordas em 0°, `display: inline-block` automático, `Esc` cancela.
-- [ ] Testes em jsdom com `fireEvent.pointerDown/Move/Up`: uma entrada de histórico por gesto, `style` final, cancelamento restaura.
-- **Pronto quando**: redimensionar por qualquer alça em 100% e 200% de zoom grava `width/height/left/top` iguais aos exibidos no badge, e o canto oposto não se move (teste com rects antes/depois).
+### Phase T2 — Resize handles (2 days)
+- [ ] `Handles.tsx` (root + `Resize`), `useResizeGesture`, `gestureCommit`, `transformGestureStore`, `AngleBadge` (shows W × H).
+- [ ] `Shift` ratio, `Alt` center, edge snapping at 0°, automatic `display: inline-block`, `Esc` cancels.
+- [ ] jsdom tests with `fireEvent.pointerDown/Move/Up`: one history entry per gesture, final `style`, cancellation restores.
+- **Done when**: resizing through any handle at 100% and 200% zoom writes `width/height/left/top` equal to what the badge shows, and the opposite corner does not move (test with rects before/after).
 
-### Fase T3 — Rotação (1 dia)
-- [ ] `Handles.Rotate`, `useRotateGesture`, cursor das alças girando, snap de 15° e de 90°, `transform-origin` explícito quando necessário.
-- [ ] Testes: ângulo a partir do ponteiro em quadrantes; commit único; livro com `transform: scale()` mantém a escala.
-- **Pronto quando**: rotacionar e depois redimensionar mantém a âncora parada e o `transform` original (fora o `rotate`) intacto na saída.
+### Phase T3 — Rotation (1 day)
+- [ ] `Handles.Rotate`, `useRotateGesture`, rotating handle cursors, 15° and 90° snapping, explicit `transform-origin` when needed.
+- [ ] Tests: angle from the pointer in every quadrant; single commit; a book with `transform: scale()` keeps the scale.
+- **Done when**: rotating and then resizing keeps the anchor still and the original `transform` (besides `rotate`) intact in the output.
 
-### Fase T4 — Inspector e teclado (1 dia)
-- [ ] `Inspector.Transform`, aspect lock compartilhado com `Inspector.Position`, `Auto height`, `Reset rotation`.
-- [ ] `useTransformKeys` (`Ctrl/⌘+setas`, `[`/`]`) com coalescência; live region ("Resized to 200 × 80", "Rotated to 15°").
-- **Pronto quando**: inspector, teclado e alças convergem para o mesmo `style`; `react-doctor design` sem erros nas parts novas.
+### Phase T4 — Inspector and keyboard (1 day)
+- [ ] `Inspector.Transform`, aspect lock shared with `Inspector.Position`, `Auto height`, `Reset rotation`.
+- [ ] `useTransformKeys` (`Ctrl/⌘+arrows`, `[`/`]`) with coalescing; live region ("Resized to 200 × 80", "Rotated to 15°").
+- **Done when**: inspector, keyboard and handles converge to the same `style`; `react-doctor design` without errors in the new parts.
 
-### Fase T5 — Endurecimento (0,5 dia)
-- [ ] `react-doctor scan` (300 irmãos), a11y (labels, foco, alvos ≥ 24 px), README: seção "Resize and rotate" e limitações.
-- **Pronto quando**: `test`, `lint`, `typecheck`, hook do react-doctor limpos; README atualizado.
+### Phase T5 — Hardening (0.5 day)
+- [ ] `react-doctor scan` (300 siblings), a11y (labels, focus, targets ≥ 24 px), README: "Resize and rotate" section and limitations.
+- **Done when**: `test`, `lint`, `typecheck` and the react-doctor hook clean; README updated.
 
 ---
 
-## 6. Riscos e spikes
+## 6. Risks and spikes
 
-| Risco | Impacto | Mitigação / spike |
+| Risk | Impact | Mitigation / spike |
 |---|---|---|
-| `transform-origin` não central ou em `px` | T2–T3 | Ler o valor computado e converter para coordenadas da caixa; testes com `0 0` e `100% 50%`. |
-| Ancestral rotacionado ou escalado | T2 | Fora de escopo: alças desabilitadas com dica "move o elemento para a página para editar"; drag para a página resolve. |
-| Livro com `transform: matrix(...)` inline | T0 | Decompor a matriz para rotação e escala, reescrever como `matrix(...)` mantendo os demais componentes; snapshot em teste. |
-| Texto refluindo muda a altura ao mexer só na largura | T2 | Alças laterais gravam só `width`; `height` só é gravado por alças verticais ou de canto. |
-| `%` ou `em` em `width/height` existentes | T2 | Primeiro gesto congela para `px` a partir da caixa de layout (mesma regra da posição). |
-| Pointer capture perdido (janela perde foco) | T2–T3 | `pointercancel` e `blur` da janela cancelam o gesto restaurando o snapshot. |
-| Conflito com o drag nativo ao iniciar o gesto na alça | T2 | Alça em camada própria com `pointer-events: auto`, `draggable=false`, `preventDefault()` no `pointerdown`; teste manual em Chrome, Firefox e Safari. |
-| Cursor das alças errado em ângulos intermediários | T3 | Tabela de 8 cursores por setor de 45°; teste unitário do mapeamento. |
-| Precisão de 1 px após rotação (arredondamento de `left/top` recalculados) | T2 | Arredondar só no commit, nunca no meio do gesto; a âncora é recalculada a partir do snapshot, não do frame anterior. |
-| Touch | Geral | Pointer events já funcionam com um dedo; multitouch (pinça) fora de escopo. |
+| Non-centered `transform-origin` or one in `px` | T2–T3 | Read the computed value and convert to box coordinates; tests with `0 0` and `100% 50%`. |
+| Rotated or scaled ancestor | T2 | Out of scope: handles disabled with the hint "move the element to the page to edit it"; dragging to the page solves it. |
+| Book with inline `transform: matrix(...)` | T0 | Decompose the matrix into rotation and scale, rewrite as `matrix(...)` keeping the other components; snapshot test. |
+| Reflowing text changes the height when only the width moves | T2 | Side handles write only `width`; `height` is written only by vertical or corner handles. |
+| `%` or `em` in existing `width/height` | T2 | The first gesture freezes to `px` from the layout box (same rule as position). |
+| Pointer capture lost (window loses focus) | T2–T3 | `pointercancel` and window `blur` cancel the gesture restoring the snapshot. |
+| Conflict with native drag when starting the gesture on the handle | T2 | Handle in its own layer with `pointer-events: auto`, `draggable=false`, `preventDefault()` on `pointerdown`; manual test in Chrome, Firefox and Safari. |
+| Wrong handle cursor at intermediate angles | T3 | Table of 8 cursors by 45° sector; unit test of the mapping. |
+| 1 px precision after rotation (rounding of recomputed `left/top`) | T2 | Round only on commit, never mid-gesture; the anchor is recomputed from the snapshot, not from the previous frame. |
+| Touch | General | Pointer events already work with one finger; multitouch (pinch) out of scope. |
 
 ---
 
-## 7. Fora de escopo
+## 7. Out of scope
 
-Seleção múltipla, alinhamento e distribuição em lote, skew, edição de `transform-origin` pela UI, rotação 3D, redimensionar por pinça, alças em elementos dentro de ancestrais transformados.
+Multi-selection, batch alignment and distribution, skew, editing `transform-origin` through the UI, 3D rotation, pinch resizing, handles on elements inside transformed ancestors.
