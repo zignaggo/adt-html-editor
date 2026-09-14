@@ -98,8 +98,8 @@ Each panel is a `Root` that accepts `children`. **Without children it renders th
 | Panel | Parts |
 |---|---|
 | `HtmlEditor.Layers` | `Header`, `Title`, `Count`, `Search`, `Tree`, `Row`, `Empty` |
-| `HtmlEditor.Canvas` | `Toolbar`, `WidthPresets`, `DarkToggle`, `Viewport` |
-| `HtmlEditor.Inspector` | `Header`, `Empty`, `Variants`, `Body`, `Section`, `Category`, `Control`, `ClassInput`, `ClassList`, `Attributes` |
+| `HtmlEditor.Canvas` | `Toolbar`, `WidthPresets`, `DarkToggle`, `Viewport`, `FixedPage`, `Zoom`, `Guides`, `LiveGhost`, `ImageGhost`, `Handles` (`Handles.Resize`, `Handles.Rotate`) |
+| `HtmlEditor.Inspector` | `Header`, `Empty`, `Variants`, `Body`, `Section`, `Category`, `Control`, `ClassInput`, `ClassList`, `Attributes`, `Position`, `Transform` |
 | `HtmlEditor.Palette` | `Header`, `Grid`, `Item` |
 | `HtmlEditor.History` | `Undo`, `Redo` |
 
@@ -191,10 +191,12 @@ For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensio
     <HtmlEditor.Canvas.FixedPage>
       <HtmlEditor.Canvas.Guides />
       <HtmlEditor.Canvas.LiveGhost />   {/* or <HtmlEditor.Canvas.ImageGhost /> */}
+      <HtmlEditor.Canvas.Handles />     {/* or <Handles><Handles.Resize /></Handles> without rotation */}
     </HtmlEditor.Canvas.FixedPage>
   </HtmlEditor.Canvas>
   <HtmlEditor.Inspector>
     <HtmlEditor.Inspector.Position />
+    <HtmlEditor.Inspector.Transform />
   </HtmlEditor.Inspector>
 </HtmlEditor>
 ```
@@ -205,6 +207,7 @@ For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensio
 - **Same level on drop.** Dropping an element, even one nested inside a group, places it as a child of the **page container** (the single top-level wrapper, or the body) and writes `position: absolute; left; top` in px into its `style`, removing `right`/`bottom`. Typography that would change by leaving a styled parent (font, size, line height, color, alignment) is copied inline first. By default the element goes to the end of the container (on top); `fixedLayout.keepStacking: true` inserts it right after its former top-level ancestor. `fixedLayout.pageContainer` overrides the container choice.
 - **Ghost strategies.** `Canvas.ImageGhost` uses the native drag preview: a rasterized clone of the element follows the pointer off the main thread while an outline marks the snapped destination. `Canvas.LiveGhost` (the default) disables the native preview and moves a live copy of the element in an overlay, so snapping and guides are exact at any zoom; cancelling animates it back. Both implement `GhostStrategy`, exported for custom ones.
 - **Inspector.** `Inspector.Position` shows X, Y, W, H (measured from the rendered page), stacking-order buttons (the tree order is the paint order) and a position lock that disables dragging for that element. The lock lives in editor state, not in the HTML.
+- **Resize and rotate.** `Canvas.Handles` draws the selected element's layout box (not its bounding box, so rotated elements get a rotated frame) with eight resize handles and a rotate handle; `Canvas.Handles.Resize` and `Canvas.Handles.Rotate` can be composed separately. Gestures use pointer events, preview directly on the element so text reflows live, and commit once on release (`width`/`height`/`left`/`top` in px, or `transform: rotate()` appended to the existing `transform` list). `Shift` keeps the aspect ratio or snaps the angle to 15°, `Alt` resizes from the center or disables snapping, `Esc` cancels. Edges snap to sibling and page guides when the element is not rotated; angles within 1° of a right angle stick. Resizing an inline element writes `display: inline-block`. Handles are hidden for locked elements and disabled inside transformed ancestors (drag the element to the page first). `Inspector.Transform` shows the angle, a reset button, an aspect-ratio lock shared with the handles and the W/H fields, and an "Auto height" toggle that removes `height`.
 - **Output.** Only `style` attributes and node parents change, so all fidelity guarantees above hold. Palette drops and tree-to-page drops use the same placement.
 
 ## Shortcuts
@@ -222,6 +225,9 @@ For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensio
 | `Ctrl/Cmd+Z` / `Shift+Z` / `Ctrl+Y` | Undo / redo |
 | `Enter` (in the canvas) | Edit text inline |
 | `Esc` | Cancel editing / clear selection |
+| `↑` `↓` `←` `→` (fixed layout) | Nudge by 1 px (`Shift` = 10 px) |
+| `Ctrl/Cmd+arrows` (fixed layout) | Resize by 1 px (`Shift` = 10 px) |
+| `[` / `]` (fixed layout) | Rotate by 1° (`Shift` = 15°) |
 
 ## Tailwind in the canvas
 

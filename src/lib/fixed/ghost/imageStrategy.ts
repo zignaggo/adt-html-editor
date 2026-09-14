@@ -1,6 +1,6 @@
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
-import { cloneForPreview } from './snapshot'
+import { cloneForPreview, scaledWrapper } from './snapshot'
 import { createOutlineStrategy, type GhostStrategy } from './strategy'
 
 const MAX_PREVIEW_PX = 2000
@@ -28,7 +28,9 @@ export function createImageStrategy(): GhostStrategy {
           wrapper.style.minHeight = '0'
           wrapper.style.width = `${size.width * previewScale}px`
           wrapper.style.height = `${size.height * previewScale}px`
-          wrapper.appendChild(cloneForPreview(element, size, previewScale))
+          const scaled = scaledWrapper(size, previewScale)
+          scaled.appendChild(cloneForPreview(element, size))
+          wrapper.appendChild(scaled)
           container.appendChild(wrapper)
           return () => wrapper.remove()
         },

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1200, height=1600">
+<title>Fixed layout · rotated and scaled</title>
+<style>
+  .tilted { transform: rotate(-8deg); }
+  .stamp { transform: rotate(12deg) scale(1.25); transform-origin: 0 0; }
+  .caption { font-family: Georgia, serif; font-style: italic; color: #4a3a2a; }
+</style>
+</head>
+<body style="margin: 0; width: 1200px; height: 1600px; background: #f3efe6; font-family: 'Trebuchet MS', sans-serif; color: #2b2118;">
+<div style="position: absolute; left: 0; top: 0; width: 1200px; height: 400px; background: #dfe8d2;"></div>
+<h1 style="position: absolute; left: 120px; top: 120px; margin: 0; width: 640px; font-size: 84px; line-height: 1; transform: rotate(-4deg);">Tilted Tales</h1>
+<p class="tilted" style="position: absolute; left: 140px; top: 280px; margin: 0; width: 460px; font-size: 26px; line-height: 1.3;">A headline from inline transform, a paragraph from a class.</p>
+<div class="stamp" style="position: absolute; left: 860px; top: 140px; width: 200px; height: 200px; border: 6px solid #b23a48; border-radius: 50%; box-sizing: border-box; display: grid; place-items: center; font-weight: 700; color: #b23a48;">STAMP</div>
+<img alt="Postcard" width="360" height="240" style="position: absolute; left: 120px; top: 520px; width: 360px; height: 240px; transform: rotate(6deg); box-shadow: 0 16px 30px rgba(43, 33, 24, .2);" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 240'%3E%3Crect width='360' height='240' fill='%23f7d9a6'/%3E%3Ccircle cx='260' cy='80' r='40' fill='%23e07a5f'/%3E%3Crect x='30' y='150' width='300' height='50' fill='%237bb661'/%3E%3C/svg%3E">
+<p class="caption" style="position: absolute; left: 140px; top: 820px; margin: 0; width: 320px; font-size: 20px; transform: rotate(6deg) translate(12px, 0);">Rotate plus translate stay together.</p>
+<div style="position: absolute; left: 620px; top: 560px; width: 440px; height: 360px; background: #ffffff; border-radius: 20px; box-shadow: 0 12px 32px rgba(43, 33, 24, .12); transform: rotate(3deg);">
+  <h2 style="position: absolute; left: 32px; top: 32px; margin: 0; font-size: 34px; color: #7a4b1e;">Inside a rotated group</h2>
+  <p style="position: absolute; left: 32px; top: 100px; margin: 0; width: 376px; font-size: 20px; line-height: 1.5;">Children of a transformed ancestor show disabled handles until they are dragged to the page.</p>
+</div>
+<span style="position: absolute; left: 640px; top: 1000px; font-size: 22px; background: #fff3c4; padding: 4px 10px;">An inline span turns inline-block when resized</span>
+<div style="position: absolute; left: 120px; top: 1100px; width: 300px; height: 160px; background: #b8cbe5; transform-origin: 0 0; transform: rotate(10deg);"></div>
+<div style="position: absolute; left: 700px; top: 1200px; width: 240px; height: 180px; background: #e8b4c8; transform: matrix(0.866, 0.5, -0.5, 0.866, 0, 0);"></div>
+</body>
+</html>

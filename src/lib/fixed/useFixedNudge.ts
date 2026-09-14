@@ -1,8 +1,9 @@
 import type { KeyboardEvent } from 'react'
 import { isStyled } from '../core/model'
 import { useEditorContext, useEditorStoreApi, useFixedLayout } from '../components/Editor/context'
-import { measureScale, offsetOriginOf, readBox } from './geometry'
 import { positionDeclarations } from './position'
+import { styleOriginOf } from './transform/elementTransform'
+import { readLayoutBox } from './transform/layoutBox'
 
 const STEP = 1
 const FAST_STEP = 10
@@ -17,7 +18,7 @@ const DELTAS: Record<string, [number, number]> = {
 export function useFixedNudge(): (event: KeyboardEvent<HTMLElement>) => boolean {
   const store = useEditorStoreApi()
   const { canvasRootRef } = useEditorContext()
-  const { page, precision } = useFixedLayout()
+  const { precision } = useFixedLayout()
 
   return (event) => {
     const delta = DELTAS[event.key]
@@ -34,9 +35,8 @@ export function useFixedNudge(): (event: KeyboardEvent<HTMLElement>) => boolean 
     const element = root?.querySelector<HTMLElement>(`[data-adt-id="${selectedId}"]`)
     if (!root || !element) return false
 
-    const scale = measureScale(root.getBoundingClientRect(), page.width)
-    const current = readBox(element, root, scale)
-    const origin = offsetOriginOf(element, root, scale)
+    const current = readLayoutBox(element, root)
+    const origin = styleOriginOf(element, root)
     const step = event.shiftKey ? FAST_STEP : STEP
 
     event.preventDefault()

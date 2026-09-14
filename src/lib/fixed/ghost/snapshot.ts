@@ -1,6 +1,6 @@
 import type { Size } from '../geometry'
 
-export function cloneForPreview(element: HTMLElement, size: Size, scale: number): HTMLElement {
+export function cloneForPreview(element: HTMLElement, size: Size): HTMLElement {
   const clone = element.cloneNode(true) as HTMLElement
   clone.removeAttribute('data-adt-id')
   clone.removeAttribute('data-adt-fixed-dragging')
@@ -19,8 +19,19 @@ export function cloneForPreview(element: HTMLElement, size: Size, scale: number)
   clone.style.boxSizing = 'border-box'
   clone.style.width = `${size.width}px`
   clone.style.height = `${size.height}px`
-  clone.style.transformOrigin = '0 0'
-  clone.style.transform = scale === 1 ? '' : `scale(${scale})`
   clone.style.pointerEvents = 'none'
   return clone
+}
+
+export function scaledWrapper(size: Size, scale: number): HTMLDivElement {
+  const wrapper = document.createElement('div')
+  wrapper.style.position = 'absolute'
+  wrapper.style.left = '0'
+  wrapper.style.top = '0'
+  wrapper.style.width = `${size.width}px`
+  wrapper.style.height = `${size.height}px`
+  wrapper.style.transformOrigin = '0 0'
+  wrapper.style.transform = scale === 1 ? '' : `scale(${scale})`
+  wrapper.style.pointerEvents = 'none'
+  return wrapper
 }

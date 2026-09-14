@@ -7,6 +7,7 @@ import {
   type Ref,
 } from 'react'
 import { useSelector } from '@tanstack/react-store'
+import { Store } from '@tanstack/store'
 import type { NodeId } from '../../core/ids'
 import type { EditorDocument } from '../../core/model'
 import { serializeHtml } from '../../core/html/serialize'
@@ -102,6 +103,7 @@ export function EditorProvider({
   children,
 }: EditorProviderProps) {
   const [store] = useState(() => createEditorStore(value ?? defaultValue))
+  const [aspectLock] = useState(() => new Store(false))
   const canvasRootRef = useRef<HTMLElement | null>(null)
   const lastEmittedRef = useRef<string | null>(null)
   const onChangeRef = useRef(onChange)
@@ -136,6 +138,7 @@ export function EditorProvider({
     styleMode,
     layout: resolved.layout,
     fixedLayout: fixedConfig,
+    aspectLock,
     canvasRootRef,
   }
 

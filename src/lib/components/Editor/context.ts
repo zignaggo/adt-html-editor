@@ -1,5 +1,6 @@
 import { createContext, use } from 'react'
 import { useSelector } from '@tanstack/react-store'
+import type { Store } from '@tanstack/store'
 import invariant from 'tiny-invariant'
 import type { NodeId } from '../../core/ids'
 import type { AnyNode, EditorDocument } from '../../core/model'
@@ -23,6 +24,7 @@ export type EditorContextValue = {
   styleMode: StyleMode
   layout: LayoutMode
   fixedLayout: FixedLayoutConfig
+  aspectLock: Store<boolean>
   canvasRootRef: { current: HTMLElement | null }
 }
 
@@ -73,6 +75,10 @@ export function useLayoutMode(): LayoutMode {
 
 export function useFixedLayout(): FixedLayoutConfig {
   return useEditorContext().fixedLayout
+}
+
+export function useAspectLocked(): boolean {
+  return useSelector(useEditorContext().aspectLock, (locked) => locked)
 }
 
 export function useCanUndo(): boolean {

@@ -11,7 +11,7 @@ function prefersReducedMotion(): boolean {
 }
 
 export function createLiveStrategy(): GhostStrategy {
-  let clone: HTMLElement | null = null
+  let ghost: HTMLElement | null = null
   let originBox: HTMLDivElement | null = null
   let origin: Box | null = null
 
@@ -26,30 +26,29 @@ export function createLiveStrategy(): GhostStrategy {
       originBox = createGhostBox(layer, size, styles.origin)
       moveGhostBox(originBox, start)
       if (element) {
-        clone = cloneForPreview(element, size, 1)
-        clone.classList.add(styles.box, styles.clone)
-        layer.appendChild(clone)
+        ghost = createGhostBox(layer, size, styles.clone)
+        ghost.appendChild(cloneForPreview(element, size))
       } else {
-        clone = createGhostBox(layer, size, styles.target)
+        ghost = createGhostBox(layer, size, styles.target)
       }
-      moveGhostBox(clone, start)
+      moveGhostBox(ghost, start)
     },
     move(position) {
-      if (clone) moveGhostBox(clone, position)
+      if (ghost) moveGhostBox(ghost, position)
     },
     end({ cancelled }) {
       originBox?.remove()
       originBox = null
-      const ghost = clone
-      clone = null
-      if (!ghost) return
+      const leaving = ghost
+      ghost = null
+      if (!leaving) return
       if (!cancelled || !origin || prefersReducedMotion()) {
-        ghost.remove()
+        leaving.remove()
         return
       }
-      ghost.classList.add(styles.returning)
-      moveGhostBox(ghost, origin)
-      setTimeout(() => ghost.remove(), RETURN_MS)
+      leaving.classList.add(styles.returning)
+      moveGhostBox(leaving, origin)
+      setTimeout(() => leaving.remove(), RETURN_MS)
     },
   }
 }

@@ -8,6 +8,7 @@ import ghostStyles from './ghost/ghost.module.css'
 import { useDocumentStylesheet } from './stylesheet/useDocumentStylesheet'
 import { useFixedDropMonitor } from './useFixedDropMonitor'
 import { useFixedNudge } from './useFixedNudge'
+import { useTransformKeys } from './transform/useTransformKeys'
 import { useFixedPageDropTarget } from './useFixedPageDropTarget'
 import styles from './FixedPage.module.css'
 
@@ -29,6 +30,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
   const nodeIds = useChildren(rootId)
   const interactions = useCanvasInteractions()
   const nudge = useFixedNudge()
+  const transformKeys = useTransformKeys()
 
   useDocumentStylesheet()
   useFixedPageDropTarget(scrollRef)
@@ -50,7 +52,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
   const scale = zoom === 'fit' ? fitScale : zoom
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!nudge(event)) interactions.onKeyDown(event)
+    if (!nudge(event) && !transformKeys(event)) interactions.onKeyDown(event)
   }
 
   return (

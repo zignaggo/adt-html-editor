@@ -15,6 +15,7 @@ import type { GhostStrategy } from './ghost/strategy'
 import { snapWithGuides } from './guides/computeGuides'
 import { inheritedDeclarations } from './inheritance'
 import { positionDeclarations, withDeclarations } from './position'
+import { readLayoutBox } from './transform/layoutBox'
 
 export type FixedDragEnv = {
   store: EditorStore
@@ -86,7 +87,7 @@ export function beginFixedDrag(env: FixedDragEnv, args: BeginFixedDragArgs) {
 
   const scale = scaleOf(env)
   const pointer = pointerOf(args.input, origin, scale)
-  const measured = args.element ? readBox(args.element, origin, scale) : null
+  const measured = args.element ? readLayoutBox(args.element, origin) : null
   const size: Size = measured
     ? { width: measured.width, height: measured.height }
     : { ...TEMPLATE_SIZE }

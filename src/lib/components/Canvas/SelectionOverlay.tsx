@@ -41,7 +41,8 @@ export function SelectionOverlay() {
 
     const sync = () => {
       frame = 0
-      place(selectionRef.current, selectedId, true)
+      const delegated = root.hasAttribute('data-adt-handles')
+      place(selectionRef.current, delegated ? null : selectedId, true)
       place(hoverRef.current, hoveredId === selectedId ? null : hoveredId, false)
     }
 

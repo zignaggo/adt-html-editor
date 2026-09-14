@@ -173,3 +173,12 @@ export type {
   StyledNode,
   TextNode,
 } from './core/model'
+export { Handles as CanvasHandles, HandlesResize as CanvasHandlesResize, HandlesRotate as CanvasHandlesRotate } from './fixed/transform/Handles'
+export type { HandlesProps as CanvasHandlesProps } from './fixed/transform/Handles'
+export { InspectorTransform } from './fixed/InspectorTransform'
+export { readLayoutBox, layoutOriginOf } from './fixed/transform/layoutBox'
+export { parseTransform, rotationIn, withRotation } from './fixed/transform/transformValue'
+export { resizeBox, snapResizeEdges } from './fixed/transform/resize'
+export type { HandleId } from './fixed/transform/handleSpecs'
+export { subscribeTransformGesture, transformGesture } from './fixed/transform/transformGestureStore'
+export type { TransformGesture } from './fixed/transform/transformGestureStore'

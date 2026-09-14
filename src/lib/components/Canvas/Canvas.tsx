@@ -3,6 +3,7 @@ import { useCanvasStylesheet } from '../../tailwind/useCanvasStylesheet'
 import type { GhostStrategy } from '../../fixed/ghost/strategy'
 import { LiveGhost } from '../../fixed/ghost/LiveGhost'
 import { Guides } from '../../fixed/guides/Guides'
+import { Handles } from '../../fixed/transform/Handles'
 import { Zoom } from '../../fixed/Zoom'
 import type { FixedPageProps } from '../../fixed/FixedPage'
 import { useLayoutMode } from '../Editor/context'
@@ -94,6 +95,7 @@ function DefaultCanvas() {
         <CanvasFixedPage>
           <Guides />
           <LiveGhost />
+          <Handles />
         </CanvasFixedPage>
       </>
     )

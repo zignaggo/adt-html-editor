@@ -10,6 +10,8 @@ import { ImageGhost } from '../../fixed/ghost/ImageGhost'
 import { LiveGhost } from '../../fixed/ghost/LiveGhost'
 import { Guides } from '../../fixed/guides/Guides'
 import { InspectorPosition } from '../../fixed/InspectorPosition'
+import { InspectorTransform } from '../../fixed/InspectorTransform'
+import { Handles, HandlesResize, HandlesRotate } from '../../fixed/transform/Handles'
 import { Zoom } from '../../fixed/Zoom'
 import { InspectorPanel } from '../Inspector/InspectorPanel'
 import {
@@ -105,6 +107,11 @@ const LayersNamespace = Object.assign(LayersPanel, {
   Empty: LayersEmpty,
 })
 
+const HandlesNamespace = Object.assign(Handles, {
+  Resize: HandlesResize,
+  Rotate: HandlesRotate,
+})
+
 const CanvasNamespace = Object.assign(Canvas, {
   Toolbar: CanvasToolbar,
   WidthPresets: CanvasWidthPresets,
@@ -115,6 +122,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   Guides,
   LiveGhost,
   ImageGhost,
+  Handles: HandlesNamespace,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {
@@ -129,6 +137,7 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Control: InspectorControl,
   Attributes: InspectorAttributes,
   Position: InspectorPosition,
+  Transform: InspectorTransform,
 })
 
 const HistoryNamespace = Object.assign(HistoryGroup, {

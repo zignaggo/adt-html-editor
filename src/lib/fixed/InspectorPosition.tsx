@@ -1,18 +1,21 @@
-import { useEffect, useState, type KeyboardEvent } from 'react'
 import type { NodeId } from '../core/ids'
 import { isStyled } from '../core/model'
 import { useInspectorContext } from '../components/Inspector/context'
 import { InspectorSection } from '../components/Inspector/InspectorParts'
 import {
+  useAspectLocked,
   useEditor,
-  useEditorContext,
   useFixedLayout,
   useIsLocked,
   useLayoutMode,
   useNode,
 } from '../components/Editor/context'
-import { measureScale, offsetOriginOf, readBox, type Box, type Point } from './geometry'
+import type { Box, Point } from './geometry'
+import { NumberField } from './NumberField'
 import { positionDeclarations, sizeDeclarations } from './position'
+import { styleOriginOf } from './transform/elementTransform'
+import { readLayoutBox } from './transform/layoutBox'
+import { useMeasured } from './useMeasured'
 import inspectorStyles from '../components/Inspector/InspectorPanel.module.css'
 import styles from './InspectorPosition.module.css'
 
@@ -29,9 +32,12 @@ export function InspectorPosition({ title = 'Position' }: { title?: string }) {
 
 type Measured = { box: Box; origin: Point }
 
-function sameMeasure(a: Measured | null, b: Measured): boolean {
+function measurePosition(element: HTMLElement, root: HTMLElement): Measured {
+  return { box: readLayoutBox(element, root), origin: styleOriginOf(element, root) }
+}
+
+function sameMeasure(a: Measured, b: Measured): boolean {
   return (
-    a !== null &&
     a.box.x === b.box.x &&
     a.box.y === b.box.y &&
     a.box.width === b.box.width &&
@@ -41,56 +47,13 @@ function sameMeasure(a: Measured | null, b: Measured): boolean {
   )
 }
 
-function useMeasuredBox(id: NodeId): Measured | null {
-  const { canvasRootRef } = useEditorContext()
-  const { page } = useFixedLayout()
-  const [measured, setMeasured] = useState<Measured | null>(null)
-
-  useEffect(() => {
-    const root = canvasRootRef.current
-    if (!root) return
-    let frame = 0
-
-    const measure = () => {
-      frame = 0
-      const element = root.querySelector<HTMLElement>(`[data-adt-id="${id}"]`)
-      if (!element) {
-        setMeasured(null)
-        return
-      }
-      const scale = measureScale(root.getBoundingClientRect(), page.width)
-      const next: Measured = {
-        box: readBox(element, root, scale),
-        origin: offsetOriginOf(element, root, scale),
-      }
-      setMeasured((current) => (sameMeasure(current, next) ? current : next))
-    }
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(measure)
-    }
-
-    const mutations = new MutationObserver(schedule)
-    mutations.observe(root, { attributes: true, childList: true, subtree: true })
-    const resize = new ResizeObserver(schedule)
-    resize.observe(root)
-    measure()
-
-    return () => {
-      cancelAnimationFrame(frame)
-      mutations.disconnect()
-      resize.disconnect()
-    }
-  }, [id, canvasRootRef, page.width])
-
-  return measured
-}
-
 function PositionFields({ id }: { id: NodeId }) {
   const node = useNode(id)
   const locked = useIsLocked(id)
+  const aspectLocked = useAspectLocked()
   const { placeNode, moveNode, setLocked } = useEditor()
   const { precision } = useFixedLayout()
-  const measured = useMeasuredBox(id)
+  const measured = useMeasured(id, measurePosition, sameMeasure)
   const box = measured?.box
 
   if (!node || !isStyled(node)) return null
@@ -105,14 +68,14 @@ function PositionFields({ id }: { id: NodeId }) {
 
   const commitSize = (axis: 'width' | 'height', value: number) => {
     if (!Number.isFinite(value) || value <= 0) return
-    placeNode(id, {
-      style: sizeDeclarations(
-        style,
-        axis === 'width' ? value : null,
-        axis === 'height' ? value : null,
-        precision,
-      ),
-    })
+    let width = axis === 'width' ? value : null
+    let height = axis === 'height' ? value : null
+    if (aspectLocked && box && box.width > 0 && box.height > 0) {
+      const ratio = box.width / box.height
+      if (width !== null) height = width / ratio
+      else if (height !== null) width = height * ratio
+    }
+    placeNode(id, { style: sizeDeclarations(style, width, height, precision) })
   }
 
   return (
@@ -129,46 +92,6 @@ function PositionFields({ id }: { id: NodeId }) {
         <span>Lock position</span>
       </label>
     </div>
-  )
-}
-
-function NumberField({
-  label,
-  value,
-  disabled,
-  onCommit,
-}: {
-  label: string
-  value: number | undefined
-  disabled: boolean
-  onCommit: (value: number) => void
-}) {
-  const shown = value === undefined ? '' : String(Math.round(value * 100) / 100)
-  const commit = (raw: string) => {
-    const parsed = Number.parseFloat(raw)
-    if (Number.isFinite(parsed)) onCommit(parsed)
-  }
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== 'Enter') return
-    event.preventDefault()
-    commit(event.currentTarget.value)
-  }
-  return (
-    <label className={styles.field}>
-      <span className={inspectorStyles.fieldLabel}>{label}</span>
-      <input
-        key={shown}
-        type="number"
-        className={inspectorStyles.input}
-        defaultValue={shown}
-        disabled={disabled}
-        step={1}
-        onBlur={(event) => {
-          if (event.target.value !== shown) commit(event.target.value)
-        }}
-        onKeyDown={onKeyDown}
-      />
-    </label>
   )
 }
 
