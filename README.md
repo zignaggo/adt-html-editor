@@ -1,33 +1,33 @@
 # adt-html-editor
 
-Biblioteca React de edição visual de HTML: árvore de elementos, canvas e painel de estilos Tailwind. Recebe uma string HTML, o usuário edita, e devolve uma string HTML.
+React library for visual HTML editing: element tree, canvas and Tailwind style panel. It takes an HTML string, the user edits it, and it returns an HTML string.
 
-Consumida por `file:` / `bun link` — não é publicada no npm.
+Consumed via `file:` / `bun link` — not published to npm.
 
-## Instalação
+## Installation
 
 ```bash
 bun add file:../adt-html-editor
 ```
 
-`react` e `react-dom` (>= 19) são peer dependencies.
+`react` and `react-dom` (>= 19) are peer dependencies.
 
 ```tsx
 import { HtmlEditor } from 'adt-html-editor'
 import 'adt-html-editor/style.css'
 ```
 
-## Uso
+## Usage
 
-### Layout pronto (3 painéis)
+### Ready-made layout (3 panels)
 
 ```tsx
 <HtmlEditor.DefaultLayout defaultValue={html} onChange={(next) => setHtml(next)} />
 ```
 
-### Escolhendo os painéis
+### Picking the panels
 
-Cada painel é independente. Use só o que você quer, no arranjo que quiser:
+Each panel is independent. Use only the ones you want, in whatever arrangement you want:
 
 ```tsx
 <HtmlEditor defaultValue={html} onChange={(next) => setHtml(next)}>
@@ -40,18 +40,18 @@ Cada painel é independente. Use só o que você quer, no arranjo que quiser:
 </HtmlEditor>
 ```
 
-Só o `<HtmlEditor>` é obrigatório — ele cria a store da instância. `<HtmlEditor><HtmlEditor.Inspector /></HtmlEditor>` sozinho funciona, e `HtmlEditor.Layout` é opcional (use seu próprio grid).
+Only `<HtmlEditor>` is required — it creates the instance store. `<HtmlEditor><HtmlEditor.Inspector /></HtmlEditor>` works on its own, and `HtmlEditor.Layout` is optional (use your own grid).
 
-### Customizando o interior de cada painel
+### Customizing the inside of each panel
 
-Cada painel é um `Root` que aceita `children`. **Sem children ele renderiza a composição padrão; com children, você controla tudo** — quais partes existem, em que ordem, e com quais rótulos.
+Each panel is a `Root` that accepts `children`. **Without children it renders the default composition; with children, you control everything** — which parts exist, in what order, and with which labels.
 
 ```tsx
 <HtmlEditor defaultValue={html} onChange={setHtml}>
-  <MeuLayout>
+  <MyLayout>
     <HtmlEditor.Layers>
       <HtmlEditor.Layers.Header>
-        <HtmlEditor.Layers.Title>Estrutura</HtmlEditor.Layers.Title>
+        <HtmlEditor.Layers.Title>Structure</HtmlEditor.Layers.Title>
         <HtmlEditor.Layers.Count />
       </HtmlEditor.Layers.Header>
       <HtmlEditor.Layers.Tree />
@@ -64,11 +64,11 @@ Cada painel é um `Root` que aceita `children`. **Sem children ele renderiza a c
           <HtmlEditor.History.Undo>↶</HtmlEditor.History.Undo>
           <HtmlEditor.History.Redo>↷</HtmlEditor.History.Redo>
         </HtmlEditor.History>
-        <HtmlEditor.Canvas.DarkToggle>Tema escuro</HtmlEditor.Canvas.DarkToggle>
+        <HtmlEditor.Canvas.DarkToggle>Dark theme</HtmlEditor.Canvas.DarkToggle>
         <HtmlEditor.Canvas.WidthPresets
           presets={[
             { id: 'narrow', label: '360', width: 360 },
-            { id: 'fluid', label: 'Fluido', width: 0 },
+            { id: 'fluid', label: 'Fluid', width: 0 },
           ]}
         />
       </HtmlEditor.Canvas.Toolbar>
@@ -76,25 +76,25 @@ Cada painel é um `Root` que aceita `children`. **Sem children ele renderiza a c
 
     <HtmlEditor.Inspector>
       <HtmlEditor.Inspector.Header />
-      <HtmlEditor.Inspector.Empty>Nada selecionado.</HtmlEditor.Inspector.Empty>
+      <HtmlEditor.Inspector.Empty>Nothing selected.</HtmlEditor.Inspector.Empty>
       <HtmlEditor.Inspector.Variants />
       <HtmlEditor.Inspector.Body>
-        <HtmlEditor.Inspector.Section title="Atalhos">
+        <HtmlEditor.Inspector.Section title="Shortcuts">
           <HtmlEditor.Inspector.Control id="display" />
           <HtmlEditor.Inspector.Control id="gap" />
         </HtmlEditor.Inspector.Section>
         <HtmlEditor.Inspector.Category id="typography" />
       </HtmlEditor.Inspector.Body>
     </HtmlEditor.Inspector>
-  </MeuLayout>
+  </MyLayout>
 </HtmlEditor>
 ```
 
-O `src/playground/CustomLayout.tsx` é um exemplo completo — o playground alterna entre ele e o layout padrão.
+`src/playground/CustomLayout.tsx` is a complete example — the playground toggles between it and the default layout.
 
-### Partes disponíveis
+### Available parts
 
-| Painel | Partes |
+| Panel | Parts |
 |---|---|
 | `HtmlEditor.Layers` | `Header`, `Title`, `Count`, `Tree`, `Row`, `Empty` |
 | `HtmlEditor.Canvas` | `Toolbar`, `WidthPresets`, `DarkToggle`, `Viewport` |
@@ -102,119 +102,119 @@ O `src/playground/CustomLayout.tsx` é um exemplo completo — o playground alte
 | `HtmlEditor.Palette` | `Header`, `Grid`, `Item` |
 | `HtmlEditor.History` | `Undo`, `Redo` |
 
-`HtmlEditor.History` não depende de painel nenhum: coloque-o em qualquer toolbar dentro do `<HtmlEditor>`. Sem children ele renderiza `Undo` + `Redo`; com children você escolhe rótulos, ordem e partes extras (um contador, por exemplo). Para escrever seus próprios botões use `useHistory()` → `{ canUndo, canRedo, undo, redo }`. Os atalhos `Ctrl/⌘+Z` e `Ctrl/⌘+Shift+Z` (ou `Ctrl+Y`) continuam funcionando independentemente dos botões.
+`HtmlEditor.History` does not depend on any panel: place it in any toolbar inside `<HtmlEditor>`. Without children it renders `Undo` + `Redo`; with children you choose labels, order and extra parts (a counter, for example). To write your own buttons use `useHistory()` → `{ canUndo, canRedo, undo, redo }`. The `Ctrl/⌘+Z` and `Ctrl/⌘+Shift+Z` (or `Ctrl+Y`) shortcuts keep working regardless of the buttons.
 
-`Category` e `Control` recebem um `id` das `CATEGORIES` exportadas — categorias: `layout`, `flex`, `spacing`, `sizing`, `typography`, `color`, `border`, `effects`; controles: `display`, `gap`, `p`, `text-size`, etc.
+`Category` and `Control` take an `id` from the exported `CATEGORIES` — categories: `layout`, `flex`, `spacing`, `sizing`, `typography`, `color`, `border`, `effects`; controls: `display`, `gap`, `p`, `text-size`, etc.
 
-Para trocar a aparência das linhas da árvore sem perder o drag and drop, passe `renderRow` para `Tree` e monte sua linha em volta de `HtmlEditor.Layers.Row`.
+To change the look of the tree rows without losing drag and drop, pass `renderRow` to `Tree` and build your row around `HtmlEditor.Layers.Row`.
 
-Cada parte também é exportada solta (`LayersTree`, `InspectorCategory`, `CanvasViewport`, `HistoryGroup`…), e os contextos ficam acessíveis por `useLayersContext()`, `useInspectorContext()`, `useCanvasContext()` e `useHistory()` se você precisar escrever partes próprias.
+Each part is also exported standalone (`LayersTree`, `InspectorCategory`, `CanvasViewport`, `HistoryGroup`…), and the contexts are accessible via `useLayersContext()`, `useInspectorContext()`, `useCanvasContext()` and `useHistory()` if you need to write your own parts.
 
-## Contrato de entrada e saída
+## Input and output contract
 
 ```tsx
 const editor = useRef<HtmlEditorHandle>(null)
 
 <HtmlEditor
-  defaultValue={html}            // não controlado
-  value={html}                   // ou controlado: reparse quando muda por fora
+  defaultValue={html}            // uncontrolled
+  value={html}                   // or controlled: reparses when changed from outside
   onChange={(html, doc) => {}}
   changeDebounceMs={0}
   handleRef={editor}             // editor.current.getHtml() / setHtml() / getDocument()
 />
 ```
 
-- `onChange` dispara a cada ação confirmada (drop, classe aplicada, atributo, texto ao sair do `contentEditable`, undo/redo). Nunca por frame de drag nem por tecla digitada.
-- `getHtml()` pode ser chamado a qualquer momento (ex.: botão "Concluir" do workflow).
-- `value` mudando por fora substitui o documento inteiro e limpa histórico e seleção.
+- `onChange` fires on every committed action (drop, class applied, attribute, text on leaving `contentEditable`, undo/redo). Never per drag frame nor per typed key.
+- `getHtml()` can be called at any time (e.g. the workflow's "Done" button).
+- `value` changing from outside replaces the whole document and clears history and selection.
 
-### Formatos aceitos
+### Accepted formats
 
-| Entrada | Como é tratada | Saída |
+| Input | How it is handled | Output |
 |---|---|---|
-| Fragmento (`<section>…</section><p>…</p>`) | Filhos diretos viram filhos do nó raiz virtual | Fragmento |
-| Documento completo | Edita só o conteúdo de `<body>`; `<!doctype>`, attrs de `<html>`, `<head>` inteiro e attrs de `<body>` são guardados como texto opaco | Documento completo, com `<head>` idêntico ao original |
+| Fragment (`<section>…</section><p>…</p>`) | Direct children become children of the virtual root node | Fragment |
+| Full document | Edits only the content of `<body>`; `<!doctype>`, `<html>` attrs, the whole `<head>` and `<body>` attrs are stored as opaque text | Full document, with `<head>` identical to the original |
 
-A detecção é pela presença de `<html`, `<head` ou `<body` na entrada.
+Detection is based on the presence of `<html`, `<head` or `<body` in the input.
 
-### Garantias de fidelidade
+### Fidelity guarantees
 
-- **Equivalência de DOM, não de bytes.** `serialize(parse(html))` produz um HTML cujo DOM é igual ao da entrada; a indentação original entre blocos não é preservada. O round-trip é idempotente: `serialize(parse(serialize(parse(x)))) === serialize(parse(x))`.
-- Preservados: todos os atributos na ordem original, ordem das classes, tags desconhecidas e custom elements, comentários HTML, entidades.
-- `<script>`, `<style>`, `<svg>`, `<math>`, `<iframe>`, `<template>`, `<noscript>` são **nós opacos**: aparecem na árvore, podem ser movidos e removidos, não aceitam filhos, e o conteúdo interno é reemitido **byte a byte**.
-- Nós de texto só com whitespace entre elementos de bloco são descartados no parse. Whitespace adjacente a elementos inline é mantido. `<pre>` e `<textarea>` preservam whitespace integral.
-- Nada do editor vaza para a saída: `data-adt-id`, overlays e indicadores existem só no DOM renderizado.
+- **DOM equivalence, not byte equivalence.** `serialize(parse(html))` produces HTML whose DOM equals the input's; the original indentation between blocks is not preserved. The round-trip is idempotent: `serialize(parse(serialize(parse(x)))) === serialize(parse(x))`.
+- Preserved: all attributes in their original order, class order, unknown tags and custom elements, HTML comments, entities.
+- `<script>`, `<style>`, `<svg>`, `<math>`, `<iframe>`, `<template>`, `<noscript>` are **opaque nodes**: they show up in the tree, can be moved and removed, do not accept children, and their inner content is re-emitted **byte for byte**.
+- Whitespace-only text nodes between block elements are dropped during parsing. Whitespace adjacent to inline elements is kept. `<pre>` and `<textarea>` preserve whitespace in full.
+- Nothing from the editor leaks into the output: `data-adt-id`, overlays and indicators exist only in the rendered DOM.
 
-No canvas, o conteúdo de nós opacos passa por um sanitizador (remove `on*`, `<script>`, urls `javascript:`) **apenas para a pré-visualização** — o modelo e a saída continuam byte a byte.
+In the canvas, the content of opaque nodes goes through a sanitizer (removes `on*`, `<script>`, `javascript:` urls) **only for the preview** — the model and the output remain byte for byte.
 
-## API headless
+## Headless API
 
 ```ts
 import { parseHtml, serializeHtml, createEditorStore } from 'adt-html-editor'
 
-const doc = parseHtml(html)      // puro, usável fora do React
+const doc = parseHtml(html)      // pure, usable outside React
 const out = serializeHtml(doc)
 ```
 
-Também exportados: `useEditor()`, `useNode()`, `useChildren()`, `useDocument()`, `useEditorSelector()` e os tipos do modelo.
+Also exported: `useEditor()`, `useNode()`, `useChildren()`, `useDocument()`, `useEditorSelector()` and the model types.
 
-## Zonas de drop no canvas
+## Drop zones in the canvas
 
-Cada elemento do canvas tem duas zonas:
+Each canvas element has two zones:
 
-- **Faixa de borda** (16 px, ou 30% do tamanho em elementos pequenos) — insere como irmão antes/depois. O eixo segue o layout do pai: `left`/`right` em flex-row, `top`/`bottom` no resto.
-- **Centro** — insere *dentro*, quando o elemento aceita aninhamento: pode ter filhos e está vazio ou já tem ao menos um filho elemento. Um `<p>Texto</p>` ou `<h1>` só com texto **não** aceita, então a faixa de borda cobre o elemento inteiro.
+- **Edge strip** (16 px, or 30% of the size on small elements) — inserts as a sibling before/after. The axis follows the parent's layout: `left`/`right` in flex-row, `top`/`bottom` elsewhere.
+- **Center** — inserts *inside*, when the element accepts nesting: it can have children and is either empty or already has at least one element child. A `<p>Text</p>` or an `<h1>` with only text does **not** accept it, so the edge strip covers the whole element.
 
-Dentro de um container, a posição exata vem da comparação do ponteiro com o meio de cada filho — soltar no vão entre dois filhos insere entre eles.
+Inside a container, the exact position comes from comparing the pointer with the midpoint of each child — dropping in the gap between two children inserts between them.
 
-O indicador é desenhado por um único monitor, sempre a partir do alvo mais interno (`dropTargets[0]`), então ele mostra exatamente onde o elemento vai cair.
+The indicator is drawn by a single monitor, always from the innermost target (`dropTargets[0]`), so it shows exactly where the element will land.
 
-## Atalhos
+## Shortcuts
 
-| Tecla | Ação |
+| Key | Action |
 |---|---|
-| `↑` / `↓` | Navega na árvore |
-| `←` / `→` | Recolhe/expande, ou sobe/desce um nível |
-| `Alt+↑` / `Alt+↓` | Reordena entre irmãos |
-| `Alt+←` | Move para fora (reparent) |
-| `Alt+→` | Move para dentro do irmão anterior |
+| `↑` / `↓` | Navigate the tree |
+| `←` / `→` | Collapse/expand, or go up/down one level |
+| `Alt+↑` / `Alt+↓` | Reorder among siblings |
+| `Alt+←` | Move out (reparent) |
+| `Alt+→` | Move into the previous sibling |
 | `Del` / `Backspace` | Remove |
-| `Ctrl/Cmd+D` | Duplica |
-| `Ctrl/Cmd+C` / `X` / `V` | Copia / recorta / cola (clipboard interno) |
+| `Ctrl/Cmd+D` | Duplicate |
+| `Ctrl/Cmd+C` / `X` / `V` | Copy / cut / paste (internal clipboard) |
 | `Ctrl/Cmd+Z` / `Shift+Z` / `Ctrl+Y` | Undo / redo |
-| `Enter` (no canvas) | Edita texto inline |
-| `Esc` | Cancela edição / limpa seleção |
+| `Enter` (in the canvas) | Edit text inline |
+| `Esc` | Cancel editing / clear selection |
 
-## Tailwind no canvas
+## Tailwind in the canvas
 
-O CSS é compilado em runtime pelo `tailwindcss` v4 rodando em um **Web Worker** (carregado sob demanda quando o primeiro `<Canvas>` monta). Só as classes presentes no documento são compiladas.
+The CSS is compiled at runtime by `tailwindcss` v4 running in a **Web Worker** (loaded on demand when the first `<Canvas>` mounts). Only the classes present in the document are compiled.
 
-O CSS gerado é isolado em `@scope (.adt-canvas)` — com fallback de prefixação de seletores em browsers sem `@scope`. As media queries de breakpoint são reescritas para container queries:
+The generated CSS is isolated in `@scope (.adt-canvas)` — with a selector-prefixing fallback in browsers without `@scope`. Breakpoint media queries are rewritten to container queries:
 
 ```
 @media (width >= 48rem)  →  @container adt-canvas (width >= 48rem)
 ```
 
-Ou seja, `sm:` / `md:` / `lg:` respondem à **largura do canvas**, não à da janela do editor. Media queries de recurso (`hover`, `prefers-color-scheme`, …) não são reescritas.
+That is, `sm:` / `md:` / `lg:` respond to the **canvas width**, not the editor window's. Feature media queries (`hover`, `prefers-color-scheme`, …) are not rewritten.
 
-Conflitos entre classes são resolvidos com `tailwind-merge`. O modo escuro do canvas usa a variante `dark:` ligada à classe `.adt-dark`.
+Class conflicts are resolved with `tailwind-merge`. The canvas dark mode uses the `dark:` variant bound to the `.adt-dark` class.
 
-## Desenvolvimento
+## Development
 
 ```bash
-bun run dev          # playground em http://localhost:5173
+bun run dev          # playground at http://localhost:5173
 bun run test         # vitest
 bun run typecheck    # tsc -b
 bun run lint         # oxlint
 bun run build        # dist/index.js + dist/style.css + dist/index.d.ts
 ```
 
-O playground (`src/playground`) simula o workflow: textarea de entrada → editor → textarea de saída atualizada por `onChange`, com botão de validação de round-trip. Fixtures em `src/playground/fixtures`.
+The playground (`src/playground`) simulates the workflow: input textarea → editor → output textarea updated via `onChange`, with a round-trip validation button. Fixtures live in `src/playground/fixtures`.
 
-## Limitações conhecidas (v1)
+## Known limitations (v1)
 
-- Drag and drop usa a API nativa do HTML5: **desktop-first**, sem suporte a touch.
-- O canvas renderiza no mesmo documento (sem iframe). Um `<style>` dentro do HTML editado pode afetar a UI do editor — por isso `<style>` é renderizado como placeholder inerte no canvas.
-- `DOMParser` normaliza HTML inválido (fecha `<p>` implícito, insere `<tbody>`). A saída é HTML válido equivalente, não o original não normalizado.
-- Sem edição de `<head>`, sem colaboração em tempo real, sem símbolos/componentes reutilizáveis.
-- Modo CSS puro (`styleMode="inline-css"`) tem só o adaptador (`StyleAdapter`), sem controles dedicados.
+- Drag and drop uses the native HTML5 API: **desktop-first**, no touch support.
+- The canvas renders in the same document (no iframe). A `<style>` inside the edited HTML could affect the editor UI — that is why `<style>` is rendered as an inert placeholder in the canvas.
+- `DOMParser` normalizes invalid HTML (closes implicit `<p>`, inserts `<tbody>`). The output is equivalent valid HTML, not the original un-normalized one.
+- No `<head>` editing, no real-time collaboration, no reusable symbols/components.
+- Pure CSS mode (`styleMode="inline-css"`) has only the adapter (`StyleAdapter`), no dedicated controls.
