@@ -9,9 +9,9 @@ export type CanvasWidthPreset = {
 }
 
 export const DEFAULT_WIDTH_PRESETS: CanvasWidthPreset[] = [
-  { id: 'mobile', label: 'Mobile', width: 390 },
-  { id: 'tablet', label: 'Tablet', width: 820 },
   { id: 'desktop', label: 'Desktop', width: 0 },
+  { id: 'tablet', label: 'Tablet', width: 820 },
+  { id: 'mobile', label: 'Mobile', width: 390 },
 ]
 
 export type CanvasZoom = number | 'fit'

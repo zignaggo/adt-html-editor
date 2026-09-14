@@ -1,6 +1,6 @@
 @import './tokens.css';
 
-.adt-editor {
+.adt-chrome {
   color: var(--adt-text);
   background: var(--adt-bg);
   font-family: var(--adt-font);
@@ -11,19 +11,17 @@
   text-wrap: pretty;
 }
 
-.adt-editor :focus-visible {
+.adt-chrome :focus-visible {
   outline: 2px solid var(--adt-focus);
   outline-offset: 1px;
   border-radius: var(--adt-radius-xs);
 }
 
-.adt-editor h1,
-.adt-editor h2,
-.adt-editor h3 {
+.adt-chrome h3 {
   text-wrap: balance;
 }
 
-.adt-editor img {
+.adt-canvas img {
   outline: 1px solid var(--adt-image-outline);
   outline-offset: -1px;
 }

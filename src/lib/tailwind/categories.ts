@@ -309,16 +309,23 @@ export function withVariant(className: string, variant: VariantId): string {
   return variant === 'base' ? className : `${variant}:${className}`
 }
 
+function variantPrefixEnd(className: string): number {
+  const bracket = className.indexOf('[')
+  const head = bracket === -1 ? className : className.slice(0, bracket)
+  return head.lastIndexOf(':')
+}
+
 export function variantOf(className: string): VariantId {
-  const parts = className.split(':')
-  if (parts.length === 1) return 'base'
+  const end = variantPrefixEnd(className)
+  if (end === -1) return 'base'
+  const parts = className.slice(0, end).split(':')
   const found = VARIANTS.find((variant) => variant !== 'base' && parts.includes(variant))
   return found ?? 'base'
 }
 
 export function stripVariants(className: string): string {
-  const parts = className.split(':')
-  return parts[parts.length - 1]
+  const end = variantPrefixEnd(className)
+  return end === -1 ? className : className.slice(end + 1)
 }
 
 export const COLOR_SWATCHES: Record<string, string> = {

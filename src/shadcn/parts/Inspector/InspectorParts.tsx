@@ -47,6 +47,7 @@ import { Textarea } from '../../ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '../../ui/toggle-group'
 import { InspectorPosition } from './InspectorPosition'
 import { InspectorTransform } from './InspectorTransform'
+import { InspectorStyles } from './sections/InspectorStyles'
 
 export type InspectorPanelProps = {
   className?: string
@@ -70,21 +71,16 @@ function DefaultInspector() {
   return (
     <>
       <InspectorHeader />
-      <InspectorEmpty />
       <InspectorVariants />
+      <InspectorEmpty />
       <InspectorBody>
-        <InspectorPosition />
-        <InspectorTransform />
         <InspectorSection title="Classes">
           <InspectorClassInput />
           <InspectorClassList />
         </InspectorSection>
-        {CATEGORIES.map((category) => (
-          <InspectorCategory key={category.id} id={category.id} />
-        ))}
-        <InspectorSection title="Attributes">
-          <InspectorAttributes />
-        </InspectorSection>
+        <InspectorPosition />
+        <InspectorTransform />
+        <InspectorStyles />
       </InspectorBody>
     </>
   )
@@ -134,7 +130,7 @@ export function InspectorVariants() {
   const bar = useVariantBar()
   if (!bar.selectedId) return null
   return (
-    <div className="shrink-0 px-3 pb-2">
+    <div className="shrink-0 px-3 pb-4 border-b border-border">
       <Select
         value={bar.active}
         onValueChange={(value) => {

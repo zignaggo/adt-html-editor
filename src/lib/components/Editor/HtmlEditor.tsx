@@ -62,7 +62,9 @@ function EditorShell({ className, children }: { className?: string; children: Re
     <div
       ref={shellRef}
       className={
-        className ? `adt-editor ${styles.shell} ${className}` : `adt-editor ${styles.shell}`
+        className
+          ? `adt-editor adt-chrome ${styles.shell} ${className}`
+          : `adt-editor adt-chrome ${styles.shell}`
       }
     >
       {children}

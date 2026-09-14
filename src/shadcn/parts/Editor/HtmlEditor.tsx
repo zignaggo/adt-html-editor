@@ -1,11 +1,8 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { CanvasFixedPage } from '../../../lib/components/Canvas/Canvas'
 import { CanvasViewport } from '../../../lib/components/Canvas/CanvasParts'
-import {
-  HtmlEditor as CoreHtmlEditor,
-  type HtmlEditorProps as CoreHtmlEditorProps,
-} from '../../../lib/components/Editor/HtmlEditor'
-import type { EditorProviderProps } from '../../../lib/components/Editor/EditorProvider'
+import { EditorProvider, type EditorProviderProps } from '../../../lib/components/Editor/EditorProvider'
+import { useEditorShortcuts } from '../../../lib/components/Editor/useEditorShortcuts'
 import { ImageGhost } from '../../../lib/fixed/ghost/ImageGhost'
 import { LiveGhost } from '../../../lib/fixed/ghost/LiveGhost'
 import { Guides } from '../../../lib/fixed/guides/Guides'
@@ -35,6 +32,13 @@ import {
 } from '../Inspector/InspectorParts'
 import { InspectorPosition } from '../Inspector/InspectorPosition'
 import { InspectorTransform } from '../Inspector/InspectorTransform'
+import { InspectorAppearance } from '../Inspector/sections/InspectorAppearance'
+import { InspectorBorders } from '../Inspector/sections/InspectorBorders'
+import { InspectorLayout } from '../Inspector/sections/InspectorLayout'
+import { InspectorSizing } from '../Inspector/sections/InspectorSizing'
+import { InspectorSpacing } from '../Inspector/sections/InspectorSpacing'
+import { InspectorStyles } from '../Inspector/sections/InspectorStyles'
+import { InspectorTypography } from '../Inspector/sections/InspectorTypography'
 import {
   LayerRow,
   LayersCount,
@@ -48,13 +52,30 @@ import {
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
 
-export type HtmlEditorProps = CoreHtmlEditorProps
+export type HtmlEditorProps = EditorProviderProps & {
+  className?: string
+}
 
-export function HtmlEditor({ children, ...props }: HtmlEditorProps) {
+export function HtmlEditor({ className, children, ...providerProps }: HtmlEditorProps) {
   return (
-    <CoreHtmlEditor {...props}>
-      <TooltipProvider>{children}</TooltipProvider>
-    </CoreHtmlEditor>
+    <EditorProvider {...providerProps}>
+      <EditorShell className={className}>
+        <TooltipProvider>{children}</TooltipProvider>
+      </EditorShell>
+    </EditorProvider>
+  )
+}
+
+function EditorShell({ className, children }: { className?: string; children: ReactNode }) {
+  const shellRef = useRef<HTMLDivElement | null>(null)
+  useEditorShortcuts(shellRef)
+  return (
+    <div
+      ref={shellRef}
+      className={cn('adt-editor isolate flex h-full min-h-0 min-w-0 bg-background text-sm text-foreground antialiased', className)}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -137,6 +158,13 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Attributes: InspectorAttributes,
   Position: InspectorPosition,
   Transform: InspectorTransform,
+  Styles: InspectorStyles,
+  Layout: InspectorLayout,
+  Spacing: InspectorSpacing,
+  Sizing: InspectorSizing,
+  Typography: InspectorTypography,
+  Appearance: InspectorAppearance,
+  Borders: InspectorBorders,
 })
 
 const HistoryNamespace = Object.assign(HistoryGroup, {
