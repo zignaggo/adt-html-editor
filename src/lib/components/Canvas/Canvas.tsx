@@ -30,12 +30,7 @@ export function CanvasFixedPage(props: FixedPageProps) {
   )
 }
 
-export type CanvasProps = {
-  className?: string
-  children?: ReactNode
-}
-
-export function Canvas({ className, children }: CanvasProps) {
+export function CanvasProvider({ children }: { children: ReactNode }) {
   const [preset, setPreset] = useState<CanvasWidthPreset>(
     DEFAULT_WIDTH_PRESETS[DEFAULT_WIDTH_PRESETS.length - 1],
   )
@@ -72,12 +67,21 @@ export function Canvas({ className, children }: CanvasProps) {
     registerGhostLayer,
   }
 
+  return <CanvasContext value={context}>{children}</CanvasContext>
+}
+
+export type CanvasProps = {
+  className?: string
+  children?: ReactNode
+}
+
+export function Canvas({ className, children }: CanvasProps) {
   return (
-    <CanvasContext value={context}>
+    <CanvasProvider>
       <div className={className ? `${styles.wrapper} ${className}` : styles.wrapper}>
         {children ?? <DefaultCanvas />}
       </div>
-    </CanvasContext>
+    </CanvasProvider>
   )
 }
 

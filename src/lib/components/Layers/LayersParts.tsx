@@ -3,8 +3,10 @@ import {
   useEffectEvent,
   useRef,
   useState,
+  type ComponentType,
   type KeyboardEvent,
   type ReactNode,
+  type UIEvent,
 } from 'react'
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
@@ -12,10 +14,11 @@ import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
 import type { NodeId } from '../../core/ids'
 import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
-import { useEditorSelector, useEditorStoreApi } from '../Editor/context'
+import { useEditorSelector } from '../Editor/context'
 import { useLayersContext } from './context'
 import type { LayerRowInfo } from './flatten'
 import { LayerRow } from './LayerRow'
+import { useLayersSearch } from './useLayersSearch'
 import { useTreeKeyboard } from './useTreeKeyboard'
 import styles from './LayersPanel.module.css'
 
@@ -56,52 +59,54 @@ export function LayersSearch({
   placeholder = 'Search elements…',
   'aria-label': ariaLabel = 'Search elements',
 }: LayersSearchProps) {
-  const { rows, state, actions, meta } = useLayersContext()
-  const store = useEditorStoreApi()
-  const { focusTree } = actions
-
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') {
-      if (!state.query) return
-      event.preventDefault()
-      actions.clearSearch()
-      return
-    }
-    if (event.key !== 'ArrowDown' && event.key !== 'Enter') return
-    if (rows.length === 0) return
-    event.preventDefault()
-    const { selectedId } = store.state
-    if (!selectedId || !rows.some((row) => row.id === selectedId)) {
-      const target = rows.find((row) => row.isMatch) ?? rows[0]
-      store.actions.select(target.id)
-    }
-    focusTree()
-  }
+  const search = useLayersSearch()
 
   return (
     <div className={className ? `${styles.search} ${className}` : styles.search}>
       <input
-        ref={(element) => meta.registerSearch(element)}
+        ref={(element) => search.registerInput(element)}
         type="search"
         className={styles.searchInput}
         aria-label={ariaLabel}
         placeholder={placeholder}
         autoComplete="off"
         spellCheck={false}
-        value={state.query}
-        onChange={(event) => actions.setQuery(event.target.value)}
-        onKeyDown={onKeyDown}
+        value={search.value}
+        onChange={(event) => search.setValue(event.target.value)}
+        onKeyDown={search.onKeyDown}
       />
     </div>
   )
 }
 
+export type LayersScrollerProps = {
+  ref: (element: HTMLDivElement | null) => void
+  role: 'tree'
+  'aria-label': string
+  tabIndex: -1
+  className: string | undefined
+  onKeyDown: (event: KeyboardEvent<HTMLElement>) => void
+  onScroll: ((event: UIEvent<HTMLDivElement>) => void) | undefined
+  children: ReactNode
+}
+
 export type LayersTreeProps = {
   className?: string
   renderRow?: (row: LayerRowInfo, isFocusable: boolean) => ReactNode
+  scroller?: ComponentType<LayersScrollerProps>
+  empty?: ReactNode
 }
 
-export function LayersTree({ className, renderRow }: LayersTreeProps) {
+function DefaultScroller({ className, ...props }: LayersScrollerProps) {
+  return <div {...props} className={className ? `${styles.scroll} ${className}` : styles.scroll} />
+}
+
+export function LayersTree({
+  className,
+  renderRow,
+  scroller: Scroller = DefaultScroller,
+  empty,
+}: LayersTreeProps) {
   const { rows, meta } = useLayersContext()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const attachScroll = (element: HTMLDivElement | null) => {
@@ -169,12 +174,12 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
   const visible = isVirtual ? rows.slice(first, last) : rows
 
   return (
-    <div
+    <Scroller
       ref={attachScroll}
       role="tree"
       aria-label="Element tree"
       tabIndex={-1}
-      className={className ? `${styles.scroll} ${className}` : styles.scroll}
+      className={className}
       onKeyDown={onKeyDown}
       onScroll={
         isVirtual
@@ -214,8 +219,8 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
           )}
         </div>
       </div>
-      <LayersEmpty />
+      {empty === undefined ? <LayersEmpty /> : empty}
       <DropIndicator surface="tree" />
-    </div>
+    </Scroller>
   )
 }

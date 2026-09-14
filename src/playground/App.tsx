@@ -3,11 +3,12 @@ import { HtmlEditor, parseHtml, serializeHtml, type HtmlEditorHandle } from '../
 import { CustomLayout } from './CustomLayout'
 import { FixedImageLayout } from './FixedImageLayout'
 import { FIXTURES } from './fixtures'
+import { DefaultLayout as ShadcnDefaultLayout } from '../shadcn/parts/Editor/HtmlEditor'
 import styles from './App.module.css'
 
 type RoundTrip = { ok: boolean; message: string } | null
 
-type LayoutMode = 'default' | 'custom' | 'fixed-image'
+type LayoutMode = 'default' | 'custom' | 'fixed-image' | 'shadcn'
 
 type State = {
   layoutMode: LayoutMode
@@ -106,6 +107,7 @@ export function App() {
             <option value="default">Default (3 panels)</option>
             <option value="custom">Custom composition</option>
             <option value="fixed-image">Fixed layout · image ghost</option>
+            <option value="shadcn">shadcn skin</option>
           </select>
         </label>
         <div className={styles.actions}>
@@ -132,6 +134,13 @@ export function App() {
         {state.layoutMode === 'default' ? (
           <HtmlEditor.DefaultLayout
             key={`default-${state.documentHtml}`}
+            defaultValue={state.documentHtml}
+            handleRef={handleRef}
+            onChange={(html) => dispatch({ type: 'setOutput', value: html })}
+          />
+        ) : state.layoutMode === 'shadcn' ? (
+          <ShadcnDefaultLayout
+            key={`shadcn-${state.documentHtml}`}
             defaultValue={state.documentHtml}
             handleRef={handleRef}
             onChange={(html) => dispatch({ type: 'setOutput', value: html })}

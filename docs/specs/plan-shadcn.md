@@ -196,35 +196,35 @@ One test module exports `describePartContract(name, render)` suites for each par
 ## 4. Phases
 
 ### Phase S0 — Headless extraction in the core (1–2 days)
-- [ ] Hooks from §3.1 added and exported; core styled parts rewritten on top of them; no visual or behavioural change.
-- [ ] `describePartContract` suites written and passing against the core parts.
+- [x] Hooks from §3.1 added and exported; core styled parts rewritten on top of them; no visual or behavioural change.
+- [x] `describePartContract` suites written and passing against the core parts.
 - **Done when**: `test`, `lint`, `typecheck`, react-doctor unchanged; every core part imports its hook; `src/lib/index.ts` exports the hooks.
 
 ### Phase S1 — Skin scaffold and build (1 day)
-- [ ] `components.json` (base decided, style, icon library), `@shadcn/*` alias in TS and Vite, `cn()` and first `ui/*` via `bunx --bun shadcn@latest add`.
-- [ ] Second entry, `exports`, optional peers, `tsconfig.types.json` layout, `bundle.test.ts`, oxlint restricted imports.
-- [ ] Playground: Tailwind v4 + shadcn tokens in `src/playground/index.css` with `@source` limited to `src/shadcn`, layout option "shadcn" rendering the core `DefaultLayout` for now.
+- [x] `components.json` (base decided, style, icon library), `@shadcn/*` alias in TS and Vite, `cn()` and first `ui/*` via `bunx --bun shadcn@latest add`.
+- [x] Second entry, `exports`, optional peers, `tsconfig.types.json` layout, `bundle.test.ts`, oxlint restricted imports.
+- [x] Playground: Tailwind v4 + shadcn tokens in `src/playground/index.css` with `@source` limited to `src/shadcn`, layout option "shadcn" rendering the core `DefaultLayout` for now.
 - **Done when**: `bun run build` emits `dist/index.js` and `dist/shadcn.js`; the bundle test proves `dist/index.js` has no skin peer; the playground renders with the new CSS without regressions in the core layouts.
 
 ### Phase S2 — Layers, History and Canvas toolbar (1–2 days)
-- [ ] Skin `Layers.*` (search, tree, rows, empty), `History`, `Canvas.Toolbar`, `WidthPresets`, `DarkToggle`, `Zoom`.
-- [ ] Conformance suites green against the skin parts.
+- [x] Skin `Layers.*` (search, tree, rows, empty), `History`, `Canvas.Toolbar`, `WidthPresets`, `DarkToggle`, `Zoom`.
+- [x] Conformance suites green against the skin parts.
 - **Done when**: tree DnD, keyboard reordering and search behave identically to the core in the playground; react-doctor 100 on changed files.
 
 ### Phase S3 — Inspector (2 days)
-- [ ] `Inspector.*`: header, variants (`Tabs`), sections (`Accordion`), class list (`Badge`), class input (`Popover` + `Command`), controls, attributes, `Position`, `Transform`.
-- [ ] Conformance suites green.
+- [x] `Inspector.*`: header, variants (`Tabs`), sections (`Accordion`), class list (`Badge`), class input (`Popover` + `Command`), controls, attributes, `Position`, `Transform`.
+- [x] Conformance suites green.
 - **Done when**: applying a class through the combobox shows in the canvas in < 50 ms as in the core; position/transform fields converge to the same `style` as handles and keyboard.
 
 ### Phase S4 — Palette and DefaultLayout (1 day)
-- [ ] `Palette` with `Button` grid and drag data from `usePaletteDraggable`; `DefaultLayout` with `Resizable`.
-- [ ] `src/shadcn/index.ts` namespace complete, canvas internals re-exported from the core.
+- [x] `Palette` with `Button` grid and drag data from `usePaletteDraggable`; `DefaultLayout` with `Resizable`.
+- [x] `src/shadcn/index.ts` namespace complete, canvas internals re-exported from the core.
 - **Done when**: swapping the import path in the playground is the only change needed to get the skin; palette drops work into tree and canvas.
 
 ### Phase S5 — Hardening and docs (1 day)
 - [ ] a11y audit of skin parts (focus, labels, 24 px targets, `prefers-reduced-motion`), `react-doctor scan` with the 2,000-node fixture.
-- [ ] README: "shadcn skin" section (install peers, `@source`, tokens, `style.css` still required, `base` vs `radix`), limitations.
-- [ ] Size budget recorded in `bundle.test.ts`.
+- [x] README: "shadcn skin" section (install peers, `@source`, tokens, `style.css` still required, `base` vs `radix`), limitations.
+- [x] Size budget recorded in `bundle.test.ts`.
 - **Done when**: `test`, `lint`, `typecheck`, `build`, react-doctor clean; README updated; the bundle test is part of `bun run build` verification.
 
 ---

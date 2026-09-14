@@ -17,12 +17,7 @@ import {
 } from './InspectorParts'
 import styles from './InspectorPanel.module.css'
 
-export type InspectorPanelProps = {
-  className?: string
-  children?: ReactNode
-}
-
-export function InspectorPanel({ className, children }: InspectorPanelProps) {
+export function InspectorProvider({ children }: { children: ReactNode }) {
   const selectedId = useEditorSelector((state) => state.selectedId)
   const [variant, setVariant] = useState<VariantId>('base')
   const [openCategory, setOpenCategory] = useState<string>(CATEGORIES[0]?.id ?? '')
@@ -35,15 +30,24 @@ export function InspectorPanel({ className, children }: InspectorPanelProps) {
     setOpenCategory,
   }
 
+  return <InspectorContext value={context}>{children}</InspectorContext>
+}
+
+export type InspectorPanelProps = {
+  className?: string
+  children?: ReactNode
+}
+
+export function InspectorPanel({ className, children }: InspectorPanelProps) {
   return (
-    <InspectorContext.Provider value={context}>
+    <InspectorProvider>
       <aside
         className={className ? `${styles.panel} ${className}` : styles.panel}
         aria-label="Styles"
       >
         {children ?? <DefaultInspector />}
       </aside>
-    </InspectorContext.Provider>
+    </InspectorProvider>
   )
 }
 

@@ -1,26 +1,9 @@
-import { startTransition, useDeferredValue, useEffect, useRef, useState } from 'react'
+import { startTransition, useRef, useState } from 'react'
 import type { NodeId } from '../../core/ids'
-import { getClassList } from '../../tailwind/client'
 import type { VariantId } from '../../tailwind/categories'
 import { useClassEditing } from './useClassEditing'
+import { useClassSuggestions } from './useClassSuggestions'
 import styles from './InspectorPanel.module.css'
-
-const MAX_SUGGESTIONS = 40
-
-const NO_SUGGESTIONS: string[] = []
-
-function suggestFor(allClasses: string[], query: string): string[] {
-  const needle = query.trim().toLowerCase()
-  if (!needle) return NO_SUGGESTIONS
-  const starts: string[] = []
-  const contains: string[] = []
-  for (const className of allClasses) {
-    if (className.startsWith(needle)) starts.push(className)
-    else if (className.includes(needle)) contains.push(className)
-    if (starts.length >= MAX_SUGGESTIONS) break
-  }
-  return [...starts, ...contains].slice(0, MAX_SUGGESTIONS)
-}
 
 export type ClassComboboxProps = {
   id: NodeId
@@ -31,23 +14,10 @@ export type ClassComboboxProps = {
 export function ClassCombobox({ id, variant, placeholder = 'Add class…' }: ClassComboboxProps) {
   const editing = useClassEditing(id)
   const [query, setQuery] = useState('')
-  const [allClasses, setAllClasses] = useState<string[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const deferredQuery = useDeferredValue(query)
-
-  useEffect(() => {
-    let cancelled = false
-    void getClassList().then((classes) => {
-      if (!cancelled) startTransition(() => setAllClasses(classes))
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const suggestions = suggestFor(allClasses, deferredQuery)
+  const suggestions = useClassSuggestions(query)
 
   const commit = (className: string) => {
     startTransition(() => editing.apply(className, variant))

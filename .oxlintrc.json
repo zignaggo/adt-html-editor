@@ -1,8 +1,32 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "oxc"],
+  "ignorePatterns": ["src/shadcn/ui/**"],
   "rules": {
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/lib/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@shadcn/*",
+              "**/shadcn/**",
+              "@base-ui/react",
+              "@base-ui/react/*",
+              "lucide-react",
+              "class-variance-authority",
+              "cn",
+              "cmdk",
+              "react-resizable-panels"
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

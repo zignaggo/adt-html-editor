@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
 import { isStyled, labelOf } from '../../core/model'
-import { CATEGORIES, VARIANTS, type ControlSpec } from '../../tailwind/categories'
+import { CATEGORIES, type ControlSpec } from '../../tailwind/categories'
 import { useNode } from '../Editor/context'
 import { AttributeFields } from './AttributeFields'
 import { ClassChips } from './ClassChips'
 import { ClassCombobox } from './ClassCombobox'
 import { useInspectorContext } from './context'
 import { ControlGroup } from './controls/ControlGroup'
+import { useVariantBar } from './useVariantBar'
 import styles from './InspectorPanel.module.css'
 
 export function InspectorHeader({ children }: { children?: ReactNode }) {
@@ -42,20 +43,20 @@ export function InspectorEmpty({ children }: { children?: ReactNode }) {
 }
 
 export function InspectorVariants() {
-  const { selectedId, variant, setVariant } = useInspectorContext()
-  if (!selectedId) return null
+  const bar = useVariantBar()
+  if (!bar.selectedId) return null
 
   return (
     <div className={styles.variantBar} role="tablist" aria-label="Variant">
-      {VARIANTS.map((entry) => (
+      {bar.variants.map((entry) => (
         <button
           key={entry}
           type="button"
           role="tab"
-          aria-selected={entry === variant}
+          aria-selected={bar.isActive(entry)}
           className={styles.variantButton}
-          data-active={entry === variant || undefined}
-          onClick={() => setVariant(entry)}
+          data-active={bar.isActive(entry) || undefined}
+          onClick={() => bar.setActive(entry)}
         >
           {entry}
         </button>

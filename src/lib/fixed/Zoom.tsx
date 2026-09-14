@@ -1,19 +1,19 @@
-import { useCanvasContext } from '../components/Canvas/context'
 import styles from '../components/Canvas/Canvas.module.css'
-import { DEFAULT_ZOOM_LEVELS, type CanvasZoomLevel } from './zoomLevels'
+import { useZoom } from './useZoom'
+import type { CanvasZoomLevel } from './zoomLevels'
 
-export function Zoom({ levels = DEFAULT_ZOOM_LEVELS }: { levels?: CanvasZoomLevel[] }) {
-  const { zoom, setZoom } = useCanvasContext()
+export function Zoom({ levels }: { levels?: CanvasZoomLevel[] }) {
+  const control = useZoom(levels)
   return (
     <div className={styles.presets} role="group" aria-label="Zoom">
-      {levels.map((level) => (
+      {control.levels.map((level) => (
         <button
           key={level.id}
           type="button"
           className={styles.presetButton}
-          data-active={level.zoom === zoom || undefined}
-          aria-pressed={level.zoom === zoom}
-          onClick={() => setZoom(level.zoom)}
+          data-active={control.isActive(level.id) || undefined}
+          aria-pressed={control.isActive(level.id)}
+          onClick={() => control.selectLevel(level.id)}
         >
           {level.label}
         </button>

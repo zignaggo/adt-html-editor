@@ -6,28 +6,29 @@ import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
 import { useChildren, useEditorContext, useRootId } from '../Editor/context'
 import { CanvasNode } from './CanvasNode'
-import { DEFAULT_WIDTH_PRESETS, useCanvasContext, type CanvasWidthPreset } from './context'
+import { useCanvasContext, type CanvasWidthPreset } from './context'
 import { SelectionOverlay } from './SelectionOverlay'
 import { useCanvasInteractions } from './useCanvasInteractions'
+import { useDarkToggle, useWidthPresets } from './useCanvasControls'
 import styles from './Canvas.module.css'
 
 export function CanvasToolbar({ children }: { children?: ReactNode }) {
   return <div className={styles.toolbar}>{children}</div>
 }
 
-export function CanvasWidthPresets({ presets = DEFAULT_WIDTH_PRESETS }: { presets?: CanvasWidthPreset[] }) {
-  const { presetId, setPreset } = useCanvasContext()
+export function CanvasWidthPresets({ presets }: { presets?: CanvasWidthPreset[] }) {
+  const control = useWidthPresets(presets)
 
   return (
     <div className={styles.presets} role="group" aria-label="Canvas width">
-      {presets.map((preset) => (
+      {control.presets.map((preset) => (
         <button
           key={preset.id}
           type="button"
           className={styles.presetButton}
-          data-active={preset.id === presetId || undefined}
-          aria-pressed={preset.id === presetId}
-          onClick={() => setPreset(preset)}
+          data-active={control.isActive(preset.id) || undefined}
+          aria-pressed={control.isActive(preset.id)}
+          onClick={() => control.select(preset.id)}
         >
           {preset.label}
         </button>
@@ -37,14 +38,14 @@ export function CanvasWidthPresets({ presets = DEFAULT_WIDTH_PRESETS }: { preset
 }
 
 export function CanvasDarkToggle({ children }: { children?: ReactNode }) {
-  const { isDark, setIsDark } = useCanvasContext()
+  const { isDark, toggle } = useDarkToggle()
   return (
     <button
       type="button"
       className={styles.presetButton}
       data-active={isDark || undefined}
       aria-pressed={isDark}
-      onClick={() => setIsDark(!isDark)}
+      onClick={toggle}
     >
       {children ?? 'Dark'}
     </button>

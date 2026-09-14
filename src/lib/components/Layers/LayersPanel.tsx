@@ -5,12 +5,7 @@ import { createLayerFilter, flattenTree } from './flatten'
 import { LayersCount, LayersHeader, LayersSearch, LayersTitle, LayersTree } from './LayersParts'
 import styles from './LayersPanel.module.css'
 
-export type LayersPanelProps = {
-  className?: string
-  children?: ReactNode
-}
-
-export function LayersPanel({ className, children }: LayersPanelProps) {
+export function LayersProvider({ children }: { children: ReactNode }) {
   const doc = useEditorSelector((state) => state.doc)
   const collapsed = useEditorSelector((state) => state.collapsed)
   const [query, setQuery] = useState('')
@@ -41,12 +36,21 @@ export function LayersPanel({ className, children }: LayersPanelProps) {
     },
   }
 
+  return <LayersContext value={context}>{children}</LayersContext>
+}
+
+export type LayersPanelProps = {
+  className?: string
+  children?: ReactNode
+}
+
+export function LayersPanel({ className, children }: LayersPanelProps) {
   return (
-    <LayersContext value={context}>
+    <LayersProvider>
       <div className={className ? `${styles.panel} ${className}` : styles.panel}>
         {children ?? <DefaultLayers />}
       </div>
-    </LayersContext>
+    </LayersProvider>
   )
 }
 

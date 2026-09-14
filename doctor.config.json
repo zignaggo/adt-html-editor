@@ -1,0 +1,16 @@
+{
+  "ignore": {
+    "files": ["src/shadcn/ui/**"],
+    "overrides": [
+      {
+        "files": [
+          "src/shadcn/parts/**",
+          "src/lib/components/Canvas/Canvas.tsx",
+          "src/lib/components/Inspector/InspectorPanel.tsx",
+          "src/lib/components/Layers/LayersPanel.tsx"
+        ],
+        "rules": ["duplicate-jsx-subtree"]
+      }
+    ]
+  }
+}
