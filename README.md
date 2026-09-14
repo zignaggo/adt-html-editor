@@ -170,7 +170,12 @@ Each canvas element has two zones:
 
 Inside a container, the exact position comes from comparing the pointer with the midpoint of each child — dropping in the gap between two children inserts between them.
 
-The indicator is drawn by a single monitor, always from the innermost target (`dropTargets[0]`), so it shows exactly where the element will land.
+When an existing element is dragged, its **current parent takes priority** so reordering among siblings is easy:
+
+- Over a sibling (or anything inside it), a **wide band** (40% of the sibling on the parent's axis, at least 24 px) means "before/after that sibling". Only the sibling's core still nests into it, or into a deeper container under the pointer.
+- Over the parent's own padding or edges, the drop stays inside the parent, at the position closest to the pointer. Moving out of the parent is done by hovering another element outside it.
+
+Palette drags keep the plain zones above. The indicator is drawn by a single monitor from the target chosen this way, so it shows exactly where the element will land.
 
 ## Shortcuts
 

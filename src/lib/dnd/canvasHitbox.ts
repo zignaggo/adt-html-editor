@@ -11,8 +11,18 @@ export type InsideSpot = {
   line: { axis: 'horizontal' | 'vertical'; start: number; cross: number; length: number } | null
 }
 
-const EDGE_PIXELS = 16
-const EDGE_RATIO = 0.3
+export type EdgeBand = 'thin' | 'wide'
+
+const THIN_EDGE_PIXELS = 16
+const THIN_EDGE_RATIO = 0.3
+const WIDE_EDGE_PIXELS = 24
+const WIDE_EDGE_RATIO = 0.4
+
+function edgeThreshold(size: number, band: EdgeBand): number {
+  return band === 'wide'
+    ? Math.max(WIDE_EDGE_PIXELS, size * WIDE_EDGE_RATIO)
+    : Math.min(THIN_EDGE_PIXELS, size * THIN_EDGE_RATIO)
+}
 
 const zoneKey = Symbol('adt:canvas-zone')
 
@@ -38,8 +48,9 @@ export function computeZone(options: {
   input: Input
   axis: LayoutAxis
   canNest: boolean
+  band?: EdgeBand
 }): CanvasZone {
-  const { rect, input, axis, canNest } = options
+  const { rect, input, axis, canNest, band = 'thin' } = options
   const horizontal = axis === 'row'
 
   const size = horizontal ? rect.width : rect.height
@@ -52,7 +63,7 @@ export function computeZone(options: {
     return { type: 'edge', edge: fromStart <= fromEnd ? startEdge : endEdge }
   }
 
-  const threshold = Math.min(EDGE_PIXELS, size * EDGE_RATIO)
+  const threshold = edgeThreshold(size, band)
   if (fromStart < threshold) return { type: 'edge', edge: startEdge }
   if (fromEnd < threshold) return { type: 'edge', edge: endEdge }
   return { type: 'inside' }

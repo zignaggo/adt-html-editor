@@ -1,20 +1,34 @@
 import { useEffect } from 'react'
-import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
+import {
+  monitorForElements,
+  type ElementDragPayload,
+} from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 import { announce } from '@atlaskit/pragmatic-drag-and-drop-live-region'
-import type { DragLocationHistory } from '@atlaskit/pragmatic-drag-and-drop/types'
+import type { DragLocationHistory, DropTargetRecord } from '@atlaskit/pragmatic-drag-and-drop/types'
 import { labelOf } from '../core/model'
 import { useEditorStoreApi } from '../components/Editor/context'
 import { isEditorDrag, isNodeDrag, isPaletteDrag } from './data'
 import { beginDragGeneration, clearIndicators, setIndicator } from './dragStore'
 import { indicatorFor } from './indicatorFor'
+import { pickDropTarget } from './pickDropTarget'
 import { resolveDrop } from './resolveDrop'
+
+type DragEvent = { source: ElementDragPayload; location: DragLocationHistory }
 
 export function useEditorDropMonitor() {
   const store = useEditorStoreApi()
 
   useEffect(() => {
-    const paint = ({ location }: { location: DragLocationHistory }) => {
-      const indicator = indicatorFor(location.current.dropTargets[0], location.current.input)
+    const targetOf = ({ source, location }: DragEvent): DropTargetRecord | undefined =>
+      pickDropTarget(
+        store.state.doc,
+        location.current.dropTargets,
+        isNodeDrag(source.data) ? source.data.nodeId : null,
+        location.current.input,
+      )
+
+    const paint = (event: DragEvent) => {
+      const indicator = indicatorFor(targetOf(event), event.location.current.input)
       if (!indicator) {
         clearIndicators()
         return
@@ -34,7 +48,7 @@ export function useEditorDropMonitor() {
       onDrop({ source, location }) {
         clearIndicators()
 
-        const target = location.current.dropTargets[0]
+        const target = targetOf({ source, location })
         if (!target) return
 
         const { state, actions } = store
