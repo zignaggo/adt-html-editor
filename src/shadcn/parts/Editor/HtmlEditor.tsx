@@ -50,6 +50,7 @@ import {
   LayersTree,
 } from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
+import { Sidebar, SidebarLayers, SidebarPalette, SidebarSearch, SidebarTabs } from '../Sidebar/Sidebar'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
 
 export type HtmlEditorProps = EditorProviderProps & {
@@ -101,8 +102,7 @@ export function DefaultLayout({ className, ...providerProps }: DefaultLayoutProp
     <HtmlEditor {...providerProps} className={className}>
       <ResizablePanelGroup orientation="horizontal" className="min-h-0">
         <ResizablePanel defaultSize={22} minSize={16} className="flex min-h-0 flex-col">
-          <Palette />
-          <LayersPanel className="min-h-0 flex-1 border-r-0" />
+          <Sidebar className="min-h-0 flex-1 border-r-0" />
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={54} minSize={30} className="flex min-h-0 min-w-0 flex-col">
@@ -178,10 +178,18 @@ const PaletteNamespace = Object.assign(Palette, {
   Item: PaletteItem,
 })
 
+const SidebarNamespace = Object.assign(Sidebar, {
+  Search: SidebarSearch,
+  Tabs: SidebarTabs,
+  Layers: SidebarLayers,
+  Palette: SidebarPalette,
+})
+
 HtmlEditor.Layers = LayersNamespace
 HtmlEditor.Canvas = CanvasNamespace
 HtmlEditor.Inspector = InspectorNamespace
 HtmlEditor.Palette = PaletteNamespace
+HtmlEditor.Sidebar = SidebarNamespace
 HtmlEditor.History = HistoryNamespace
 HtmlEditor.Layout = Layout
 HtmlEditor.DefaultLayout = DefaultLayout

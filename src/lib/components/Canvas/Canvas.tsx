@@ -32,7 +32,7 @@ export function CanvasFixedPage(props: FixedPageProps) {
 
 export function CanvasProvider({ children }: { children: ReactNode }) {
   const [preset, setPreset] = useState<CanvasWidthPreset>(
-    DEFAULT_WIDTH_PRESETS[DEFAULT_WIDTH_PRESETS.length - 1],
+    DEFAULT_WIDTH_PRESETS[0],
   )
   const [isDark, setIsDark] = useState(false)
   const [zoom, setZoom] = useState<CanvasZoom>('fit')

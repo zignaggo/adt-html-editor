@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { useEffect } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EditorProvider } from '../../lib/components/Editor/EditorProvider'
@@ -84,6 +84,25 @@ describe('shadcn skin parts', () => {
     expect(screen.getByRole('button', { name: 'Remove font-bold' })).toBeTruthy()
     expect(screen.getByRole('combobox', { name: 'Variant' })).toBeTruthy()
     expect(screen.getByRole('combobox', { name: 'Add class' })).toBeTruthy()
+  })
+
+  it('describes the selected element in the header and navigates to ancestors', () => {
+    const store = setup()
+    const h1 = idOf(store, 'h1')
+    act(() => store.actions.select(h1))
+    expect(screen.getByText(/2 classes/)).toBeTruthy()
+    expect(screen.getByText('“Title”')).toBeTruthy()
+    const crumbs = screen.getByRole('navigation', { name: 'Ancestors' })
+    fireEvent.click(within(crumbs).getByRole('button', { name: 'section' }))
+    expect(store.state.selectedId).toBe(idOf(store, 'section'))
+    expect(screen.getAllByText('#hero').length).toBeGreaterThan(1)
+    expect(screen.getByRole('button', { name: 'Select parent' })).toHaveProperty('disabled', true)
+
+    act(() => store.actions.select(h1))
+    fireEvent.click(screen.getByRole('button', { name: 'Select parent' }))
+    expect(store.state.selectedId).toBe(idOf(store, 'section'))
+    fireEvent.click(screen.getByRole('button', { name: 'Lock element' }))
+    expect(store.state.locked[idOf(store, 'section')]).toBe(true)
   })
 
   it('removes a class through the chip button and records history', () => {

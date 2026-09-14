@@ -1,15 +1,16 @@
-import { startTransition, useRef, useState, type ReactNode } from 'react'
-import { ArrowDownIcon, ArrowUpIcon, XIcon } from 'lucide-react'
+import { Fragment, createElement, startTransition, useRef, useState, type ReactNode } from 'react'
+import { ArrowDownIcon, ArrowUpIcon, CornerLeftUpIcon, LockIcon, LockOpenIcon, XIcon } from 'lucide-react'
 import { useNode } from '../../../lib/components/Editor/context'
 import { useInspectorContext } from '../../../lib/components/Inspector/context'
 import { InspectorProvider } from '../../../lib/components/Inspector/InspectorPanel'
 import { useAttributeFields } from '../../../lib/components/Inspector/useAttributeFields'
 import { useClassEditing } from '../../../lib/components/Inspector/useClassEditing'
 import { useClassSuggestions } from '../../../lib/components/Inspector/useClassSuggestions'
+import { useNodeSummary, type NodeSummary } from '../../../lib/components/Inspector/useNodeSummary'
 import { useVariantBar } from '../../../lib/components/Inspector/useVariantBar'
 import { useStyleControl } from '../../../lib/components/Inspector/controls/useStyleControl'
 import type { NodeId } from '../../../lib/core/ids'
-import { isStyled, labelOf } from '../../../lib/core/model'
+import { isStyled } from '../../../lib/core/model'
 import {
   CATEGORIES,
   COLOR_SWATCHES,
@@ -22,6 +23,14 @@ import {
 import { cn } from '../../lib/utils'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion'
 import { Badge } from '../../ui/badge'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '../../ui/breadcrumb'
 import { Button } from '../../ui/button'
 import {
   Combobox,
@@ -45,6 +54,8 @@ import {
 } from '../../ui/select'
 import { Textarea } from '../../ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '../../ui/toggle-group'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip'
+import { elementIconFor, kindLabelFor } from './elementIcon'
 import { InspectorPosition } from './InspectorPosition'
 import { InspectorTransform } from './InspectorTransform'
 import { InspectorStyles } from './sections/InspectorStyles'
@@ -89,7 +100,7 @@ function DefaultInspector() {
 export function InspectorHeader({ children }: { children?: ReactNode }) {
   const { selectedId } = useInspectorContext()
   return (
-    <div className="flex h-10 shrink-0 items-center gap-2 px-3">
+    <div className="flex min-h-10 shrink-0 flex-col justify-center px-3">
       {children ??
         (selectedId ? (
           <SelectedHeader id={selectedId} />
@@ -103,13 +114,105 @@ export function InspectorHeader({ children }: { children?: ReactNode }) {
 }
 
 function SelectedHeader({ id }: { id: NodeId }) {
-  const node = useNode(id)
-  if (!node) return null
+  const summary = useNodeSummary(id)
+  if (!summary) return null
+  const meta = [kindLabelFor(summary.node)]
+  if (summary.classCount > 0) meta.push(`${summary.classCount} ${summary.classCount === 1 ? 'class' : 'classes'}`)
+  if (summary.childCount > 0) meta.push(`${summary.childCount} ${summary.childCount === 1 ? 'child' : 'children'}`)
+
+  return (
+    <div className="flex flex-col gap-1.5 py-2">
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+        >
+          {createElement(elementIconFor(summary.node), { className: 'size-4' })}
+        </span>
+        <div className="min-w-0 flex-1 leading-tight">
+          <div className="flex items-baseline gap-1 font-mono text-sm">
+            <span className="truncate font-semibold">{summary.tag ?? summary.label}</span>
+            {summary.attrId ? <span className="truncate text-muted-foreground">#{summary.attrId}</span> : null}
+          </div>
+          <div className="truncate text-[11px] text-muted-foreground">{meta.join(' · ')}</div>
+        </div>
+        <HeaderActions summary={summary} />
+      </div>
+      <AncestorCrumbs summary={summary} />
+      {summary.textPreview ? (
+        <p className="truncate text-xs text-muted-foreground italic" title={summary.textPreview}>
+          “{summary.textPreview}”
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function HeaderActions({ summary }: { summary: NodeSummary }) {
   return (
     <>
-      <span className="flex-1 truncate font-mono text-sm">{labelOf(node)}</span>
-      {isStyled(node) ? <Badge variant="secondary">{node.classes.length}</Badge> : null}
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={summary.isLocked ? 'Unlock element' : 'Lock element'}
+              aria-pressed={summary.isLocked}
+              className={summary.isLocked ? 'text-foreground' : 'text-muted-foreground'}
+              onClick={() => summary.setLocked(!summary.isLocked)}
+            />
+          }
+        >
+          {summary.isLocked ? <LockIcon /> : <LockOpenIcon />}
+        </TooltipTrigger>
+        <TooltipContent>{summary.isLocked ? 'Unlock position' : 'Lock position'}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Select parent"
+              className="text-muted-foreground"
+              disabled={!summary.parentId}
+              onClick={summary.selectParent}
+            />
+          }
+        >
+          <CornerLeftUpIcon />
+        </TooltipTrigger>
+        <TooltipContent>Select parent</TooltipContent>
+      </Tooltip>
     </>
+  )
+}
+
+function AncestorCrumbs({ summary }: { summary: NodeSummary }) {
+  if (summary.ancestors.length === 0) return null
+  return (
+    <Breadcrumb aria-label="Ancestors">
+      <BreadcrumbList className="flex-nowrap gap-0.5 overflow-hidden text-[11px] sm:gap-0.5">
+        {summary.ancestors.map((crumb) => (
+          <Fragment key={crumb.id}>
+            <BreadcrumbItem className="min-w-0">
+              <BreadcrumbLink
+                render={<button type="button" />}
+                className="truncate font-mono"
+                onClick={() => summary.select(crumb.id)}
+              >
+                {crumb.label}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="[&>svg]:size-3" />
+          </Fragment>
+        ))}
+        <BreadcrumbItem className="min-w-0">
+          <BreadcrumbPage className="truncate font-mono">{summary.label}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
   )
 }
 
