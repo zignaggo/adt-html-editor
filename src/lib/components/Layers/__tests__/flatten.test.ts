@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseHtml } from '../../../core/html/parse'
 import { serializeHtml } from '../../../core/html/serialize'
 import { childrenOf, isLayoutWhitespace } from '../../../core/model'
-import { flattenTree } from '../flatten'
+import { createLayerFilter, flattenTree } from '../flatten'
 
 // Line breaks between inlines are preserved by the parser (they affect spacing on the canvas).
 const NAV = '<nav>\n  <a href="#a">A</a>\n  <a href="#b">B</a>\n</nav>'
@@ -47,5 +47,63 @@ describe('flattenTree', () => {
 
   it('hiding in the panel does not change the output HTML', () => {
     expect(serializeHtml(parseHtml(NAV))).toBe(NAV)
+  })
+})
+
+const PAGE =
+  '<section id="hero" class="flex"><h1>Title</h1><p class="lead">Intro</p></section><aside><span class="flex">x</span></aside>'
+
+function labelsOf(html: string, query: string) {
+  const doc = parseHtml(html)
+  const rows = flattenTree(doc, {}, createLayerFilter(query) ?? undefined)
+  return rows.map((row) => {
+    const node = doc.nodes[row.id]
+    const name = 'value' in node ? node.value : node.tag
+    return row.isMatch ? name : `(${name})`
+  })
+}
+
+describe('flattenTree with a filter', () => {
+  it('returns null for a blank query', () => {
+    expect(createLayerFilter('')).toBeNull()
+    expect(createLayerFilter('   ')).toBeNull()
+  })
+
+  it('keeps ancestors of matches, muted', () => {
+    expect(labelsOf(PAGE, 'lead')).toEqual(['(section)', 'p'])
+  })
+
+  it('matches tag, id, class and text', () => {
+    expect(labelsOf(PAGE, 'h1')).toEqual(['(section)', 'h1'])
+    expect(labelsOf(PAGE, 'hero')).toEqual(['section'])
+    expect(labelsOf(PAGE, 'flex')).toEqual(['section', '(aside)', 'span'])
+    expect(labelsOf(PAGE, 'intro')).toEqual(['(section)', '(p)', 'Intro'])
+  })
+
+  it('restricts to id or class with # and . prefixes', () => {
+    expect(labelsOf(PAGE, '#hero')).toEqual(['section'])
+    expect(labelsOf(PAGE, '.hero')).toEqual([])
+    expect(labelsOf(PAGE, '.lead')).toEqual(['(section)', 'p'])
+  })
+
+  it('requires every word to match', () => {
+    expect(labelsOf(PAGE, 'span flex')).toEqual(['(aside)', 'span'])
+    expect(labelsOf(PAGE, 'span lead')).toEqual([])
+  })
+
+  it('ignores collapsed state while filtering', () => {
+    const doc = parseHtml(PAGE)
+    const section = childrenOf(doc, doc.rootId)[0]
+    const rows = flattenTree(doc, { [section]: true }, createLayerFilter('lead') ?? undefined)
+    expect(rows.map((row) => row.level)).toEqual([0, 1])
+    expect(rows[0].mode).toBe('expanded')
+  })
+
+  it('keeps hasChildren for matched elements whose children are hidden', () => {
+    const doc = parseHtml(PAGE)
+    const rows = flattenTree(doc, {}, createLayerFilter('#hero') ?? undefined)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].hasChildren).toBe(true)
+    expect(rows[0].mode).toBe('last-in-group')
   })
 })

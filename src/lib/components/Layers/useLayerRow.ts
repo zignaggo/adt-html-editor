@@ -12,6 +12,7 @@ export type UseLayerRowOptions = {
   mode: ItemMode
   hasChildren: boolean
   isFocusable?: boolean
+  isMatch?: boolean
 }
 
 export type LayerRowAria = {
@@ -24,6 +25,7 @@ export type LayerRowAria = {
   'data-kind': AnyNode['kind']
   'data-dragging': true | undefined
   'data-selected': true | undefined
+  'data-muted': true | undefined
   onClick: (event: MouseEvent<HTMLElement>) => void
   onFocus: (event: FocusEvent<HTMLElement>) => void
 }
@@ -57,6 +59,7 @@ export function useLayerRow({
   mode,
   hasChildren,
   isFocusable = false,
+  isMatch = true,
 }: UseLayerRowOptions): LayerRow {
   const [element, setElement] = useState<HTMLElement | null>(null)
   const node = useNode(id)
@@ -93,6 +96,7 @@ export function useLayerRow({
       'data-kind': node?.kind ?? 'element',
       'data-dragging': isDragging || undefined,
       'data-selected': isSelected || undefined,
+      'data-muted': isMatch ? undefined : true,
       onClick: selectSelf,
       onFocus: selectSelf,
     },

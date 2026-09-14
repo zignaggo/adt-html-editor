@@ -21,7 +21,14 @@ import {
 } from '../Inspector/InspectorParts'
 import { LayersPanel } from '../Layers/LayersPanel'
 import { LayerRow } from '../Layers/LayerRow'
-import { LayersCount, LayersEmpty, LayersHeader, LayersTitle, LayersTree } from '../Layers/LayersParts'
+import {
+  LayersCount,
+  LayersEmpty,
+  LayersHeader,
+  LayersSearch,
+  LayersTitle,
+  LayersTree,
+} from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
 import { EditorProvider, type EditorProviderProps } from './EditorProvider'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
@@ -87,6 +94,7 @@ const LayersNamespace = Object.assign(LayersPanel, {
   Header: LayersHeader,
   Title: LayersTitle,
   Count: LayersCount,
+  Search: LayersSearch,
   Tree: LayersTree,
   Row: LayerRow,
   Empty: LayersEmpty,

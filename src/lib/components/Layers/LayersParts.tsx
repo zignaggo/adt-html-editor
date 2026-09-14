@@ -1,11 +1,18 @@
-import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react'
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
 import type { NodeId } from '../../core/ids'
 import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
-import { useEditorSelector } from '../Editor/context'
+import { useEditorSelector, useEditorStoreApi } from '../Editor/context'
 import { useLayersContext } from './context'
 import type { LayerRowInfo } from './flatten'
 import { LayerRow } from './LayerRow'
@@ -25,14 +32,68 @@ export function LayersTitle({ children }: { children?: ReactNode }) {
 }
 
 export function LayersCount() {
-  const { rows } = useLayersContext()
-  return <span className={styles.count}>{rows.length}</span>
+  const { state } = useLayersContext()
+  return <span className={styles.count}>{state.matchCount}</span>
 }
 
 export function LayersEmpty({ children }: { children?: ReactNode }) {
-  const { rows } = useLayersContext()
+  const { rows, state } = useLayersContext()
   if (rows.length > 0) return null
+  if (state.isSearching) {
+    return <p className={styles.empty}>No elements match “{state.query.trim()}”.</p>
+  }
   return <p className={styles.empty}>{children ?? 'No elements. Drag something from the palette.'}</p>
+}
+
+export type LayersSearchProps = {
+  className?: string
+  placeholder?: string
+  'aria-label'?: string
+}
+
+export function LayersSearch({
+  className,
+  placeholder = 'Search elements…',
+  'aria-label': ariaLabel = 'Search elements',
+}: LayersSearchProps) {
+  const { rows, state, actions, meta } = useLayersContext()
+  const store = useEditorStoreApi()
+  const { focusTree } = actions
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      if (!state.query) return
+      event.preventDefault()
+      actions.clearSearch()
+      return
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'Enter') return
+    if (rows.length === 0) return
+    event.preventDefault()
+    const { selectedId } = store.state
+    if (!selectedId || !rows.some((row) => row.id === selectedId)) {
+      const target = rows.find((row) => row.isMatch) ?? rows[0]
+      store.actions.select(target.id)
+    }
+    focusTree()
+  }
+
+  return (
+    <div className={className ? `${styles.search} ${className}` : styles.search}>
+      <input
+        ref={(element) => meta.registerSearch(element)}
+        type="search"
+        className={styles.searchInput}
+        aria-label={ariaLabel}
+        placeholder={placeholder}
+        autoComplete="off"
+        spellCheck={false}
+        value={state.query}
+        onChange={(event) => actions.setQuery(event.target.value)}
+        onKeyDown={onKeyDown}
+      />
+    </div>
+  )
 }
 
 export type LayersTreeProps = {
@@ -41,8 +102,12 @@ export type LayersTreeProps = {
 }
 
 export function LayersTree({ className, renderRow }: LayersTreeProps) {
+  const { rows, meta } = useLayersContext()
   const scrollRef = useRef<HTMLDivElement | null>(null)
-  const { rows } = useLayersContext()
+  const attachScroll = (element: HTMLDivElement | null) => {
+    scrollRef.current = element
+    meta.registerTree(element)
+  }
   const selectedId = useEditorSelector((state) => state.selectedId)
   const [viewport, setViewport] = useState({ scrollTop: 0, height: 0 })
 
@@ -105,9 +170,10 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
 
   return (
     <div
-      ref={scrollRef}
+      ref={attachScroll}
       role="tree"
       aria-label="Element tree"
+      tabIndex={-1}
       className={className ? `${styles.scroll} ${className}` : styles.scroll}
       onKeyDown={onKeyDown}
       onScroll={
@@ -141,6 +207,7 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
                 level={row.level}
                 mode={row.mode}
                 hasChildren={row.hasChildren}
+                isMatch={row.isMatch}
                 isFocusable={row.id === selectedId}
               />
             ),

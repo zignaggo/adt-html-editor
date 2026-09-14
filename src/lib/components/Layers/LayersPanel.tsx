@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react'
+import { useDeferredValue, useRef, useState, type ReactNode } from 'react'
 import { useEditorSelector } from '../Editor/context'
 import { LayersContext, type LayersContextValue } from './context'
-import { flattenTree } from './flatten'
-import { LayersCount, LayersHeader, LayersTitle, LayersTree } from './LayersParts'
+import { createLayerFilter, flattenTree } from './flatten'
+import { LayersCount, LayersHeader, LayersSearch, LayersTitle, LayersTree } from './LayersParts'
 import styles from './LayersPanel.module.css'
 
 export type LayersPanelProps = {
@@ -13,15 +13,40 @@ export type LayersPanelProps = {
 export function LayersPanel({ className, children }: LayersPanelProps) {
   const doc = useEditorSelector((state) => state.doc)
   const collapsed = useEditorSelector((state) => state.collapsed)
+  const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  const treeRef = useRef<HTMLElement | null>(null)
 
-  const context: LayersContextValue = { rows: flattenTree(doc, collapsed) }
+  const filter = createLayerFilter(deferredQuery)
+  const rows = flattenTree(doc, collapsed, filter ?? undefined)
+  const matchCount = filter ? rows.reduce((total, row) => total + (row.isMatch ? 1 : 0), 0) : rows.length
+
+  const context: LayersContextValue = {
+    rows,
+    state: { query, isSearching: filter !== null, matchCount },
+    actions: {
+      setQuery,
+      clearSearch: () => setQuery(''),
+      focusTree: () => treeRef.current?.focus(),
+      focusSearch: () => searchRef.current?.focus(),
+    },
+    meta: {
+      registerSearch: (element) => {
+        searchRef.current = element
+      },
+      registerTree: (element) => {
+        treeRef.current = element
+      },
+    },
+  }
 
   return (
-    <LayersContext.Provider value={context}>
+    <LayersContext value={context}>
       <div className={className ? `${styles.panel} ${className}` : styles.panel}>
         {children ?? <DefaultLayers />}
       </div>
-    </LayersContext.Provider>
+    </LayersContext>
   )
 }
 
@@ -32,6 +57,7 @@ function DefaultLayers() {
         <LayersTitle>Layers</LayersTitle>
         <LayersCount />
       </LayersHeader>
+      <LayersSearch />
       <LayersTree />
     </>
   )

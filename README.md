@@ -54,6 +54,7 @@ Each panel is a `Root` that accepts `children`. **Without children it renders th
         <HtmlEditor.Layers.Title>Structure</HtmlEditor.Layers.Title>
         <HtmlEditor.Layers.Count />
       </HtmlEditor.Layers.Header>
+      <HtmlEditor.Layers.Search placeholder="Filter…" />
       <HtmlEditor.Layers.Tree />
     </HtmlEditor.Layers>
 
@@ -96,7 +97,7 @@ Each panel is a `Root` that accepts `children`. **Without children it renders th
 
 | Panel | Parts |
 |---|---|
-| `HtmlEditor.Layers` | `Header`, `Title`, `Count`, `Tree`, `Row`, `Empty` |
+| `HtmlEditor.Layers` | `Header`, `Title`, `Count`, `Search`, `Tree`, `Row`, `Empty` |
 | `HtmlEditor.Canvas` | `Toolbar`, `WidthPresets`, `DarkToggle`, `Viewport` |
 | `HtmlEditor.Inspector` | `Header`, `Empty`, `Variants`, `Body`, `Section`, `Category`, `Control`, `ClassInput`, `ClassList`, `Attributes` |
 | `HtmlEditor.Palette` | `Header`, `Grid`, `Item` |
@@ -107,6 +108,8 @@ Each panel is a `Root` that accepts `children`. **Without children it renders th
 `Category` and `Control` take an `id` from the exported `CATEGORIES` — categories: `layout`, `flex`, `spacing`, `sizing`, `typography`, `color`, `border`, `effects`; controls: `display`, `gap`, `p`, `text-size`, etc.
 
 To change the look of the tree rows without losing drag and drop, pass `renderRow` to `Tree` and build your row around `HtmlEditor.Layers.Row`.
+
+`HtmlEditor.Layers.Search` filters the tree. A query matches tag, id, classes and text; `#hero` and `.flex` restrict the match to id or class, and several words must all match. Ancestors of a match stay visible so the structure reads correctly, rendered muted (`data-muted` on the row, `isMatch: false` in `LayerRowInfo`). While a query is active, collapsed state is ignored, `Count` shows the number of matches and `Empty` reports when nothing matched. `Esc` clears the query; `↓` or `Enter` jump into the tree. The search state lives in the `Layers` root, so any part inside it can read `useLayersContext()` → `{ rows, state: { query, isSearching, matchCount }, actions: { setQuery, clearSearch, focusTree, focusSearch }, meta: { registerSearch, registerTree } }` to build its own input or match counter (pass `meta.registerSearch` as the `ref` of a custom input so `focusSearch` keeps working).
 
 Each part is also exported standalone (`LayersTree`, `InspectorCategory`, `CanvasViewport`, `HistoryGroup`…), and the contexts are accessible via `useLayersContext()`, `useInspectorContext()`, `useCanvasContext()` and `useHistory()` if you need to write your own parts.
 

@@ -54,6 +54,7 @@ export function CustomLayout() {
             <HtmlEditor.Layers.Title>Structure</HtmlEditor.Layers.Title>
             <HtmlEditor.Layers.Count />
           </HtmlEditor.Layers.Header>
+          <HtmlEditor.Layers.Search placeholder="Filter by tag, #id, .class or text" />
           <HtmlEditor.Layers.Tree
             renderRow={(row, isFocusable) => (
               <MyTreeRow key={row.id} row={row} isFocusable={isFocusable} />

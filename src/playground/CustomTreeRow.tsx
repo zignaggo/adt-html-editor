@@ -8,6 +8,7 @@ export function MyTreeRow({ row, isFocusable }: { row: LayerRowInfo; isFocusable
       level: row.level,
       mode: row.mode,
       hasChildren: row.hasChildren,
+      isMatch: row.isMatch,
       isFocusable,
     })
 

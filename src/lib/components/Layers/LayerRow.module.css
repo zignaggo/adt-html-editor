@@ -37,6 +37,10 @@
   opacity: 0.4;
 }
 
+.row[data-muted] {
+  opacity: 0.5;
+}
+
 .row[data-kind='comment'] .kind,
 .row[data-kind='text'] .kind {
   font-style: italic;

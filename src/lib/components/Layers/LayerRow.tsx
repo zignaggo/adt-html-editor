@@ -10,15 +10,17 @@ export type LayerRowProps = {
   mode: ItemMode
   hasChildren: boolean
   isFocusable: boolean
+  isMatch?: boolean
 }
 
-export function LayerRow({ id, level, mode, hasChildren, isFocusable }: LayerRowProps) {
+export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }: LayerRowProps) {
   const { setElement, node, classes, indent, rowProps, chevronProps } = useLayerRow({
     id,
     level,
     mode,
     hasChildren,
     isFocusable,
+    isMatch,
   })
 
   if (!node) return null

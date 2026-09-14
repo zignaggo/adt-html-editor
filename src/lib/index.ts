@@ -20,10 +20,11 @@ export {
   LayersCount,
   LayersEmpty,
   LayersHeader,
+  LayersSearch,
   LayersTitle,
   LayersTree,
 } from './components/Layers/LayersParts'
-export type { LayersTreeProps } from './components/Layers/LayersParts'
+export type { LayersSearchProps, LayersTreeProps } from './components/Layers/LayersParts'
 export { LayerRow } from './components/Layers/LayerRow'
 export { useLayerRow } from './components/Layers/useLayerRow'
 export type {
@@ -34,10 +35,16 @@ export type {
 } from './components/Layers/useLayerRow'
 export type { LayerRowProps } from './components/Layers/LayerRow'
 export { LayerLabel } from './components/Layers/LayerLabel'
-export { flattenTree, siblingsOf } from './components/Layers/flatten'
+export { createLayerFilter, flattenTree, siblingsOf } from './components/Layers/flatten'
 export { contentChildrenOf, isLayoutWhitespace, labelOf } from './core/model'
-export type { LayerRowInfo } from './components/Layers/flatten'
+export type { LayerFilter, LayerRowInfo } from './components/Layers/flatten'
 export { useLayersContext } from './components/Layers/context'
+export type {
+  LayersActions,
+  LayersContextValue,
+  LayersMeta,
+  LayersState,
+} from './components/Layers/context'
 
 export { Canvas } from './components/Canvas/Canvas'
 export type { CanvasProps } from './components/Canvas/Canvas'
