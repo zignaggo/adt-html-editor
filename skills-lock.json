@@ -16,6 +16,12 @@
       "sourceType": "local",
       "computedHash": "907d99a561051340ef6ea99ebe75356a3b484c2b1d1fc4c7a9dde47c538ce7a2"
     },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "d04e43ec01e921558b93bb8046c14a42a22556689a2827243df900825a4e1604"
+    },
     "tanstack-store": {
       "source": "tanstack-skills/tanstack-skills",
       "sourceType": "github",
