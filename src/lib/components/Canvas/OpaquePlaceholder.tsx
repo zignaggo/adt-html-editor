@@ -13,7 +13,7 @@ export function OpaquePlaceholder({ setElement, id, tag }: OpaquePlaceholderProp
       ref={setElement}
       data-adt-id={id}
       className={styles.opaque}
-      title={`<${tag}> preservado, não renderizado no editor`}
+      title={`<${tag}> preserved, not rendered in the editor`}
     >
       <code>{`<${tag}>`}</code>
     </div>

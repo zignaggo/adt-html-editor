@@ -37,7 +37,7 @@ export function InspectorPanel({ className, children }: InspectorPanelProps) {
     <InspectorContext.Provider value={context}>
       <aside
         className={className ? `${styles.panel} ${className}` : styles.panel}
-        aria-label="Estilos"
+        aria-label="Styles"
       >
         {children ?? <DefaultInspector />}
       </aside>
@@ -59,7 +59,7 @@ function DefaultInspector() {
         {CATEGORIES.map((category) => (
           <InspectorCategory key={category.id} id={category.id} />
         ))}
-        <InspectorSection title="Atributos">
+        <InspectorSection title="Attributes">
           <InspectorAttributes />
         </InspectorSection>
       </InspectorBody>

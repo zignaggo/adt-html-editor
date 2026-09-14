@@ -80,7 +80,7 @@
   transition-timing-function: var(--adt-ease, ease);
 }
 
-/* Evita o flash sem estilo: o conteúdo só aparece quando o CSS do documento já foi injetado. */
+/* Avoids the unstyled flash: content only shows once the document CSS has been injected. */
 .adt-canvas[data-adt-styles='pending'] {
   visibility: hidden;
   opacity: 0;

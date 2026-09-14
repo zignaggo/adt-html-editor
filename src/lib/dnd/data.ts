@@ -90,5 +90,5 @@ export function isEditorDrag(data: Data): boolean {
 export function dragLabel(data: Data): string {
   if (isNodeDrag(data)) return data.label
   if (isPaletteDrag(data)) return data.label
-  return 'elemento'
+  return 'element'
 }

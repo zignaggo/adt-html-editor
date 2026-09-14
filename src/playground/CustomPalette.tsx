@@ -24,7 +24,7 @@ export function MyPalette() {
 
   return (
     <div className={styles.wrap}>
-      <p className={styles.heading}>Paleta do outro projeto</p>
+      <p className={styles.heading}>Palette from another project</p>
       <div className={styles.cards}>
         {featured.map((entry) => (
           <MyPaletteCard key={entry.id} entry={entry} />

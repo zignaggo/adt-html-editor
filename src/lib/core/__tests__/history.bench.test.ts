@@ -24,20 +24,20 @@ function timed(label: string, run: () => void) {
   return ms
 }
 
-describe('perfil do historico', () => {
-  it('custo por acao, undo e retencao', () => {
+describe('history profile', () => {
+  it('cost per action, undo and retention', () => {
     const store = createEditorStore(html)
     const nodeCount = Object.keys(store.state.doc.nodes).length
     const roots = childrenOf(store.state.doc, store.state.doc.rootId)
     console.log(`  nodes: ${nodeCount}`)
 
-    const burst = timed('200 setClasses (burst de slider)', () => {
+    const burst = timed('200 setClasses (slider burst)', () => {
       for (let i = 0; i < 200; i += 1) {
         store.actions.setClasses(roots[1], [`p-${i % 12}`])
       }
     })
-    console.log(`  por acao: ${(burst / 200).toFixed(3)} ms`)
-    console.log(`  entradas de historico apos burst: ${store.state.history.past.length}`)
+    console.log(`  per action: ${(burst / 200).toFixed(3)} ms`)
+    console.log(`  history entries after burst: ${store.state.history.past.length}`)
 
     timed('100 undo', () => {
       for (let i = 0; i < 100; i += 1) store.actions.undo()
@@ -50,8 +50,8 @@ describe('perfil do historico', () => {
     const after = fresh.state.doc
     const ids = Object.keys(before.nodes)
     const shared = ids.filter((id) => before.nodes[id] === after.nodes[id]).length
-    console.log(`  nodes compartilhados apos 1 acao: ${shared}/${ids.length}`)
-    console.log(`  snapshot guarda o doc anterior por referencia: ${fresh.state.history.past[0].snapshot.doc === before}`)
+    console.log(`  nodes shared after 1 action: ${shared}/${ids.length}`)
+    console.log(`  snapshot keeps the previous doc by reference: ${fresh.state.history.past[0].snapshot.doc === before}`)
 
     expect(shared).toBeGreaterThan(ids.length - 5)
     expect(nodeCount).toBeGreaterThan(3000)

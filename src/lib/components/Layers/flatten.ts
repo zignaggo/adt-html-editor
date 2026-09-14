@@ -41,7 +41,7 @@ export function flattenTree(
   return rows
 }
 
-/** Irmãos de `id` na ordem real do documento (inclui whitespace de layout — use para calcular índices de inserção). */
+/** Siblings of `id` in real document order (includes layout whitespace — use it to compute insertion indices). */
 export function siblingsOf(doc: EditorDocument, id: NodeId): NodeId[] {
   const parentId = doc.nodes[id]?.parentId
   if (!parentId) return []

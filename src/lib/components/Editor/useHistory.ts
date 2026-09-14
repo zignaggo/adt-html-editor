@@ -7,7 +7,7 @@ export type HistoryApi = {
   redo: () => void
 }
 
-/** Estado e ações do histórico, para quem quiser escrever partes próprias. */
+/** History state and actions, for consumers who want to write their own parts. */
 export function useHistory(): HistoryApi {
   const { undo, redo } = useEditor()
   return { canUndo: useCanUndo(), canRedo: useCanRedo(), undo, redo }

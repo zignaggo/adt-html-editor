@@ -14,8 +14,8 @@ export function LayerLabel({ node }: { node: AnyNode }) {
 
   return (
     <span className={styles.label}>
-      {node.kind === 'comment' ? <span className={styles.kind}>comentário</span> : null}
-      <span className={styles.text}>{node.value.trim() || 'texto'}</span>
+      {node.kind === 'comment' ? <span className={styles.kind}>comment</span> : null}
+      <span className={styles.text}>{node.value.trim() || 'text'}</span>
     </span>
   )
 }

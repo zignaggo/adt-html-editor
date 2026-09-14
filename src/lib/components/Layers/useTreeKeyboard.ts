@@ -33,13 +33,13 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
       event.preventDefault()
       const node = doc.nodes[selectedId]
       if (!copySubtree(doc, selectedId)) return
-      const name = node ? labelOf(node) : 'elemento'
+      const name = node ? labelOf(node) : 'element'
       if (key === 'x') {
         actions.removeNode(selectedId)
-        announce(`${name} recortado`)
+        announce(`${name} cut`)
         return
       }
-      announce(`${name} copiado`)
+      announce(`${name} copied`)
       return
     }
 
@@ -50,7 +50,7 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
       if (!clip || !parentId) return
       const siblings = siblingsOf(doc, selectedId)
       actions.insertHtml(clip, { parentId, index: siblings.indexOf(selectedId) + 1 })
-      announce('elemento colado')
+      announce('element pasted')
       return
     }
 
@@ -58,7 +58,7 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
       event.preventDefault()
       const node = doc.nodes[selectedId]
       actions.removeNode(selectedId)
-      if (node) announce(`${labelOf(node)} removido`)
+      if (node) announce(`${labelOf(node)} removed`)
       return
     }
 

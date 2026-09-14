@@ -22,14 +22,14 @@ function setup(children = <HistoryGroup />) {
       {children}
     </EditorProvider>,
   )
-  if (!store) throw new Error('store não capturada')
+  if (!store) throw new Error('store not captured')
   return store
 }
 
 function removeFirstChild(store: EditorStore) {
   const { state, actions } = store
   const root = state.doc.nodes[state.doc.rootId]
-  if (root.kind !== 'element') throw new Error('raiz inesperada')
+  if (root.kind !== 'element') throw new Error('unexpected root')
   act(() => actions.removeNode(root.children[0]))
 }
 
@@ -38,9 +38,9 @@ describe('HtmlEditor.History', () => {
 
   it('renders undo and redo disabled on a fresh document', () => {
     setup()
-    expect(screen.getByRole('group', { name: 'Histórico' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Desfazer' })).toHaveProperty('disabled', true)
-    expect(screen.getByRole('button', { name: 'Refazer' })).toHaveProperty('disabled', true)
+    expect(screen.getByRole('group', { name: 'History' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Undo' })).toHaveProperty('disabled', true)
+    expect(screen.getByRole('button', { name: 'Redo' })).toHaveProperty('disabled', true)
   })
 
   it('undoes and redoes through the buttons', () => {
@@ -50,8 +50,8 @@ describe('HtmlEditor.History', () => {
     const after = store.actions.getHtml()
     expect(after).not.toBe(before)
 
-    const undo = screen.getByRole('button', { name: 'Desfazer' })
-    const redo = screen.getByRole('button', { name: 'Refazer' })
+    const undo = screen.getByRole('button', { name: 'Undo' })
+    const redo = screen.getByRole('button', { name: 'Redo' })
     expect(undo).toHaveProperty('disabled', false)
     expect(redo).toHaveProperty('disabled', true)
 

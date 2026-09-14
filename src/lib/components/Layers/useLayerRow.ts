@@ -99,7 +99,7 @@ export function useLayerRow({
     chevronProps: {
       type: 'button',
       tabIndex: -1,
-      'aria-label': isCollapsed ? `Expandir ${label}` : `Recolher ${label}`,
+      'aria-label': isCollapsed ? `Expand ${label}` : `Collapse ${label}`,
       'data-collapsed': isCollapsed || undefined,
       onClick: (event) => {
         event.stopPropagation()

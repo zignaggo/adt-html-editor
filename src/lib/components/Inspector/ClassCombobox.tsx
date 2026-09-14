@@ -28,7 +28,7 @@ export type ClassComboboxProps = {
   placeholder?: string
 }
 
-export function ClassCombobox({ id, variant, placeholder = 'Adicionar classe…' }: ClassComboboxProps) {
+export function ClassCombobox({ id, variant, placeholder = 'Add class…' }: ClassComboboxProps) {
   const editing = useClassEditing(id)
   const [query, setQuery] = useState('')
   const [allClasses, setAllClasses] = useState<string[]>([])
@@ -66,7 +66,7 @@ export function ClassCombobox({ id, variant, placeholder = 'Adicionar classe…'
         aria-expanded={isOpen && suggestions.length > 0}
         aria-controls="adt-class-suggestions"
         aria-autocomplete="list"
-        aria-label="Adicionar classe"
+        aria-label="Add class"
         placeholder={placeholder}
         className={styles.input}
         value={query}

@@ -15,7 +15,7 @@ export function InspectorHeader({ children }: { children?: ReactNode }) {
   if (!selectedId) {
     return (
       <div className={styles.header}>
-        <span className={styles.title}>Estilos</span>
+        <span className={styles.title}>Styles</span>
       </div>
     )
   }
@@ -37,7 +37,7 @@ export function InspectorEmpty({ children }: { children?: ReactNode }) {
   const { selectedId } = useInspectorContext()
   if (selectedId) return null
   return (
-    <p className={styles.empty}>{children ?? 'Selecione um elemento para editar seus estilos.'}</p>
+    <p className={styles.empty}>{children ?? 'Select an element to edit its styles.'}</p>
   )
 }
 
@@ -46,7 +46,7 @@ export function InspectorVariants() {
   if (!selectedId) return null
 
   return (
-    <div className={styles.variantBar} role="tablist" aria-label="Variante">
+    <div className={styles.variantBar} role="tablist" aria-label="Variant">
       {VARIANTS.map((entry) => (
         <button
           key={entry}

@@ -58,7 +58,7 @@ function ColorControl({ id, control, variant }: ControlGroupProps) {
             className={styles.clearButton}
             onClick={() => startTransition(clear)}
           >
-            limpar
+            clear
           </button>
         ) : null}
       </span>
@@ -99,7 +99,7 @@ function TextControl({ id, control, variant }: ControlGroupProps) {
             className={styles.clearButton}
             onClick={() => startTransition(clear)}
           >
-            limpar
+            clear
           </button>
         ) : null}
       </span>
@@ -122,7 +122,7 @@ function TextControl({ id, control, variant }: ControlGroupProps) {
           placeholder={value ?? `${control.roots[0]}-…`}
           value={draft}
           spellCheck={false}
-          aria-label={`${control.label} personalizado`}
+          aria-label={`Custom ${control.label}`}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key !== 'Enter') return

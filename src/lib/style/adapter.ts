@@ -32,7 +32,7 @@ export function formatInlineStyle(declarations: Map<string, string>): string {
 
 export const inlineCssAdapter: StyleAdapter = {
   id: 'inline-css',
-  label: 'CSS puro',
+  label: 'Plain CSS',
   supportsVariants: false,
 
   read(node, property) {

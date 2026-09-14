@@ -21,7 +21,7 @@ export function AttributeFields({ id }: { id: NodeId }) {
   if (node.kind === 'text' || node.kind === 'comment') {
     return (
       <label className={styles.field}>
-        <span className={styles.fieldLabel}>{node.kind === 'text' ? 'Texto' : 'Comentário'}</span>
+        <span className={styles.fieldLabel}>{node.kind === 'text' ? 'Text' : 'Comment'}</span>
         <textarea
           key={node.id}
           className={styles.textarea}
@@ -77,8 +77,8 @@ function NewAttribute({ id }: { id: NodeId }) {
       <input
         type="text"
         className={styles.input}
-        placeholder="atributo"
-        aria-label="Nome do novo atributo"
+        placeholder="attribute"
+        aria-label="New attribute name"
         value={name}
         spellCheck={false}
         onChange={(event) => setName(event.target.value)}
@@ -86,8 +86,8 @@ function NewAttribute({ id }: { id: NodeId }) {
       <input
         type="text"
         className={styles.input}
-        placeholder="valor"
-        aria-label="Valor do novo atributo"
+        placeholder="value"
+        aria-label="New attribute value"
         value={value}
         spellCheck={false}
         onChange={(event) => setValue(event.target.value)}
@@ -98,7 +98,7 @@ function NewAttribute({ id }: { id: NodeId }) {
         }}
       />
       <button type="button" className={styles.addButton} onClick={commit}>
-        Adicionar
+        Add
       </button>
     </div>
   )

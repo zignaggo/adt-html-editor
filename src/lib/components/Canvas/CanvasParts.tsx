@@ -26,7 +26,7 @@ export function CanvasWidthPresets({ presets = DEFAULT_WIDTH_PRESETS }: { preset
   const { presetId, setPreset } = useCanvasContext()
 
   return (
-    <div className={styles.presets} role="group" aria-label="Largura do canvas">
+    <div className={styles.presets} role="group" aria-label="Canvas width">
       {presets.map((preset) => (
         <button
           key={preset.id}
@@ -119,7 +119,7 @@ export function CanvasViewport({ className }: { className?: string }) {
         <div
           ref={canvasRootRef as RefObject<HTMLDivElement>}
           role="group"
-          aria-label="Pré-visualização editável"
+          aria-label="Editable preview"
           tabIndex={0}
           className={`adt-canvas${isDark ? ' adt-dark' : ''}`}
           data-adt-canvas=""
@@ -142,7 +142,7 @@ export function CanvasViewport({ className }: { className?: string }) {
             <CanvasNode key={childId} id={childId} />
           ))}
           {children.length === 0 ? (
-            <p className={styles.empty}>Canvas vazio. Arraste um elemento da paleta.</p>
+            <p className={styles.empty}>Empty canvas. Drag an element from the palette.</p>
           ) : null}
         </div>
       </div>

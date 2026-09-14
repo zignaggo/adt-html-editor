@@ -35,7 +35,7 @@ function setup(html: string) {
     },
     { wrapper },
   )
-  if (!store) throw new Error('store não capturada')
+  if (!store) throw new Error('store not captured')
   return { hook, store }
 }
 
@@ -58,7 +58,7 @@ describe('useCanvasStylesheet', () => {
 
   it('becomes ready even when the build fails, so the canvas is never hidden forever', async () => {
     const { hook } = setup('<p class="p-4">a</p>')
-    await act(async () => builds[0].reject(new Error('sem worker')))
+    await act(async () => builds[0].reject(new Error('no worker')))
     await waitFor(() => expect(hook.result.current).toBe(true))
     expect(styleText()).toBe('')
   })
@@ -70,7 +70,7 @@ describe('useCanvasStylesheet', () => {
 
     const { state, actions } = store
     const root = state.doc.nodes[state.doc.rootId]
-    if (root.kind !== 'element') throw new Error('raiz inesperada')
+    if (root.kind !== 'element') throw new Error('unexpected root')
     act(() => actions.setClasses(root.children[0], ['p-4', 'm-2']))
 
     expect(hook.result.current).toBe(true)

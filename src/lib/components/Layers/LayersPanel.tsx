@@ -29,7 +29,7 @@ function DefaultLayers() {
   return (
     <>
       <LayersHeader>
-        <LayersTitle>Camadas</LayersTitle>
+        <LayersTitle>Layers</LayersTitle>
         <LayersCount />
       </LayersHeader>
       <LayersTree />

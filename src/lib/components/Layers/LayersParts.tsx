@@ -31,7 +31,7 @@ export function LayersCount() {
 export function LayersEmpty({ children }: { children?: ReactNode }) {
   const { rows } = useLayersContext()
   if (rows.length > 0) return null
-  return <p className={styles.empty}>{children ?? 'Nenhum elemento. Arraste algo da paleta.'}</p>
+  return <p className={styles.empty}>{children ?? 'No elements. Drag something from the palette.'}</p>
 }
 
 export type LayersTreeProps = {
@@ -85,7 +85,7 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
     <div
       ref={scrollRef}
       role="tree"
-      aria-label="Árvore de elementos"
+      aria-label="Element tree"
       className={className ? `${styles.scroll} ${className}` : styles.scroll}
       onKeyDown={onKeyDown}
       onScroll={

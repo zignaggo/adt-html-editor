@@ -1,12 +1,12 @@
 import { HtmlEditor, useEditorSelector } from '../lib'
 import styles from './HistoryControls.module.css'
 
-/** Exemplo de composição: partes da lib com rótulos próprios + uma parte extra do playground. */
+/** Composition example: lib parts with custom labels + an extra playground-only part. */
 export function HistoryControls() {
   return (
     <HtmlEditor.History className={styles.bar}>
-      <HtmlEditor.History.Undo>↶ Desfazer</HtmlEditor.History.Undo>
-      <HtmlEditor.History.Redo>Refazer ↷</HtmlEditor.History.Redo>
+      <HtmlEditor.History.Undo>↶ Undo</HtmlEditor.History.Undo>
+      <HtmlEditor.History.Redo>Redo ↷</HtmlEditor.History.Redo>
       <HistoryCounts />
     </HtmlEditor.History>
   )

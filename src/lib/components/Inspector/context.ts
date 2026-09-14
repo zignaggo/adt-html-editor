@@ -17,7 +17,7 @@ export function useInspectorContext(): InspectorContextValue {
   const value = useContext(InspectorContext)
   invariant(
     value,
-    'As partes de <HtmlEditor.Inspector> precisam ficar dentro de <HtmlEditor.Inspector>',
+    '<HtmlEditor.Inspector> parts must be rendered inside <HtmlEditor.Inspector>',
   )
   return value
 }

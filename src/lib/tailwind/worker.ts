@@ -42,7 +42,7 @@ const INPUT_CSS = `
 async function loadStylesheet(id: string) {
   const key = id.replace(/^\.\//, '')
   const content = STYLESHEETS[key]
-  if (content === undefined) throw new Error(`não foi possível resolver ${id}`)
+  if (content === undefined) throw new Error(`could not resolve ${id}`)
   return { path: key, base: '/', content }
 }
 
@@ -61,7 +61,7 @@ function getDesignSystem() {
   return designSystemPromise
 }
 
-// Compila o design system assim que o worker sobe, para o primeiro build não pagar esse custo.
+// Compiles the design system as soon as the worker starts, so the first build does not pay that cost.
 void getCompiler().catch(() => {})
 
 function describeValue(value: unknown): string | null {

@@ -33,6 +33,6 @@ export function usePaletteDraggable(entry: PaletteEntry): PaletteDraggable {
   return {
     setElement,
     isDragging,
-    title: `Arraste para inserir <${entry.template.tag}>`,
+    title: `Drag to insert <${entry.template.tag}>`,
   }
 }

@@ -46,13 +46,13 @@ export function useEditorDropMonitor() {
 
         if (isNodeDrag(source.data)) {
           const moved = actions.moveNode(source.data.nodeId, position)
-          if (moved) announce(`${source.data.label} movido para dentro de ${parentLabel}`)
+          if (moved) announce(`${source.data.label} moved into ${parentLabel}`)
           return
         }
 
         if (isPaletteDrag(source.data)) {
           const created = actions.insertNode(source.data.template, position)
-          if (created) announce(`${source.data.label} inserido em ${parentLabel}`)
+          if (created) announce(`${source.data.label} inserted into ${parentLabel}`)
         }
       },
     })

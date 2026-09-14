@@ -21,11 +21,11 @@ function isSuperset(set: ReadonlySet<string>, subset: ReadonlySet<string>): bool
 }
 
 /**
- * Mantém a folha de estilos do canvas em sincronia com as classes usadas no documento.
+ * Keeps the canvas stylesheet in sync with the classes used in the document.
  *
- * Retorna `false` enquanto o documento atual ainda não tem CSS gerado — na montagem e
- * sempre que o documento inteiro é trocado (`value`/`setHtml`). Adições incrementais
- * (drop de um elemento, classe nova) não voltam para o estado pendente.
+ * Returns `false` while the current document has no generated CSS yet — on mount and
+ * whenever the whole document is replaced (`value`/`setHtml`). Incremental additions
+ * (dropping an element, a new class) do not go back to the pending state.
  */
 export function useCanvasStylesheet(): boolean {
   const store = useEditorStoreApi()
@@ -85,7 +85,7 @@ export function useCanvasStylesheet(): boolean {
       if (state.usedClasses === previousUsed) return
       const previous = previousUsed
       previousUsed = state.usedClasses
-      // Documento trocado por inteiro: o conjunto anterior não sobrevive → esconder até estilizar.
+      // Whole document replaced: the previous set does not survive → hide until styled.
       if (!isSuperset(state.usedClasses, previous)) setReady(false)
       run()
     })

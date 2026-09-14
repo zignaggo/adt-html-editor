@@ -34,7 +34,7 @@ function inputAt(clientX: number, clientY: number): Input {
 const tall = rectOf({ top: 0, left: 0, width: 200, height: 400 })
 
 describe('computeZone', () => {
-  it('sem aninhamento, divide o elemento ao meio', () => {
+  it('without nesting, splits the element in half', () => {
     expect(computeZone({ rect: tall, input: inputAt(100, 100), axis: 'column', canNest: false })).toEqual({
       type: 'edge',
       edge: 'top',
@@ -45,13 +45,13 @@ describe('computeZone', () => {
     })
   })
 
-  it('com aninhamento, o centro vira zona interna', () => {
+  it('with nesting, the center becomes the inside zone', () => {
     expect(computeZone({ rect: tall, input: inputAt(100, 200), axis: 'column', canNest: true })).toEqual({
       type: 'inside',
     })
   })
 
-  it('mantém uma faixa de borda de 16 px em elementos grandes', () => {
+  it('keeps a 16 px edge band on large elements', () => {
     expect(computeZone({ rect: tall, input: inputAt(100, 4), axis: 'column', canNest: true })).toEqual({
       type: 'edge',
       edge: 'top',
@@ -65,7 +65,7 @@ describe('computeZone', () => {
     })
   })
 
-  it('em elementos baixos a faixa encolhe para 30% e sobra zona interna', () => {
+  it('on short elements the band shrinks to 30% and an inside zone remains', () => {
     const short = rectOf({ top: 0, left: 0, width: 200, height: 20 })
     expect(computeZone({ rect: short, input: inputAt(100, 2), axis: 'column', canNest: true })).toEqual({
       type: 'edge',
@@ -76,7 +76,7 @@ describe('computeZone', () => {
     })
   })
 
-  it('usa o eixo horizontal em layout de linha', () => {
+  it('uses the horizontal axis in row layout', () => {
     const wide = rectOf({ top: 0, left: 0, width: 400, height: 100 })
     expect(computeZone({ rect: wide, input: inputAt(4, 50), axis: 'row', canNest: true })).toEqual({
       type: 'edge',
@@ -91,7 +91,7 @@ describe('computeZone', () => {
     })
   })
 
-  it('elemento sem dimensão cai para borda', () => {
+  it('an element with no size falls back to edge', () => {
     const empty = rectOf({ top: 0, left: 0, width: 0, height: 0 })
     expect(computeZone({ rect: empty, input: inputAt(0, 0), axis: 'column', canNest: true })).toEqual({
       type: 'edge',
@@ -101,31 +101,31 @@ describe('computeZone', () => {
 })
 
 describe('acceptsNesting', () => {
-  it('aceita container vazio', () => {
+  it('accepts an empty container', () => {
     const doc = parseHtml('<div></div>')
     const div = childrenOf(doc, doc.rootId)[0]
     expect(acceptsNesting(doc, doc.nodes[div])).toBe(true)
   })
 
-  it('aceita container com filhos elemento', () => {
+  it('accepts a container with element children', () => {
     const doc = parseHtml('<div><span>a</span></div>')
     const div = childrenOf(doc, doc.rootId)[0]
     expect(acceptsNesting(doc, doc.nodes[div])).toBe(true)
   })
 
-  it('recusa elemento que só tem texto', () => {
-    const doc = parseHtml('<p>apenas texto</p>')
+  it('refuses an element that only has text', () => {
+    const doc = parseHtml('<p>text only</p>')
     const p = childrenOf(doc, doc.rootId)[0]
     expect(acceptsNesting(doc, doc.nodes[p])).toBe(false)
   })
 
-  it('recusa tag void', () => {
+  it('refuses a void tag', () => {
     const doc = parseHtml('<img src="a.png">')
     const img = childrenOf(doc, doc.rootId)[0]
     expect(acceptsNesting(doc, doc.nodes[img])).toBe(false)
   })
 
-  it('recusa nó opaco', () => {
+  it('refuses an opaque node', () => {
     const doc = parseHtml('<svg></svg>')
     const svg = childrenOf(doc, doc.rootId)[0]
     expect(acceptsNesting(doc, doc.nodes[svg])).toBe(false)
@@ -145,12 +145,12 @@ describe('computeInsideSpot', () => {
     return element
   }
 
-  it('sem filhos, não devolve linha', () => {
+  it('without children, returns no line', () => {
     const spot = computeInsideSpot(container([]), inputAt(100, 50), 'column')
     expect(spot).toEqual({ beforeId: null, line: null })
   })
 
-  it('acima do meio do primeiro filho, insere antes dele', () => {
+  it('above the middle of the first child, inserts before it', () => {
     const spot = computeInsideSpot(
       container([
         { top: 0, height: 100 },
@@ -163,7 +163,7 @@ describe('computeInsideSpot', () => {
     expect(spot.line).toEqual({ axis: 'horizontal', start: 0, cross: 0, length: 200 })
   })
 
-  it('entre dois filhos, insere antes do segundo', () => {
+  it('between two children, inserts before the second', () => {
     const spot = computeInsideSpot(
       container([
         { top: 0, height: 100 },
@@ -176,7 +176,7 @@ describe('computeInsideSpot', () => {
     expect(spot.line?.cross).toBe(100)
   })
 
-  it('depois do último filho, anexa no fim', () => {
+  it('after the last child, appends at the end', () => {
     const spot = computeInsideSpot(
       container([
         { top: 0, height: 100 },
@@ -189,7 +189,7 @@ describe('computeInsideSpot', () => {
     expect(spot.line).toEqual({ axis: 'horizontal', start: 0, cross: 200, length: 200 })
   })
 
-  it('ignora filhos sem data-adt-id', () => {
+  it('ignores children without data-adt-id', () => {
     const element = container([{ top: 0, height: 100 }])
     const stray = document.createElement('span')
     element.appendChild(stray)

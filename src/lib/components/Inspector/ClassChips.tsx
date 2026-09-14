@@ -23,7 +23,7 @@ export function ClassChips({ id, variant }: ClassChipsProps) {
   }
 
   if (visible.length === 0) {
-    return <p className={styles.hint}>Nenhuma classe nesta variante.</p>
+    return <p className={styles.hint}>No classes in this variant.</p>
   }
 
   return (
@@ -35,7 +35,7 @@ export function ClassChips({ id, variant }: ClassChipsProps) {
             <button
               type="button"
               className={styles.chipButton}
-              aria-label={`Mover ${className} para cima`}
+              aria-label={`Move ${className} up`}
               disabled={index === 0}
               onClick={() => editing.reorder(index, index - 1)}
             >
@@ -44,7 +44,7 @@ export function ClassChips({ id, variant }: ClassChipsProps) {
             <button
               type="button"
               className={styles.chipButton}
-              aria-label={`Mover ${className} para baixo`}
+              aria-label={`Move ${className} down`}
               disabled={index === node.classes.length - 1}
               onClick={() => editing.reorder(index, index + 1)}
             >
@@ -54,7 +54,7 @@ export function ClassChips({ id, variant }: ClassChipsProps) {
               type="button"
               className={styles.chipButton}
               data-danger=""
-              aria-label={`Remover ${className}`}
+              aria-label={`Remove ${className}`}
               onClick={() => editing.remove(className)}
             >
               ×

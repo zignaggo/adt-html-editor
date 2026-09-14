@@ -19,14 +19,14 @@ export function MyClassInput() {
   return (
     <div className={styles.field}>
       <label className={styles.label} htmlFor="my-class-input">
-        Input do outro projeto
+        Input from another project
       </label>
       <div className={styles.row}>
         <input
           id="my-class-input"
           className={styles.input}
           value={draft}
-          placeholder="ex.: rounded-2xl"
+          placeholder="e.g. rounded-2xl"
           spellCheck={false}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
@@ -36,7 +36,7 @@ export function MyClassInput() {
           }}
         />
         <button type="button" className={styles.button} onClick={submit}>
-          Aplicar
+          Apply
         </button>
       </div>
     </div>
@@ -59,7 +59,7 @@ export function MyRadiusSlider() {
   return (
     <div className={styles.field}>
       <label className={styles.label} htmlFor="my-radius">
-        Raio (slider próprio) <span className={styles.value}>{control.value ?? 'nenhum'}</span>
+        Radius (custom slider) <span className={styles.value}>{control.value ?? 'none'}</span>
       </label>
       <input
         id="my-radius"

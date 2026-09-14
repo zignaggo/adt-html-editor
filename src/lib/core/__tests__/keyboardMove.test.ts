@@ -5,7 +5,7 @@ import { MOVE_KEYS, resolveKeyboardMove } from '../keyboardMove'
 import { createEditorStore } from '../store'
 
 const HTML =
-  '<section id="s"><p id="p1">um</p><p id="p2">dois</p><p id="p3">três</p></section><aside id="a"><img src="x.png"><span id="sp">t</span></aside>'
+  '<section id="s"><p id="p1">one</p><p id="p2">two</p><p id="p3">three</p></section><aside id="a"><img src="x.png"><span id="sp">t</span></aside>'
 
 function ids(doc = parseHtml(HTML)) {
   const roots = childrenOf(doc, doc.rootId)
@@ -16,7 +16,7 @@ function ids(doc = parseHtml(HTML)) {
 }
 
 describe('MOVE_KEYS', () => {
-  it('mapeia as setas para direções', () => {
+  it('maps arrow keys to directions', () => {
     expect(MOVE_KEYS.ArrowUp).toBe('up')
     expect(MOVE_KEYS.ArrowDown).toBe('down')
     expect(MOVE_KEYS.ArrowLeft).toBe('out')
@@ -26,27 +26,27 @@ describe('MOVE_KEYS', () => {
 })
 
 describe('resolveKeyboardMove', () => {
-  it('sobe entre irmãos', () => {
+  it('moves up among siblings', () => {
     const { doc, section, p2 } = ids()
     expect(resolveKeyboardMove(doc, p2, 'up')).toEqual({ parentId: section, index: 0 })
   })
 
-  it('desce entre irmãos', () => {
+  it('moves down among siblings', () => {
     const { doc, section, p1 } = ids()
     expect(resolveKeyboardMove(doc, p1, 'down')).toEqual({ parentId: section, index: 2 })
   })
 
-  it('não sobe além do primeiro irmão', () => {
+  it('does not move up past the first sibling', () => {
     const { doc, p1 } = ids()
     expect(resolveKeyboardMove(doc, p1, 'up')).toBeNull()
   })
 
-  it('não desce além do último irmão', () => {
+  it('does not move down past the last sibling', () => {
     const { doc, p3 } = ids()
     expect(resolveKeyboardMove(doc, p3, 'down')).toBeNull()
   })
 
-  it('sai para o avô, logo depois do pai', () => {
+  it('moves out to the grandparent, right after the parent', () => {
     const { doc, roots, section, p1 } = ids()
     expect(resolveKeyboardMove(doc, p1, 'out')).toEqual({
       parentId: doc.rootId,
@@ -54,12 +54,12 @@ describe('resolveKeyboardMove', () => {
     })
   })
 
-  it('não sai quando já está no nível raiz', () => {
+  it('does not move out when already at root level', () => {
     const { doc, section } = ids()
     expect(resolveKeyboardMove(doc, section, 'out')).toBeNull()
   })
 
-  it('entra no irmão anterior, como último filho', () => {
+  it('moves into the previous sibling as its last child', () => {
     const { doc, section, aside } = ids()
     expect(resolveKeyboardMove(doc, aside, 'in')).toEqual({
       parentId: section,
@@ -67,38 +67,38 @@ describe('resolveKeyboardMove', () => {
     })
   })
 
-  it('não entra quando não há irmão anterior', () => {
+  it('does not move in when there is no previous sibling', () => {
     const { doc, section } = ids()
     expect(resolveKeyboardMove(doc, section, 'in')).toBeNull()
   })
 
-  it('não entra em uma tag void', () => {
+  it('does not move into a void tag', () => {
     const { doc, span } = ids()
     expect(resolveKeyboardMove(doc, span, 'in')).toBeNull()
   })
 
-  it('não entra em um nó de texto', () => {
-    const textDoc = parseHtml('<div>texto solto<p id="p">x</p></div>')
+  it('does not move into a text node', () => {
+    const textDoc = parseHtml('<div>loose text<p id="p">x</p></div>')
     const div = childrenOf(textDoc, textDoc.rootId)[0]
     const [, p] = childrenOf(textDoc, div)
     expect(resolveKeyboardMove(textDoc, p, 'in')).toBeNull()
   })
 
-  it('recusa mover a raiz', () => {
+  it('refuses to move the root', () => {
     const { doc } = ids()
     for (const direction of ['up', 'down', 'out', 'in'] as const) {
       expect(resolveKeyboardMove(doc, doc.rootId, direction)).toBeNull()
     }
   })
 
-  it('recusa um id inexistente', () => {
+  it('refuses a nonexistent id', () => {
     const { doc } = ids()
-    expect(resolveKeyboardMove(doc, 'nao-existe', 'up')).toBeNull()
+    expect(resolveKeyboardMove(doc, 'does-not-exist', 'up')).toBeNull()
   })
 })
 
-describe('movimento por teclado aplicado no store', () => {
-  it('desce um elemento e a ordem final confere', () => {
+describe('keyboard move applied to the store', () => {
+  it('moves an element down and the final order matches', () => {
     const store = createEditorStore(HTML)
     const { section, p1 } = ids(store.state.doc)
     const before = childrenOf(store.state.doc, section)
@@ -109,7 +109,7 @@ describe('movimento por teclado aplicado no store', () => {
     expect(after).toEqual([before[1], before[0], before[2]])
   })
 
-  it('sobe e desce volta ao estado original', () => {
+  it('moving up then down returns to the original state', () => {
     const store = createEditorStore(HTML)
     const { section, p2 } = ids(store.state.doc)
     const original = store.actions.getHtml()
@@ -121,7 +121,7 @@ describe('movimento por teclado aplicado no store', () => {
     expect(store.actions.getHtml()).toBe(original)
   })
 
-  it('sair e entrar de novo volta ao estado original', () => {
+  it('moving out then back in returns to the original state', () => {
     const store = createEditorStore(HTML)
     const { p3 } = ids(store.state.doc)
     const original = store.actions.getHtml()
@@ -133,7 +133,7 @@ describe('movimento por teclado aplicado no store', () => {
     expect(store.actions.getHtml()).toBe(original)
   })
 
-  it('cada movimento é uma entrada de histórico desfazível', () => {
+  it('each move is an undoable history entry', () => {
     const store = createEditorStore(HTML)
     const { p1 } = ids(store.state.doc)
     const original = store.actions.getHtml()
@@ -147,7 +147,7 @@ describe('movimento por teclado aplicado no store', () => {
     expect(store.actions.getHtml()).toBe(original)
   })
 
-  it('mover para fora repetidamente sobe um nível por vez', () => {
+  it('moving out repeatedly climbs one level at a time', () => {
     const store = createEditorStore('<div id="a"><div id="b"><p id="p">x</p></div></div>')
     const doc = () => store.state.doc
     const outer = childrenOf(doc(), doc().rootId)[0]
@@ -164,7 +164,7 @@ describe('movimento por teclado aplicado no store', () => {
   })
 })
 
-describe('resolveKeyboardMove com whitespace de layout', () => {
+describe('resolveKeyboardMove with layout whitespace', () => {
   const NAV = '<nav>\n  <a id="a">A</a>\n  <a id="b">B</a>\n  <a id="c">C</a>\n</nav>'
 
   function navIds() {
@@ -175,12 +175,12 @@ describe('resolveKeyboardMove com whitespace de layout', () => {
     return { doc, nav, all, links }
   }
 
-  it('sobe pulando o whitespace entre os links', () => {
+  it('moves up skipping the whitespace between links', () => {
     const { doc, nav, all, links } = navIds()
     expect(resolveKeyboardMove(doc, links[1], 'up')).toEqual({ parentId: nav, index: all.indexOf(links[0]) })
   })
 
-  it('desce pulando o whitespace entre os links', () => {
+  it('moves down skipping the whitespace between links', () => {
     const { doc, nav, all, links } = navIds()
     expect(resolveKeyboardMove(doc, links[0], 'down')).toEqual({
       parentId: nav,
@@ -188,12 +188,12 @@ describe('resolveKeyboardMove com whitespace de layout', () => {
     })
   })
 
-  it('não desce a partir do último link visível mesmo com whitespace depois', () => {
+  it('does not move down from the last visible link even with trailing whitespace', () => {
     const { doc, links } = navIds()
     expect(resolveKeyboardMove(doc, links[2], 'down')).toBeNull()
   })
 
-  it('mover de fato troca a ordem visível', () => {
+  it('moving actually changes the visible order', () => {
     const store = createEditorStore(NAV)
     const { nav, links } = (() => {
       const doc = store.state.doc

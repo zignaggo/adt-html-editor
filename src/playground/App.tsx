@@ -69,8 +69,8 @@ export function App() {
       type: 'setRoundTrip',
       value:
         once === twice
-          ? { ok: true, message: `Idempotente · ${once.length} bytes` }
-          : { ok: false, message: 'Divergiu na segunda passada' },
+          ? { ok: true, message: `Idempotent · ${once.length} bytes` }
+          : { ok: false, message: 'Diverged on the second pass' },
     })
   }
 
@@ -102,13 +102,13 @@ export function App() {
               dispatch({ type: 'setLayout', value: event.target.value as LayoutMode })
             }
           >
-            <option value="default">Padrão (3 painéis)</option>
-            <option value="custom">Composição customizada</option>
+            <option value="default">Default (3 panels)</option>
+            <option value="custom">Custom composition</option>
           </select>
         </label>
         <div className={styles.actions}>
           <button type="button" onClick={runRoundTrip}>
-            Rodar round-trip
+            Run round-trip
           </button>
           <button
             type="button"
@@ -116,7 +116,7 @@ export function App() {
               dispatch({ type: 'setOutput', value: handleRef.current?.getHtml() ?? '' })
             }
           >
-            Concluir (getHtml)
+            Finish (getHtml)
           </button>
           {state.roundTrip ? (
             <span className={styles.status} data-ok={state.roundTrip.ok || undefined}>
@@ -149,7 +149,7 @@ export function App() {
       {/*<footer className={styles.io}>
         <div className={styles.pane}>
           <label className={styles.paneTitle} htmlFor="pg-input">
-            Entrada
+            Input
           </label>
           <textarea
             id="pg-input"
@@ -158,12 +158,12 @@ export function App() {
             onChange={(event) => dispatch({ type: 'editInput', value: event.target.value })}
           />
           <button type="button" onClick={() => dispatch({ type: 'loadIntoEditor' })}>
-            Carregar no editor
+            Load into editor
           </button>
         </div>
         <div className={styles.pane}>
           <label className={styles.paneTitle} htmlFor="pg-output">
-            Saída (onChange)
+            Output (onChange)
           </label>
           <textarea id="pg-output" value={state.output} readOnly spellCheck={false} />
           <span className={styles.byteCount}>{state.output.length} bytes</span>

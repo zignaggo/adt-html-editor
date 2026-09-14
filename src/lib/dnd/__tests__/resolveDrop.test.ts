@@ -111,16 +111,16 @@ function ids(doc: EditorDocument) {
   return { root, section, p1, p2, aside: root[1] }
 }
 
-describe('resolveDrop na árvore', () => {
-  const doc = parseHtml('<section><p>um</p><p>dois</p></section><aside></aside>')
+describe('resolveDrop in the tree', () => {
+  const doc = parseHtml('<section><p>one</p><p>two</p></section><aside></aside>')
   const { section, p1, p2, aside } = ids(doc)
 
-  it('reorder-above insere antes do alvo', () => {
+  it('reorder-above inserts before the target', () => {
     const target = treeRecord({ nodeId: p2, level: 1, mode: 'standard', clientX: 120, clientY: ROW_TOP + 2 })
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 1 })
   })
 
-  it('reorder-below insere depois do alvo', () => {
+  it('reorder-below inserts after the target', () => {
     const target = treeRecord({
       nodeId: p1,
       level: 1,
@@ -131,7 +131,7 @@ describe('resolveDrop na árvore', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 1 })
   })
 
-  it('make-child insere dentro do alvo', () => {
+  it('make-child inserts inside the target', () => {
     const target = treeRecord({
       nodeId: section,
       level: 0,
@@ -142,7 +142,7 @@ describe('resolveDrop na árvore', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 0 })
   })
 
-  it('reparent sobe para o nível desejado', () => {
+  it('reparent climbs to the desired level', () => {
     const target = treeRecord({
       nodeId: p2,
       level: 1,
@@ -154,7 +154,7 @@ describe('resolveDrop na árvore', () => {
     expect(resolved).toEqual({ parentId: doc.rootId, index: 1 })
   })
 
-  it('recusa soltar dentro da própria subárvore', () => {
+  it('refuses to drop inside its own subtree', () => {
     const target = treeRecord({
       nodeId: p1,
       level: 1,
@@ -165,7 +165,7 @@ describe('resolveDrop na árvore', () => {
     expect(resolveDrop(doc, target, section)).toBeNull()
   })
 
-  it('recusa alvo sem instrução válida', () => {
+  it('refuses a target without a valid instruction', () => {
     const target: DropTargetRecord = {
       element: stubElement(),
       dropEffect: 'move',
@@ -175,21 +175,21 @@ describe('resolveDrop na árvore', () => {
     expect(resolveDrop(doc, target, aside)).toBeNull()
   })
 
-  it('sem alvo, não resolve', () => {
+  it('without a target, does not resolve', () => {
     expect(resolveDrop(doc, undefined, aside)).toBeNull()
   })
 })
 
-describe('resolveDrop no canvas', () => {
-  const doc = parseHtml('<section><p>um</p><p>dois</p></section><aside></aside>')
+describe('resolveDrop on the canvas', () => {
+  const doc = parseHtml('<section><p>one</p><p>two</p></section><aside></aside>')
   const { section, p1, p2, aside } = ids(doc)
 
-  it('borda superior insere antes', () => {
+  it('top edge inserts before', () => {
     const target = canvasRecord({ nodeId: p2, canNest: false, clientX: 120, clientY: ROW_TOP + 2 })
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 1 })
   })
 
-  it('borda inferior insere depois', () => {
+  it('bottom edge inserts after', () => {
     const target = canvasRecord({
       nodeId: p1,
       canNest: false,
@@ -199,7 +199,7 @@ describe('resolveDrop no canvas', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 1 })
   })
 
-  it('borda esquerda em layout de linha insere antes', () => {
+  it('left edge in row layout inserts before', () => {
     const target = canvasRecord({
       nodeId: p2,
       canNest: false,
@@ -210,7 +210,7 @@ describe('resolveDrop no canvas', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 1 })
   })
 
-  it('borda direita em layout de linha insere depois', () => {
+  it('right edge in row layout inserts after', () => {
     const target = canvasRecord({
       nodeId: p1,
       canNest: false,
@@ -221,7 +221,7 @@ describe('resolveDrop no canvas', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 1 })
   })
 
-  it('elemento sem filhos possíveis nunca oferece dentro, mesmo no centro', () => {
+  it('an element that cannot have children never offers inside, even at the center', () => {
     const target = canvasRecord({
       nodeId: p1,
       canNest: false,
@@ -231,7 +231,7 @@ describe('resolveDrop no canvas', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 0 })
   })
 
-  it('container vazio aceita dentro', () => {
+  it('an empty container accepts inside', () => {
     const target = canvasRecord({
       nodeId: aside,
       canNest: true,
@@ -241,7 +241,7 @@ describe('resolveDrop no canvas', () => {
     expect(resolveDrop(doc, target, p1)).toEqual({ parentId: aside, index: 0 })
   })
 
-  it('container com filhos aceita dentro no centro e anexa no fim', () => {
+  it('a container with children accepts inside at the center and appends at the end', () => {
     const target = canvasRecord({
       nodeId: section,
       canNest: true,
@@ -251,7 +251,7 @@ describe('resolveDrop no canvas', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: section, index: 2 })
   })
 
-  it('container com filhos ainda oferece borda perto do limite', () => {
+  it('a container with children still offers edge near the boundary', () => {
     const target = canvasRecord({
       nodeId: section,
       canNest: true,
@@ -261,7 +261,7 @@ describe('resolveDrop no canvas', () => {
     expect(resolveDrop(doc, target, aside)).toEqual({ parentId: doc.rootId, index: 0 })
   })
 
-  it('recusa inserir dentro de tag void', () => {
+  it('refuses to insert inside a void tag', () => {
     const voidDoc = parseHtml('<div><img src="a.png"></div><p>x</p>')
     const img = childrenOf(voidDoc, childrenOf(voidDoc, voidDoc.rootId)[0])[0]
     const target = canvasRecord({
@@ -274,13 +274,13 @@ describe('resolveDrop no canvas', () => {
   })
 })
 
-describe('resolveDrop na superfície de fallback', () => {
-  it('anexa ao fim da raiz', () => {
+describe('resolveDrop on the fallback surface', () => {
+  it('appends at the end of the root', () => {
     const doc = parseHtml('<section></section><aside></aside>')
     expect(resolveDrop(doc, surfaceRecord(), null)).toEqual({ parentId: doc.rootId, index: 2 })
   })
 
-  it('funciona em documento vazio', () => {
+  it('works on an empty document', () => {
     const doc = parseHtml('')
     expect(resolveDrop(doc, surfaceRecord(), null)).toEqual({ parentId: doc.rootId, index: 0 })
   })

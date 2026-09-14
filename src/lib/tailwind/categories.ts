@@ -70,11 +70,11 @@ export const CATEGORIES: CategorySpec[] = [
   },
   {
     id: 'flex',
-    label: 'Flex e Grid',
+    label: 'Flex & Grid',
     controls: [
       {
         id: 'flex-direction',
-        label: 'Direção',
+        label: 'Direction',
         kind: 'options',
         roots: ['flex-row', 'flex-col', 'flex-row-reverse', 'flex-col-reverse'],
         options: [
@@ -123,7 +123,7 @@ export const CATEGORIES: CategorySpec[] = [
       },
       {
         id: 'grid-cols',
-        label: 'Colunas',
+        label: 'Columns',
         kind: 'options',
         roots: ['grid-cols'],
         options: [1, 2, 3, 4, 6, 12].map((n) => ({ value: `grid-cols-${n}`, label: String(n) })),
@@ -132,7 +132,7 @@ export const CATEGORIES: CategorySpec[] = [
   },
   {
     id: 'spacing',
-    label: 'Espaçamento',
+    label: 'Spacing',
     controls: [
       { id: 'p', label: 'Padding', kind: 'scale', roots: ['p'], options: scaleOptions('p') },
       { id: 'px', label: 'Padding X', kind: 'scale', roots: ['px'], options: scaleOptions('px') },
@@ -144,11 +144,11 @@ export const CATEGORIES: CategorySpec[] = [
   },
   {
     id: 'sizing',
-    label: 'Dimensões',
+    label: 'Sizing',
     controls: [
       {
         id: 'w',
-        label: 'Largura',
+        label: 'Width',
         kind: 'text',
         roots: ['w'],
         options: [
@@ -160,7 +160,7 @@ export const CATEGORIES: CategorySpec[] = [
       },
       {
         id: 'h',
-        label: 'Altura',
+        label: 'Height',
         kind: 'text',
         roots: ['h'],
         options: [
@@ -170,17 +170,17 @@ export const CATEGORIES: CategorySpec[] = [
           { value: 'h-screen', label: 'screen' },
         ],
       },
-      { id: 'max-w', label: 'Largura máx.', kind: 'text', roots: ['max-w'] },
-      { id: 'min-h', label: 'Altura mín.', kind: 'text', roots: ['min-h'] },
+      { id: 'max-w', label: 'Max width', kind: 'text', roots: ['max-w'] },
+      { id: 'min-h', label: 'Min height', kind: 'text', roots: ['min-h'] },
     ],
   },
   {
     id: 'typography',
-    label: 'Tipografia',
+    label: 'Typography',
     controls: [
       {
         id: 'text-size',
-        label: 'Tamanho',
+        label: 'Size',
         kind: 'options',
         roots: ['text'],
         options: ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl'].map((value) => ({
@@ -190,7 +190,7 @@ export const CATEGORIES: CategorySpec[] = [
       },
       {
         id: 'font-weight',
-        label: 'Peso',
+        label: 'Weight',
         kind: 'options',
         roots: ['font'],
         options: ['normal', 'medium', 'semibold', 'bold'].map((value) => ({
@@ -200,7 +200,7 @@ export const CATEGORIES: CategorySpec[] = [
       },
       {
         id: 'text-align',
-        label: 'Alinhamento',
+        label: 'Alignment',
         kind: 'options',
         roots: ['text-left', 'text-center', 'text-right', 'text-justify'],
         options: [
@@ -211,7 +211,7 @@ export const CATEGORIES: CategorySpec[] = [
       },
       {
         id: 'leading',
-        label: 'Entrelinha',
+        label: 'Line height',
         kind: 'options',
         roots: ['leading'],
         options: ['none', 'tight', 'snug', 'normal', 'relaxed', 'loose'].map((value) => ({
@@ -223,20 +223,20 @@ export const CATEGORIES: CategorySpec[] = [
   },
   {
     id: 'color',
-    label: 'Cores',
+    label: 'Colors',
     controls: [
-      { id: 'bg', label: 'Fundo', kind: 'color', roots: ['bg'] },
-      { id: 'text-color', label: 'Texto', kind: 'color', roots: ['text'] },
-      { id: 'border-color', label: 'Borda', kind: 'color', roots: ['border'] },
+      { id: 'bg', label: 'Background', kind: 'color', roots: ['bg'] },
+      { id: 'text-color', label: 'Text', kind: 'color', roots: ['text'] },
+      { id: 'border-color', label: 'Border', kind: 'color', roots: ['border'] },
     ],
   },
   {
     id: 'border',
-    label: 'Borda',
+    label: 'Border',
     controls: [
       {
         id: 'border-width',
-        label: 'Espessura',
+        label: 'Width',
         kind: 'options',
         roots: ['border'],
         options: ['border', 'border-0', 'border-2', 'border-4', 'border-8'].map((value) => ({
@@ -246,7 +246,7 @@ export const CATEGORIES: CategorySpec[] = [
       },
       {
         id: 'rounded',
-        label: 'Raio',
+        label: 'Radius',
         kind: 'options',
         roots: ['rounded'],
         options: ['rounded-none', 'rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl', 'rounded-2xl', 'rounded-full'].map(
@@ -257,11 +257,11 @@ export const CATEGORIES: CategorySpec[] = [
   },
   {
     id: 'effects',
-    label: 'Efeitos',
+    label: 'Effects',
     controls: [
       {
         id: 'shadow',
-        label: 'Sombra',
+        label: 'Shadow',
         kind: 'options',
         roots: ['shadow'],
         options: ['shadow-none', 'shadow-sm', 'shadow-md', 'shadow-lg', 'shadow-xl', 'shadow-2xl'].map(
@@ -270,7 +270,7 @@ export const CATEGORIES: CategorySpec[] = [
       },
       {
         id: 'opacity',
-        label: 'Opacidade',
+        label: 'Opacity',
         kind: 'options',
         roots: ['opacity'],
         options: [0, 25, 50, 75, 100].map((n) => ({ value: `opacity-${n}`, label: String(n) })),

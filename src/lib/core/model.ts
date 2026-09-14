@@ -89,15 +89,15 @@ export function childrenOf(doc: EditorDocument, id: NodeId): NodeId[] {
 const EMPTY_CHILDREN: NodeId[] = []
 
 /**
- * Texto só de espaço em branco que o parser preserva porque separa elementos inline
- * (`<a>..</a>\n<a>..</a>`). Faz parte do documento e do HTML de saída, mas não é conteúdo
- * que o usuário edita — a árvore de camadas e a navegação por teclado o ignoram.
+ * Whitespace-only text the parser keeps because it separates inline elements
+ * (`<a>..</a>\n<a>..</a>`). It is part of the document and of the output HTML, but not
+ * content the user edits — the layers tree and keyboard navigation ignore it.
  */
 export function isLayoutWhitespace(node: AnyNode | undefined): boolean {
   return node?.kind === 'text' && node.value.trim() === ''
 }
 
-/** Filhos de `id` sem o whitespace de layout. Devolve o mesmo array quando não há nada a filtrar. */
+/** Children of `id` without layout whitespace. Returns the same array when there is nothing to filter. */
 export function contentChildrenOf(doc: EditorDocument, id: NodeId): NodeId[] {
   const children = childrenOf(doc, id)
   let filtered: NodeId[] | null = null
@@ -185,13 +185,13 @@ export function withAttr<T extends ElementNode | OpaqueNode>(
 export function labelOf(node: AnyNode): string {
   switch (node.kind) {
     case 'element':
-      return isRoot(node) ? 'documento' : node.tag
+      return isRoot(node) ? 'document' : node.tag
     case 'opaque':
       return node.tag
     case 'comment':
-      return 'comentário'
+      return 'comment'
     case 'text':
-      return node.value.trim() || 'texto'
+      return node.value.trim() || 'text'
   }
 }
 

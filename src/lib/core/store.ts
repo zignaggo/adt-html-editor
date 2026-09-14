@@ -64,8 +64,8 @@ export type EditorActions = {
 }
 
 /**
- * Store do editor: `store.state` é somente leitura, `store.actions` é a única forma de mutar,
- * `store.subscribe(listener)` notifica a cada mudança (retorna `{ unsubscribe }`).
+ * Editor store: `store.state` is read-only, `store.actions` is the only way to mutate,
+ * `store.subscribe(listener)` notifies on every change (returns `{ unsubscribe }`).
  */
 export type EditorStore = Store<EditorState, EditorActions>
 
@@ -124,7 +124,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
   }
 
   return new Store<EditorState, EditorActions>(initialState, ({ setState, get }) => {
-    /** `set` no estilo "patch": mescla um parcial; devolver o próprio `state` é um no-op sem notificação. */
+    /** Patch-style `set`: merges a partial; returning `state` itself is a no-op with no notification. */
     function set(patch: Patch | ((state: EditorState) => Patch | EditorState)) {
       setState((state) => {
         const next = typeof patch === 'function' ? patch(state) : patch

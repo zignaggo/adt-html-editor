@@ -19,7 +19,7 @@ export type CanvasContextValue = {
   setPreset: (preset: CanvasWidthPreset) => void
   isDark: boolean
   setIsDark: (dark: boolean) => void
-  /** `false` enquanto o CSS do documento atual ainda não foi gerado. */
+  /** `false` while the CSS for the current document has not been generated yet. */
   stylesReady: boolean
 }
 
@@ -27,6 +27,6 @@ export const CanvasContext = createContext<CanvasContextValue | null>(null)
 
 export function useCanvasContext(): CanvasContextValue {
   const value = useContext(CanvasContext)
-  invariant(value, 'As partes de <HtmlEditor.Canvas> precisam ficar dentro de <HtmlEditor.Canvas>')
+  invariant(value, '<HtmlEditor.Canvas> parts must be rendered inside <HtmlEditor.Canvas>')
   return value
 }

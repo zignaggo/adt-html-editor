@@ -25,28 +25,28 @@ function measure(label: string, run: () => void): number {
   return elapsed
 }
 
-describe('orçamento de performance (2.000 nós)', () => {
+describe('performance budget (2,000 nodes)', () => {
   const html = buildLargeHtml(70, 10)
   const doc = parseHtml(html)
   const nodeCount = Object.keys(doc.nodes).length
 
-  it('o documento de referência tem ao menos 2.000 nós', () => {
+  it('the reference document has at least 2,000 nodes', () => {
     expect(nodeCount).toBeGreaterThanOrEqual(2000)
   })
 
-  it('parse fica abaixo de 250 ms', () => {
+  it('parse stays under 250 ms', () => {
     expect(measure('parse', () => parseHtml(html))).toBeLessThan(250)
   })
 
-  it('serialize fica abaixo de 150 ms', () => {
+  it('serialize stays under 150 ms', () => {
     expect(measure('serialize', () => serializeHtml(doc))).toBeLessThan(150)
   })
 
-  it('flattenTree fica abaixo de 50 ms', () => {
+  it('flattenTree stays under 50 ms', () => {
     expect(measure('flatten', () => flattenTree(doc, {}))).toBeLessThan(50)
   })
 
-  it('moveNode fica abaixo de 20 ms', () => {
+  it('moveNode stays under 20 ms', () => {
     const store = createEditorStore(html)
     const roots = childrenOf(store.state.doc, store.state.doc.rootId)
     const source = roots[0]
@@ -58,7 +58,7 @@ describe('orçamento de performance (2.000 nós)', () => {
     expect(store.state.doc.nodes[source].parentId).toBe(target)
   })
 
-  it('setClasses fica abaixo de 20 ms e não recria o mapa de nós inteiro', () => {
+  it('setClasses stays under 20 ms and does not recreate the whole node map', () => {
     const store = createEditorStore(html)
     const roots = childrenOf(store.state.doc, store.state.doc.rootId)
     const before = store.state.doc.nodes
@@ -72,7 +72,7 @@ describe('orçamento de performance (2.000 nós)', () => {
     expect(after[roots[0]]).not.toBe(before[roots[0]])
   })
 
-  it('undo restaura por referência, sem copiar a árvore', () => {
+  it('undo restores by reference without copying the tree', () => {
     const store = createEditorStore(html)
     const roots = childrenOf(store.state.doc, store.state.doc.rootId)
     const original = store.state.doc
@@ -83,7 +83,7 @@ describe('orçamento de performance (2.000 nós)', () => {
     expect(store.state.doc).toBe(original)
   })
 
-  it('collectSubtree percorre a maior seção rapidamente', () => {
+  it('collectSubtree walks the largest section quickly', () => {
     const roots = childrenOf(doc, doc.rootId)
     expect(measure('collect', () => collectSubtree(doc, roots[0]))).toBeLessThan(20)
   })

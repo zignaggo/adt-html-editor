@@ -7,12 +7,12 @@ export type HistoryProps = {
   children?: ReactNode
 }
 
-/** Raiz do grupo de histórico. Sem children renderiza `Undo` + `Redo`. */
+/** Root of the history group. Without children it renders `Undo` + `Redo`. */
 export function HistoryGroup({ className, children }: HistoryProps) {
   return (
     <div
       role="group"
-      aria-label="Histórico"
+      aria-label="History"
       className={className ? `${styles.group} ${className}` : styles.group}
     >
       {children ?? (
@@ -38,10 +38,10 @@ export function HistoryUndo({ className, children }: HistoryButtonProps) {
       className={className ? `${styles.button} ${className}` : styles.button}
       disabled={!canUndo}
       aria-keyshortcuts="Control+Z Meta+Z"
-      title="Desfazer (Ctrl+Z)"
+      title="Undo (Ctrl+Z)"
       onClick={undo}
     >
-      {children ?? 'Desfazer'}
+      {children ?? 'Undo'}
     </button>
   )
 }
@@ -54,10 +54,10 @@ export function HistoryRedo({ className, children }: HistoryButtonProps) {
       className={className ? `${styles.button} ${className}` : styles.button}
       disabled={!canRedo}
       aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y"
-      title="Refazer (Ctrl+Shift+Z)"
+      title="Redo (Ctrl+Shift+Z)"
       onClick={redo}
     >
-      {children ?? 'Refazer'}
+      {children ?? 'Redo'}
     </button>
   )
 }

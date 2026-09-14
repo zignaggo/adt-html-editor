@@ -11,12 +11,12 @@ export function CustomLayout() {
       <HtmlEditor.Canvas className={styles.canvas}>
         <HtmlEditor.Canvas.Viewport />
         <HtmlEditor.Canvas.Toolbar>
-          <HtmlEditor.Canvas.DarkToggle>Tema escuro</HtmlEditor.Canvas.DarkToggle>
+          <HtmlEditor.Canvas.DarkToggle>Dark theme</HtmlEditor.Canvas.DarkToggle>
           <HtmlEditor.Canvas.WidthPresets
             presets={[
               { id: 'narrow', label: '360', width: 360 },
               { id: 'wide', label: '1024', width: 1024 },
-              { id: 'fluid', label: 'Fluido', width: 0 },
+              { id: 'fluid', label: 'Fluid', width: 0 },
             ]}
           />
         </HtmlEditor.Canvas.Toolbar>
@@ -25,18 +25,18 @@ export function CustomLayout() {
       <HtmlEditor.Inspector className={styles.inspector}>
         <HtmlEditor.Inspector.Header />
         <HtmlEditor.Inspector.Empty>
-          Nada selecionado. Clique em algo no canvas.
+          Nothing selected. Click something on the canvas.
         </HtmlEditor.Inspector.Empty>
         <HtmlEditor.Inspector.Variants />
         <HtmlEditor.Inspector.Body>
-          <HtmlEditor.Inspector.Section title="Atalhos">
+          <HtmlEditor.Inspector.Section title="Shortcuts">
             <HtmlEditor.Inspector.Control id="display" />
             <HtmlEditor.Inspector.Control id="gap" />
             <HtmlEditor.Inspector.Control id="p" />
           </HtmlEditor.Inspector.Section>
           <HtmlEditor.Inspector.Category id="typography" />
           <HtmlEditor.Inspector.Category id="color" />
-          <HtmlEditor.Inspector.Section title="Controles próprios">
+          <HtmlEditor.Inspector.Section title="Custom controls">
             <MyClassInput />
             <MyRadiusSlider />
           </HtmlEditor.Inspector.Section>
@@ -51,7 +51,7 @@ export function CustomLayout() {
         <HistoryControls />
         <HtmlEditor.Layers className={styles.layers}>
           <HtmlEditor.Layers.Header>
-            <HtmlEditor.Layers.Title>Estrutura</HtmlEditor.Layers.Title>
+            <HtmlEditor.Layers.Title>Structure</HtmlEditor.Layers.Title>
             <HtmlEditor.Layers.Count />
           </HtmlEditor.Layers.Header>
           <HtmlEditor.Layers.Tree

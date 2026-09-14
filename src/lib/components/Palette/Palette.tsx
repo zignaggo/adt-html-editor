@@ -14,7 +14,7 @@ export function Palette({ className, entries = PALETTE_ENTRIES, children }: Pale
     <div className={className ? `${styles.palette} ${className}` : styles.palette}>
       {children ?? (
         <>
-          <PaletteHeader>Paleta</PaletteHeader>
+          <PaletteHeader>Palette</PaletteHeader>
           <PaletteGrid entries={entries} />
         </>
       )}

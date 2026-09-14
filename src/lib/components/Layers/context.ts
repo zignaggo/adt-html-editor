@@ -10,6 +10,6 @@ export const LayersContext = createContext<LayersContextValue | null>(null)
 
 export function useLayersContext(): LayersContextValue {
   const value = useContext(LayersContext)
-  invariant(value, 'As partes de <HtmlEditor.Layers> precisam ficar dentro de <HtmlEditor.Layers>')
+  invariant(value, '<HtmlEditor.Layers> parts must be rendered inside <HtmlEditor.Layers>')
   return value
 }

@@ -17,7 +17,7 @@ export const EditorContext = createContext<EditorContextValue | null>(null)
 
 export function useEditorContext(): EditorContextValue {
   const value = use(EditorContext)
-  invariant(value, '<HtmlEditor> ausente: os painéis precisam ficar dentro do provider')
+  invariant(value, '<HtmlEditor> missing: panels must be rendered inside the provider')
   return value
 }
 
@@ -66,7 +66,7 @@ export function useDocument(): EditorDocument {
   return useEditorSelector((state) => state.doc)
 }
 
-/** Ações do editor. O objeto é estável por instância — seguro em deps de hooks. */
+/** Editor actions. The object is stable per instance — safe to use in hook deps. */
 export function useEditor(): EditorApi {
   return useEditorStoreApi().actions
 }
