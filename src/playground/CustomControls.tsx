@@ -3,7 +3,7 @@ import { useClassEditing, useInspectorContext, useStyleControl } from '../lib'
 import styles from './CustomControls.module.css'
 
 export function MyClassInput() {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   const editing = useClassEditing(selectedId ?? '')
   const [draft, setDraft] = useState('')
 
@@ -12,7 +12,7 @@ export function MyClassInput() {
   const submit = () => {
     const value = draft.trim()
     if (!value) return
-    editing.apply(value, variant)
+    editing.apply(value, target)
     setDraft('')
   }
 
@@ -44,12 +44,12 @@ export function MyClassInput() {
 }
 
 export function MyRadiusSlider() {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   const steps = ['rounded-none', 'rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl', 'rounded-2xl', 'rounded-full']
   const control = useStyleControl(
     selectedId ?? '',
     { roots: ['rounded'], kind: 'options', options: steps.map((value, index) => ({ value, label: String(index) })) },
-    variant,
+    target,
   )
 
   if (!selectedId) return null

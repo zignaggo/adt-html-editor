@@ -5,6 +5,7 @@ import invariant from 'tiny-invariant'
 import type { NodeId } from '../../core/ids'
 import type { AnyNode, EditorDocument } from '../../core/model'
 import type { EditorActions, EditorState, EditorStore } from '../../core/store'
+import type { BreakpointId } from '../../tailwind/variants'
 
 export type StyleMode = 'tailwind' | 'inline-css'
 
@@ -25,6 +26,7 @@ export type EditorContextValue = {
   layout: LayoutMode
   fixedLayout: FixedLayoutConfig
   aspectLock: Store<boolean>
+  breakpoint: Store<BreakpointId>
   canvasRootRef: { current: HTMLElement | null }
 }
 
@@ -79,6 +81,10 @@ export function useFixedLayout(): FixedLayoutConfig {
 
 export function useAspectLocked(): boolean {
   return useSelector(useEditorContext().aspectLock, (locked) => locked)
+}
+
+export function useBreakpoint(): BreakpointId {
+  return useSelector(useEditorContext().breakpoint, (breakpoint) => breakpoint)
 }
 
 export function useCanUndo(): boolean {

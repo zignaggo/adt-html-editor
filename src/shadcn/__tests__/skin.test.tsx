@@ -82,7 +82,7 @@ describe('shadcn skin parts', () => {
     expect(store.state.selectedId).toBe(h1)
     expect(screen.getByText('text-4xl')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Remove font-bold' })).toBeTruthy()
-    expect(screen.getByRole('combobox', { name: 'Variant' })).toBeTruthy()
+    expect(screen.getByRole('combobox', { name: 'State' })).toBeTruthy()
     expect(screen.getByRole('combobox', { name: 'Add class' })).toBeTruthy()
   })
 

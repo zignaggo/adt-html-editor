@@ -1,6 +1,6 @@
 import { useClassMapControl } from '../../../../lib/components/Inspector/controls/useClassMapControl'
 import type { NodeId } from '../../../../lib/core/ids'
-import type { VariantId } from '../../../../lib/tailwind/categories'
+import type { StyleTarget } from '../../../../lib/tailwind/variants'
 import { marginClassMap, paddingClassMap } from '../../../../lib/tailwind/classMaps/spacing'
 import type { BoxValue } from '../../../../lib/tailwind/classMaps/types'
 import { BoxInput } from '../controls/BoxInput'
@@ -13,12 +13,12 @@ const ZERO: BoxValue = { t: 0, r: 0, b: 0, l: 0 }
 export function InspectorSpacing({ title = 'Spacing' }: { title?: string }) {
   const selection = useStyledSelection()
   if (!selection) return null
-  return <SpacingFields key={selection.id} id={selection.id} variant={selection.variant} title={title} />
+  return <SpacingFields key={selection.id} id={selection.id} target={selection.target} title={title} />
 }
 
-function SpacingFields({ id, variant, title }: { id: NodeId; variant: VariantId; title: string }) {
-  const padding = useClassMapControl(id, paddingClassMap, ZERO, variant)
-  const margin = useClassMapControl(id, marginClassMap, ZERO, variant)
+function SpacingFields({ id, target, title }: { id: NodeId; target: StyleTarget; title: string }) {
+  const padding = useClassMapControl(id, paddingClassMap, ZERO, target)
+  const margin = useClassMapControl(id, marginClassMap, ZERO, target)
 
   return (
     <StyleSection title={title}>

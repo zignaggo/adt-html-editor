@@ -1,7 +1,7 @@
 import { twMerge } from 'tailwind-merge'
 import type { NodeId } from '../../core/ids'
 import { isStyled } from '../../core/model'
-import { stripVariants, variantOf, withVariant, type VariantId } from '../../tailwind/categories'
+import { matchesTarget, stripVariants, withTarget, type StyleTarget } from '../../tailwind/variants'
 import { useEditor, useEditorStoreApi } from '../Editor/context'
 
 export type ClassEditing = ReturnType<typeof useClassEditing>
@@ -26,14 +26,14 @@ function buildClassEditing(
   return {
     currentClasses,
 
-    classesForVariant(variant: VariantId): string[] {
-      return currentClasses().filter((entry) => variantOf(entry) === variant)
+    classesForTarget(target: StyleTarget): string[] {
+      return currentClasses().filter((entry) => matchesTarget(entry, target))
     },
 
-    apply(className: string, variant: VariantId) {
+    apply(className: string, target: StyleTarget) {
       const trimmed = className.trim()
       if (!trimmed) return
-      const next = trimmed.includes(':') ? trimmed : withVariant(trimmed, variant)
+      const next = trimmed.includes(':') ? trimmed : withTarget(trimmed, target)
       const merged = twMerge(currentClasses().join(' '), next)
       setClasses(id, merged.split(/\s+/).filter(Boolean))
     },
@@ -52,19 +52,19 @@ function buildClassEditing(
       )
     },
 
-    removeRoots(roots: string[], variant: VariantId) {
+    removeRoots(roots: string[], target: StyleTarget) {
       setClasses(
         id,
         currentClasses().filter((entry) => {
-          if (variantOf(entry) !== variant) return true
+          if (!matchesTarget(entry, target)) return true
           return !matchesRoot(stripVariants(entry), roots)
         }),
       )
     },
 
-    valueForRoots(roots: string[], variant: VariantId): string | null {
+    valueForRoots(roots: string[], target: StyleTarget): string | null {
       const match = currentClasses().find(
-        (entry) => variantOf(entry) === variant && matchesRoot(stripVariants(entry), roots),
+        (entry) => matchesTarget(entry, target) && matchesRoot(stripVariants(entry), roots),
       )
       return match ? stripVariants(match) : null
     },

@@ -47,16 +47,16 @@ export function InspectorVariants() {
   if (!bar.selectedId) return null
 
   return (
-    <div className={styles.variantBar} role="tablist" aria-label="Variant">
-      {bar.variants.map((entry) => (
+    <div className={styles.variantBar} role="group" aria-label="State">
+      <span className={styles.variantBreakpoint}>{bar.breakpoint.label}</span>
+      {bar.states.map((entry) => (
         <button
           key={entry}
           type="button"
-          role="tab"
-          aria-selected={bar.isActive(entry)}
+          aria-pressed={bar.isActive(entry)}
           className={styles.variantButton}
           data-active={bar.isActive(entry) || undefined}
-          onClick={() => bar.setActive(entry)}
+          onClick={() => bar.toggle(entry)}
         >
           {entry}
         </button>
@@ -87,15 +87,15 @@ export function InspectorSection({
 }
 
 export function InspectorClassInput() {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   if (!selectedId) return null
-  return <ClassCombobox id={selectedId} variant={variant} />
+  return <ClassCombobox id={selectedId} target={target} />
 }
 
 export function InspectorClassList() {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   if (!selectedId) return null
-  return <ClassChips id={selectedId} variant={variant} />
+  return <ClassChips id={selectedId} target={target} />
 }
 
 export function InspectorAttributes() {
@@ -109,16 +109,16 @@ export type InspectorControlProps =
   | { control: ControlSpec; id?: never }
 
 export function InspectorControl({ id, control }: InspectorControlProps) {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   const resolved =
     control ??
     CATEGORIES.flatMap((category) => category.controls).find((entry) => entry.id === id)
   if (!selectedId || !resolved) return null
-  return <ControlGroup id={selectedId} control={resolved} variant={variant} />
+  return <ControlGroup id={selectedId} control={resolved} target={target} />
 }
 
 export function InspectorCategory({ id, title }: { id: string; title?: string }) {
-  const { selectedId, variant, openCategory, setOpenCategory } = useInspectorContext()
+  const { selectedId, target, openCategory, setOpenCategory } = useInspectorContext()
   const category = CATEGORIES.find((entry) => entry.id === id)
   if (!selectedId || !category) return null
 
@@ -154,7 +154,7 @@ export function InspectorCategory({ id, title }: { id: string; title?: string })
       </button>
       <div id={`adt-panel-${id}`} hidden={!isOpen} className={styles.accordionBody}>
         {category.controls.map((control) => (
-          <ControlGroup key={control.id} id={selectedId} control={control} variant={variant} />
+          <ControlGroup key={control.id} id={selectedId} control={control} target={target} />
         ))}
       </div>
     </section>

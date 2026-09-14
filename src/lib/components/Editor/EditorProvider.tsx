@@ -14,6 +14,7 @@ import { serializeHtml } from '../../core/html/serialize'
 import { createEditorStore, type EditorState } from '../../core/store'
 import { detectLayout, pageSizeOf, type PageSize } from '../../fixed/detect'
 import { pageContainerOf } from '../../fixed/pageContainer'
+import type { BreakpointId } from '../../tailwind/variants'
 import {
   EditorContext,
   type EditorContextValue,
@@ -104,6 +105,7 @@ export function EditorProvider({
 }: EditorProviderProps) {
   const [store] = useState(() => createEditorStore(value ?? defaultValue))
   const [aspectLock] = useState(() => new Store(false))
+  const [breakpoint] = useState(() => new Store<BreakpointId>('desktop'))
   const canvasRootRef = useRef<HTMLElement | null>(null)
   const lastEmittedRef = useRef<string | null>(null)
   const onChangeRef = useRef(onChange)
@@ -139,6 +141,7 @@ export function EditorProvider({
     layout: resolved.layout,
     fixedLayout: fixedConfig,
     aspectLock,
+    breakpoint,
     canvasRootRef,
   }
 

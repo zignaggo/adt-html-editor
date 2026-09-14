@@ -1,6 +1,6 @@
 import type { NodeId } from '../core/ids'
 import type { StyledNode } from '../core/model'
-import type { VariantId } from '../tailwind/categories'
+import type { StyleTarget } from '../tailwind/variants'
 
 export type StyleWrite =
   | { kind: 'classes'; id: NodeId; classes: string[] }
@@ -10,8 +10,8 @@ export type StyleAdapter = {
   id: 'tailwind' | 'inline-css'
   label: string
   supportsVariants: boolean
-  read: (node: StyledNode, property: string, variant: VariantId) => string | null
-  write: (node: StyledNode, property: string, value: string | null, variant: VariantId) => StyleWrite
+  read: (node: StyledNode, property: string, target: StyleTarget) => string | null
+  write: (node: StyledNode, property: string, value: string | null, target: StyleTarget) => StyleWrite
 }
 
 export function parseInlineStyle(style: string): Map<string, string> {

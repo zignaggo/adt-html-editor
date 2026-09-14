@@ -1,5 +1,15 @@
 import { Fragment, createElement, startTransition, useRef, useState, type ReactNode } from 'react'
-import { ArrowDownIcon, ArrowUpIcon, CornerLeftUpIcon, LockIcon, LockOpenIcon, XIcon } from 'lucide-react'
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CornerLeftUpIcon,
+  LockIcon,
+  LockOpenIcon,
+  MonitorIcon,
+  SmartphoneIcon,
+  TabletIcon,
+  XIcon,
+} from 'lucide-react'
 import { useNode } from '../../../lib/components/Editor/context'
 import { useInspectorContext } from '../../../lib/components/Inspector/context'
 import { InspectorProvider } from '../../../lib/components/Inspector/InspectorPanel'
@@ -11,15 +21,14 @@ import { useVariantBar } from '../../../lib/components/Inspector/useVariantBar'
 import { useStyleControl } from '../../../lib/components/Inspector/controls/useStyleControl'
 import type { NodeId } from '../../../lib/core/ids'
 import { isStyled } from '../../../lib/core/model'
+import { CATEGORIES, COLOR_SWATCHES, PALETTE_COLORS, type ControlSpec } from '../../../lib/tailwind/categories'
 import {
-  CATEGORIES,
-  COLOR_SWATCHES,
-  PALETTE_COLORS,
+  matchesTarget,
   stripVariants,
-  variantOf,
-  type ControlSpec,
-  type VariantId,
-} from '../../../lib/tailwind/categories'
+  type BreakpointId,
+  type StateVariant,
+  type StyleTarget,
+} from '../../../lib/tailwind/variants'
 import { cn } from '../../lib/utils'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion'
 import { Badge } from '../../ui/badge'
@@ -229,23 +238,43 @@ export function InspectorEmpty({ children }: { children?: ReactNode }) {
   )
 }
 
+const BREAKPOINT_ICONS: Record<BreakpointId, typeof MonitorIcon> = {
+  desktop: MonitorIcon,
+  tablet: TabletIcon,
+  mobile: SmartphoneIcon,
+}
+
+const STATE_ITEMS = [
+  { value: 'hover', label: 'hover' },
+  { value: 'focus', label: 'focus' },
+  { value: 'active', label: 'active' },
+  { value: 'dark', label: 'dark' },
+]
+
 export function InspectorVariants() {
   const bar = useVariantBar()
   if (!bar.selectedId) return null
   return (
-    <div className="shrink-0 px-3 pb-4 border-b border-border">
+    <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 pb-3">
+      <Badge
+        variant="outline"
+        className="h-8 shrink-0 gap-1.5 px-2"
+        title={`Styling the ${bar.breakpoint.label.toLowerCase()} breakpoint`}
+      >
+        {createElement(BREAKPOINT_ICONS[bar.breakpoint.id])}
+        {bar.breakpoint.label}
+      </Badge>
       <Select
         value={bar.active}
-        onValueChange={(value) => {
-          if (value) bar.setActive(value as VariantId)
-        }}
+        items={STATE_ITEMS}
+        onValueChange={(value) => bar.setActive(typeof value === 'string' ? (value as StateVariant) : null)}
       >
-        <SelectTrigger size="sm" className="w-full" aria-label="Variant">
-          <SelectValue />
+        <SelectTrigger className="min-w-0 flex-1" aria-label="State">
+          <SelectValue placeholder="Default state" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            {bar.variants.map((entry) => (
+            {bar.states.map((entry) => (
               <SelectItem key={entry} value={entry}>
                 {entry}
               </SelectItem>
@@ -253,6 +282,11 @@ export function InspectorVariants() {
           </SelectGroup>
         </SelectContent>
       </Select>
+      {bar.active ? (
+        <Button variant="ghost" size="icon-sm" aria-label="Clear state" onClick={bar.clear}>
+          <XIcon />
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -277,12 +311,12 @@ export function InspectorSection({ title, children }: { title?: string; children
 }
 
 export function InspectorClassInput() {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   if (!selectedId) return null
-  return <ClassCombobox id={selectedId} variant={variant} />
+  return <ClassCombobox id={selectedId} target={target} />
 }
 
-function ClassCombobox({ id, variant }: { id: NodeId; variant: VariantId }) {
+function ClassCombobox({ id, target }: { id: NodeId; target: StyleTarget }) {
   const editing = useClassEditing(id)
   const [query, setQuery] = useState('')
   const suggestions = useClassSuggestions(query)
@@ -290,7 +324,7 @@ function ClassCombobox({ id, variant }: { id: NodeId; variant: VariantId }) {
 
   const commit = (className: string) => {
     if (!className.trim()) return
-    startTransition(() => editing.apply(className, variant))
+    startTransition(() => editing.apply(className, target))
     setQuery('')
   }
 
@@ -335,12 +369,12 @@ function ClassCombobox({ id, variant }: { id: NodeId; variant: VariantId }) {
 }
 
 export function InspectorClassList() {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   if (!selectedId) return null
-  return <ClassChips id={selectedId} variant={variant} />
+  return <ClassChips id={selectedId} target={target} />
 }
 
-function ClassChips({ id, variant }: { id: NodeId; variant: VariantId }) {
+function ClassChips({ id, target }: { id: NodeId; target: StyleTarget }) {
   const node = useNode(id)
   const editing = useClassEditing(id)
   if (!node || !isStyled(node)) return null
@@ -348,11 +382,11 @@ function ClassChips({ id, variant }: { id: NodeId; variant: VariantId }) {
   const visible: { className: string; index: number }[] = []
   for (let index = 0; index < node.classes.length; index += 1) {
     const className = node.classes[index]
-    if (variantOf(className) === variant) visible.push({ className, index })
+    if (matchesTarget(className, target)) visible.push({ className, index })
   }
 
   if (visible.length === 0) {
-    return <p className="text-xs text-muted-foreground">No classes in this variant.</p>
+    return <p className="text-xs text-muted-foreground">No classes for this target.</p>
   }
 
   return (
@@ -489,16 +523,16 @@ export type InspectorControlProps =
   | { control: ControlSpec; id?: never }
 
 export function InspectorControl({ id, control }: InspectorControlProps) {
-  const { selectedId, variant } = useInspectorContext()
+  const { selectedId, target } = useInspectorContext()
   const resolved =
     control ??
     CATEGORIES.flatMap((category) => category.controls).find((entry) => entry.id === id)
   if (!selectedId || !resolved) return null
-  return <ControlGroup id={selectedId} control={resolved} variant={variant} />
+  return <ControlGroup id={selectedId} control={resolved} target={target} />
 }
 
 export function InspectorCategory({ id, title }: { id: string; title?: string }) {
-  const { selectedId, variant, openCategory, setOpenCategory } = useInspectorContext()
+  const { selectedId, target, openCategory, setOpenCategory } = useInspectorContext()
   const category = CATEGORIES.find((entry) => entry.id === id)
   if (!selectedId || !category) return null
 
@@ -513,7 +547,7 @@ export function InspectorCategory({ id, title }: { id: string; title?: string })
         </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-3 pb-2">
           {category.controls.map((control) => (
-            <ControlGroup key={control.id} id={selectedId} control={control} variant={variant} />
+            <ControlGroup key={control.id} id={selectedId} control={control} target={target} />
           ))}
         </AccordionContent>
       </AccordionItem>
@@ -521,7 +555,7 @@ export function InspectorCategory({ id, title }: { id: string; title?: string })
   )
 }
 
-type ControlGroupProps = { id: NodeId; control: ControlSpec; variant: VariantId }
+type ControlGroupProps = { id: NodeId; control: ControlSpec; target: StyleTarget }
 
 function ControlGroup(props: ControlGroupProps) {
   if (props.control.kind === 'color') return <ColorControl {...props} />
@@ -542,8 +576,8 @@ function ControlLabel({ label, onClear }: { label: string; onClear?: (() => void
   )
 }
 
-function OptionsControl({ id, control, variant }: ControlGroupProps) {
-  const { value, options, toggle } = useStyleControl(id, control, variant)
+function OptionsControl({ id, control, target }: ControlGroupProps) {
+  const { value, options, toggle } = useStyleControl(id, control, target)
   return (
     <div className="flex flex-col gap-1">
       <ControlLabel label={control.label} />
@@ -569,8 +603,8 @@ function OptionsControl({ id, control, variant }: ControlGroupProps) {
   )
 }
 
-function ColorControl({ id, control, variant }: ControlGroupProps) {
-  const { value, toggle, clear } = useStyleControl(id, control, variant)
+function ColorControl({ id, control, target }: ControlGroupProps) {
+  const { value, toggle, clear } = useStyleControl(id, control, target)
   return (
     <div className="flex flex-col gap-1">
       <ControlLabel label={control.label} onClear={value ? () => startTransition(clear) : null} />
@@ -599,8 +633,8 @@ function ColorControl({ id, control, variant }: ControlGroupProps) {
   )
 }
 
-function TextControl({ id, control, variant }: ControlGroupProps) {
-  const { value, options, set, clear } = useStyleControl(id, control, variant)
+function TextControl({ id, control, target }: ControlGroupProps) {
+  const { value, options, set, clear } = useStyleControl(id, control, target)
   const [draft, setDraft] = useState('')
   return (
     <div className="flex flex-col gap-1">

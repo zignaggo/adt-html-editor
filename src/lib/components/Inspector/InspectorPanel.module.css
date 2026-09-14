@@ -455,3 +455,15 @@
 .addButton:active {
   scale: 0.96;
 }
+
+.variantBreakpoint {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 var(--adt-space-3);
+  margin-right: var(--adt-space-2);
+  border-radius: var(--adt-radius-xs);
+  background: var(--adt-bg-subtle);
+  color: var(--adt-text-muted);
+  font-size: var(--adt-text-xs);
+}

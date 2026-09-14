@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { CATEGORIES, type VariantId } from '../../tailwind/categories'
-import { useEditorSelector } from '../Editor/context'
+import { CATEGORIES } from '../../tailwind/categories'
+import type { StateVariant, StyleTarget } from '../../tailwind/variants'
+import { useBreakpoint, useEditorSelector } from '../Editor/context'
 import { InspectorPosition } from '../../fixed/InspectorPosition'
 import { InspectorTransform } from '../../fixed/InspectorTransform'
 import { InspectorContext, type InspectorContextValue } from './context'
@@ -19,13 +20,17 @@ import styles from './InspectorPanel.module.css'
 
 export function InspectorProvider({ children }: { children: ReactNode }) {
   const selectedId = useEditorSelector((state) => state.selectedId)
-  const [variant, setVariant] = useState<VariantId>('base')
+  const [state, setState] = useState<StateVariant | null>(null)
+  const breakpoint = useBreakpoint()
+  const target: StyleTarget = { breakpoint, state }
   const [openCategory, setOpenCategory] = useState<string>(CATEGORIES[0]?.id ?? '')
 
   const context: InspectorContextValue = {
     selectedId,
-    variant,
-    setVariant,
+    breakpoint,
+    state,
+    setState,
+    target,
     openCategory,
     setOpenCategory,
   }

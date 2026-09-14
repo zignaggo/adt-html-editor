@@ -11,7 +11,7 @@ import { useClassMapControl } from '../../../../lib/components/Inspector/control
 import { useComputedStyles } from '../../../../lib/components/Inspector/controls/useComputedStyles'
 import type { NodeId } from '../../../../lib/core/ids'
 import { alignName, lineHeightRatio, parsePx, rgbToHex, weightName } from '../../../../lib/style/computed'
-import type { VariantId } from '../../../../lib/tailwind/categories'
+import type { StyleTarget } from '../../../../lib/tailwind/variants'
 import {
   FONT_SIZE_TOKENS_LIST,
   FONT_WEIGHT_VALUES,
@@ -76,10 +76,10 @@ const NO_DECORATION: string[] = []
 export function InspectorTypography({ title = 'Typography' }: { title?: string }) {
   const selection = useStyledSelection()
   if (!selection) return null
-  return <TypographyFields key={selection.id} id={selection.id} variant={selection.variant} title={title} />
+  return <TypographyFields key={selection.id} id={selection.id} target={selection.target} title={title} />
 }
 
-function TypographyFields({ id, variant, title }: { id: NodeId; variant: VariantId; title: string }) {
+function TypographyFields({ id, target, title }: { id: NodeId; target: StyleTarget; title: string }) {
   const computed = useComputedStyles(id, COMPUTED_PROPS)
   const computedSize = parsePx(computed?.['font-size'])
   const computedWeight = weightName(computed?.['font-weight'])
@@ -87,13 +87,13 @@ function TypographyFields({ id, variant, title }: { id: NodeId; variant: Variant
   const computedLeading = lineHeightRatio(computed?.['line-height'], computed?.['font-size'])
   const computedColor = rgbToHex(computed?.color)
 
-  const family = useClassMapControl(id, fontFamilyClassMap, '', variant)
-  const size = useClassMapControl(id, fontSizeClassMap, computedSize ?? 16, variant)
-  const weight = useClassMapControl(id, fontWeightClassMap, computedWeight ?? 'normal', variant)
-  const decoration = useClassMapControl(id, textDecorationClassMap, NO_DECORATION, variant)
-  const align = useClassMapControl(id, textAlignClassMap, computedAlign ?? 'left', variant)
-  const leading = useClassMapControl(id, lineHeightClassMap, computedLeading ?? 1.5, variant)
-  const color = useClassMapControl(id, textColorClassMap, computedColor ?? '', variant)
+  const family = useClassMapControl(id, fontFamilyClassMap, '', target)
+  const size = useClassMapControl(id, fontSizeClassMap, computedSize ?? 16, target)
+  const weight = useClassMapControl(id, fontWeightClassMap, computedWeight ?? 'normal', target)
+  const decoration = useClassMapControl(id, textDecorationClassMap, NO_DECORATION, target)
+  const align = useClassMapControl(id, textAlignClassMap, computedAlign ?? 'left', target)
+  const leading = useClassMapControl(id, lineHeightClassMap, computedLeading ?? 1.5, target)
+  const color = useClassMapControl(id, textColorClassMap, computedColor ?? '', target)
 
   return (
     <StyleSection title={title}>

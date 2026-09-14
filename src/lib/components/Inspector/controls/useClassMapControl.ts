@@ -1,21 +1,21 @@
 import type { NodeId } from '../../../core/ids'
 import { isStyled } from '../../../core/model'
-import { stripVariants, variantOf, withVariant, type VariantId } from '../../../tailwind/categories'
 import type { ClassMap } from '../../../tailwind/classMaps/types'
+import {
+  BASE_TARGET,
+  cascadeOf,
+  matchesTarget,
+  sameTarget,
+  stripVariants,
+  withTarget,
+  type StyleTarget,
+} from '../../../tailwind/variants'
 import { useEditor, useNode } from '../../Editor/context'
 
-const RESPONSIVE: readonly VariantId[] = ['base', 'sm', 'md', 'lg', 'xl']
-
-export function cascadeOf(variant: VariantId): readonly VariantId[] {
-  const index = RESPONSIVE.indexOf(variant)
-  if (index >= 0) return RESPONSIVE.slice(0, index + 1).reverse()
-  return [variant, 'base']
-}
-
 export type ClassMapOverride = {
-  variant: VariantId
+  target: StyleTarget
   classes: string[]
-  fallbackVariant: VariantId
+  fallbackTarget: StyleTarget
   fallbackClasses: string[]
   reset: () => void
 }
@@ -32,23 +32,23 @@ const EMPTY: readonly string[] = []
 
 function fullClassesAt(
   classes: readonly string[],
-  variant: VariantId,
+  target: StyleTarget,
   matches: (className: string) => boolean,
 ): string[] {
   const out: string[] = []
   for (const className of classes) {
-    if (variantOf(className) === variant && matches(stripVariants(className))) out.push(className)
+    if (matchesTarget(className, target) && matches(stripVariants(className))) out.push(className)
   }
   return out
 }
 
 function resolveAt<TValue>(
   classes: readonly string[],
-  variants: readonly VariantId[],
+  targets: readonly StyleTarget[],
   classMap: ClassMap<TValue>,
 ): TValue | null {
-  for (const variant of variants) {
-    const stripped = fullClassesAt(classes, variant, classMap.matches).map(stripVariants)
+  for (const target of targets) {
+    const stripped = fullClassesAt(classes, target, classMap.matches).map(stripVariants)
     if (stripped.length === 0) continue
     const value = classMap.fromClasses(stripped)
     if (value !== null) return value
@@ -64,21 +64,22 @@ export function useClassMapControl<TValue>(
   id: NodeId,
   classMap: ClassMap<TValue>,
   defaultValue: TValue,
-  variant: VariantId,
+  target: StyleTarget,
 ): ClassMapControl<TValue> {
   const node = useNode(id)
   const { setClasses } = useEditor()
   const classes = node && isStyled(node) ? node.classes : EMPTY
 
-  const cascade = cascadeOf(variant)
+  const cascade = cascadeOf(target)
   const fallback = cascade.slice(1)
   const resolved = resolveAt(classes, cascade, classMap)
+  const isBase = sameTarget(target, BASE_TARGET)
 
   const withoutCurrent = () =>
-    classes.filter((className) => !(variantOf(className) === variant && classMap.matches(stripVariants(className))))
+    classes.filter((className) => !(matchesTarget(className, target) && classMap.matches(stripVariants(className))))
 
   const reset = () => {
-    if (variant === 'base') return
+    if (isBase) return
     setClasses(id, withoutCurrent())
   }
 
@@ -91,24 +92,24 @@ export function useClassMapControl<TValue>(
       setClasses(id, stripped)
       return
     }
-    setClasses(id, [...stripped, ...nextClasses.map((className) => withVariant(className, variant))])
+    setClasses(id, [...stripped, ...nextClasses.map((className) => withTarget(className, target))])
   }
 
   let override: ClassMapOverride | null = null
-  if (variant !== 'base') {
-    const current = fullClassesAt(classes, variant, classMap.matches)
+  if (!isBase) {
+    const current = fullClassesAt(classes, target, classMap.matches)
     if (current.length > 0) {
-      let fallbackVariant: VariantId = 'base'
+      let fallbackTarget: StyleTarget = BASE_TARGET
       let fallbackClasses: string[] = []
       for (const candidate of fallback) {
         const matched = fullClassesAt(classes, candidate, classMap.matches)
         if (matched.length > 0) {
-          fallbackVariant = candidate
+          fallbackTarget = candidate
           fallbackClasses = matched
           break
         }
       }
-      override = { variant, classes: current, fallbackVariant, fallbackClasses, reset }
+      override = { target, classes: current, fallbackTarget, fallbackClasses, reset }
     }
   }
 

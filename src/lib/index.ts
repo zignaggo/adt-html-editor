@@ -109,8 +109,9 @@ export { ClassChips } from './components/Inspector/ClassChips'
 export type { ClassChipsProps } from './components/Inspector/ClassChips'
 export { ClassCombobox } from './components/Inspector/ClassCombobox'
 export type { ClassComboboxProps } from './components/Inspector/ClassCombobox'
-export { CATEGORIES, COLOR_SWATCHES, PALETTE_COLORS, VARIANTS } from './tailwind/categories'
-export type { CategorySpec, ControlSpec, VariantId } from './tailwind/categories'
+export { CATEGORIES, COLOR_SWATCHES, PALETTE_COLORS } from './tailwind/categories'
+export type { CategorySpec, ControlSpec } from './tailwind/categories'
+export * from './tailwind/variants'
 
 export { Palette, PaletteGrid, PaletteHeader, PaletteItem } from './components/Palette/Palette'
 export type { PaletteProps } from './components/Palette/Palette'
@@ -140,6 +141,7 @@ export {
   useFixedLayout,
   useCanUndo,
   useCanRedo,
+  useBreakpoint,
 } from './components/Editor/context'
 export type {
   EditorApi,
@@ -201,7 +203,7 @@ export type { TransformFields } from './fixed/useTransformFields'
 export { LayersProvider } from './components/Layers/LayersPanel'
 export { InspectorProvider } from './components/Inspector/InspectorPanel'
 export { CanvasProvider } from './components/Canvas/Canvas'
-export { useClassMapControl, cascadeOf } from './components/Inspector/controls/useClassMapControl'
+export { useClassMapControl } from './components/Inspector/controls/useClassMapControl'
 export type { ClassMapControl, ClassMapOverride } from './components/Inspector/controls/useClassMapControl'
 export { useOptionalFields } from './components/Inspector/controls/useOptionalFields'
 export type { OptionalField, OptionalFields } from './components/Inspector/controls/useOptionalFields'

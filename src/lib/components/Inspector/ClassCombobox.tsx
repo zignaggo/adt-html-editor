@@ -1,17 +1,17 @@
 import { startTransition, useRef, useState } from 'react'
 import type { NodeId } from '../../core/ids'
-import type { VariantId } from '../../tailwind/categories'
+import type { StyleTarget } from '../../tailwind/variants'
 import { useClassEditing } from './useClassEditing'
 import { useClassSuggestions } from './useClassSuggestions'
 import styles from './InspectorPanel.module.css'
 
 export type ClassComboboxProps = {
   id: NodeId
-  variant: VariantId
+  target: StyleTarget
   placeholder?: string
 }
 
-export function ClassCombobox({ id, variant, placeholder = 'Add class…' }: ClassComboboxProps) {
+export function ClassCombobox({ id, target, placeholder = 'Add class…' }: ClassComboboxProps) {
   const editing = useClassEditing(id)
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -20,7 +20,7 @@ export function ClassCombobox({ id, variant, placeholder = 'Add class…' }: Cla
   const suggestions = useClassSuggestions(query)
 
   const commit = (className: string) => {
-    startTransition(() => editing.apply(className, variant))
+    startTransition(() => editing.apply(className, target))
     setQuery('')
     setIsOpen(false)
     setActiveIndex(0)

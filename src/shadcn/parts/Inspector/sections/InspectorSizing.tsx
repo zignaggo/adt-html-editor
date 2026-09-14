@@ -1,7 +1,7 @@
 import { useClassMapControl } from '../../../../lib/components/Inspector/controls/useClassMapControl'
 import { useOptionalFields, type OptionalField } from '../../../../lib/components/Inspector/controls/useOptionalFields'
 import type { NodeId } from '../../../../lib/core/ids'
-import type { VariantId } from '../../../../lib/tailwind/categories'
+import type { StyleTarget } from '../../../../lib/tailwind/variants'
 import {
   heightClassMap,
   maxHeightClassMap,
@@ -45,7 +45,7 @@ export function InspectorSizing({ title = 'Sizing' }: { title?: string }) {
     <SizingFields
       key={selection.id}
       id={selection.id}
-      variant={selection.variant}
+      target={selection.target}
       classes={selection.classes}
       title={title}
     />
@@ -54,22 +54,22 @@ export function InspectorSizing({ title = 'Sizing' }: { title?: string }) {
 
 function SizingFields({
   id,
-  variant,
+  target,
   classes,
   title,
 }: {
   id: NodeId
-  variant: VariantId
+  target: StyleTarget
   classes: readonly string[]
   title: string
 }) {
   const optional = useOptionalFields(OPTIONALS, classes, id)
-  const width = useClassMapControl(id, widthClassMap, AUTO, variant)
-  const height = useClassMapControl(id, heightClassMap, AUTO, variant)
-  const minWidth = useClassMapControl(id, minWidthClassMap, AUTO, variant)
-  const minHeight = useClassMapControl(id, minHeightClassMap, AUTO, variant)
-  const maxWidth = useClassMapControl(id, maxWidthClassMap, NONE, variant)
-  const maxHeight = useClassMapControl(id, maxHeightClassMap, NONE, variant)
+  const width = useClassMapControl(id, widthClassMap, AUTO, target)
+  const height = useClassMapControl(id, heightClassMap, AUTO, target)
+  const minWidth = useClassMapControl(id, minWidthClassMap, AUTO, target)
+  const minHeight = useClassMapControl(id, minHeightClassMap, AUTO, target)
+  const maxWidth = useClassMapControl(id, maxWidthClassMap, NONE, target)
+  const maxHeight = useClassMapControl(id, maxHeightClassMap, NONE, target)
 
   return (
     <StyleSection

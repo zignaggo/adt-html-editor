@@ -1,12 +1,14 @@
 import { createContext, useContext } from 'react'
 import invariant from 'tiny-invariant'
 import type { NodeId } from '../../core/ids'
-import type { VariantId } from '../../tailwind/categories'
+import type { BreakpointId, StateVariant, StyleTarget } from '../../tailwind/variants'
 
 export type InspectorContextValue = {
   selectedId: NodeId | null
-  variant: VariantId
-  setVariant: (variant: VariantId) => void
+  breakpoint: BreakpointId
+  state: StateVariant | null
+  setState: (state: StateVariant | null) => void
+  target: StyleTarget
   openCategory: string
   setOpenCategory: (id: string) => void
 }

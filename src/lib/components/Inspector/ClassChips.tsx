@@ -1,16 +1,16 @@
 import type { NodeId } from '../../core/ids'
 import { isStyled } from '../../core/model'
-import { stripVariants, variantOf, type VariantId } from '../../tailwind/categories'
+import { matchesTarget, stripVariants, type StyleTarget } from '../../tailwind/variants'
 import { useNode } from '../Editor/context'
 import { useClassEditing } from './useClassEditing'
 import styles from './InspectorPanel.module.css'
 
 export type ClassChipsProps = {
   id: NodeId
-  variant: VariantId
+  target: StyleTarget
 }
 
-export function ClassChips({ id, variant }: ClassChipsProps) {
+export function ClassChips({ id, target }: ClassChipsProps) {
   const node = useNode(id)
   const editing = useClassEditing(id)
 
@@ -19,11 +19,11 @@ export function ClassChips({ id, variant }: ClassChipsProps) {
   const visible: { className: string; index: number }[] = []
   for (let index = 0; index < node.classes.length; index += 1) {
     const className = node.classes[index]
-    if (variantOf(className) === variant) visible.push({ className, index })
+    if (matchesTarget(className, target)) visible.push({ className, index })
   }
 
   if (visible.length === 0) {
-    return <p className={styles.hint}>No classes in this variant.</p>
+    return <p className={styles.hint}>No classes for this target.</p>
   }
 
   return (

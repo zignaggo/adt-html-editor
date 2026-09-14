@@ -18,7 +18,14 @@ import {
   textDecorationClassMap,
   widthClassMap,
 } from '../classMaps'
-import { stripVariants, variantOf } from '../categories'
+import {
+  breakpointForWidth,
+  cascadeOf,
+  matchesTarget,
+  stripVariants,
+  targetOf,
+  withTarget,
+} from '../variants'
 
 describe('spacing class maps', () => {
   it('reads shorthand then side overrides', () => {
@@ -143,15 +150,56 @@ describe('layout, appearance and border class maps', () => {
   })
 })
 
-describe('variant helpers with arbitrary properties', () => {
-  it('keeps colons inside brackets out of the variant prefix', () => {
-    expect(variantOf('[text-decoration-line:underline_line-through]')).toBe('base')
+describe('style targets', () => {
+  it('parses breakpoint and state prefixes', () => {
+    expect(targetOf('p-4')).toEqual({ breakpoint: 'desktop', state: null })
+    expect(targetOf('max-lg:p-4')).toEqual({ breakpoint: 'tablet', state: null })
+    expect(targetOf('max-sm:hover:bg-red-500')).toEqual({ breakpoint: 'mobile', state: 'hover' })
+    expect(targetOf('dark:max-lg:text-white')).toEqual({ breakpoint: 'tablet', state: 'dark' })
+    expect(targetOf('md:p-4')).toBeNull()
+    expect(targetOf('[text-decoration-line:underline_line-through]')).toEqual({ breakpoint: 'desktop', state: null })
+    expect(targetOf('max-lg:[mask-type:luminance]')).toEqual({ breakpoint: 'tablet', state: null })
+  })
+
+  it('strips prefixes without touching arbitrary values', () => {
     expect(stripVariants('[text-decoration-line:underline_line-through]')).toBe(
       '[text-decoration-line:underline_line-through]',
     )
-    expect(variantOf('md:[mask-type:luminance]')).toBe('md')
-    expect(stripVariants('md:hover:bg-[#fff]')).toBe('bg-[#fff]')
-    expect(variantOf('hover:bg-red-500')).toBe('hover')
-    expect(stripVariants('lg:p-4')).toBe('p-4')
+    expect(stripVariants('max-lg:hover:bg-[#fff]')).toBe('bg-[#fff]')
+    expect(stripVariants('max-sm:p-4')).toBe('p-4')
+  })
+
+  it('matches unknown prefixes to the base target only', () => {
+    expect(matchesTarget('md:p-4', { breakpoint: 'desktop', state: null })).toBe(true)
+    expect(matchesTarget('md:p-4', { breakpoint: 'tablet', state: null })).toBe(false)
+    expect(matchesTarget('max-lg:p-4', { breakpoint: 'tablet', state: null })).toBe(true)
+  })
+
+  it('writes desktop-first prefixes', () => {
+    expect(withTarget('p-4', { breakpoint: 'desktop', state: null })).toBe('p-4')
+    expect(withTarget('p-4', { breakpoint: 'tablet', state: null })).toBe('max-lg:p-4')
+    expect(withTarget('p-4', { breakpoint: 'mobile', state: 'hover' })).toBe('max-sm:hover:p-4')
+    expect(withTarget('p-4', { breakpoint: 'desktop', state: 'dark' })).toBe('dark:p-4')
+  })
+
+  it('cascades from the narrow breakpoint up to desktop, then drops the state', () => {
+    expect(cascadeOf({ breakpoint: 'mobile', state: null })).toEqual([
+      { breakpoint: 'mobile', state: null },
+      { breakpoint: 'tablet', state: null },
+      { breakpoint: 'desktop', state: null },
+    ])
+    expect(cascadeOf({ breakpoint: 'tablet', state: 'hover' })).toEqual([
+      { breakpoint: 'tablet', state: 'hover' },
+      { breakpoint: 'desktop', state: 'hover' },
+      { breakpoint: 'tablet', state: null },
+      { breakpoint: 'desktop', state: null },
+    ])
+  })
+
+  it('derives the breakpoint from the canvas width', () => {
+    expect(breakpointForWidth(0)).toBe('desktop')
+    expect(breakpointForWidth(1280)).toBe('desktop')
+    expect(breakpointForWidth(820)).toBe('tablet')
+    expect(breakpointForWidth(390)).toBe('mobile')
   })
 })

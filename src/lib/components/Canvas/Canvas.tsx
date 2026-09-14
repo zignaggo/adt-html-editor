@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useCanvasStylesheet } from '../../tailwind/useCanvasStylesheet'
 import type { GhostStrategy } from '../../fixed/ghost/strategy'
 import { LiveGhost } from '../../fixed/ghost/LiveGhost'
@@ -6,7 +6,8 @@ import { Guides } from '../../fixed/guides/Guides'
 import { Handles } from '../../fixed/transform/Handles'
 import { Zoom } from '../../fixed/Zoom'
 import type { FixedPageProps } from '../../fixed/FixedPage'
-import { useLayoutMode } from '../Editor/context'
+import { useEditorContext, useLayoutMode } from '../Editor/context'
+import { breakpointForWidth } from '../../tailwind/variants'
 import { HistoryGroup } from '../Editor/HistoryParts'
 import {
   CanvasContext,
@@ -40,6 +41,11 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   const ghostLayerRef = useRef<HTMLElement | null>(null)
 
   const stylesReady = useCanvasStylesheet()
+  const { breakpoint } = useEditorContext()
+  useEffect(() => {
+    breakpoint.setState(() => breakpointForWidth(preset.width))
+    return () => breakpoint.setState(() => 'desktop')
+  }, [breakpoint, preset.width])
 
   const registerGhost = (strategy: GhostStrategy) => {
     ghostRef.current = strategy

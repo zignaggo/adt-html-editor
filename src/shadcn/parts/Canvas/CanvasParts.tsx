@@ -55,7 +55,6 @@ function DefaultCanvas() {
       <CanvasToolbar>
         <HistoryGroup />
         <CanvasWidthPresets />
-        <CanvasDarkToggle />
       </CanvasToolbar>
       <CanvasViewport />
     </>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useClassMapControl } from '../../../../lib/components/Inspector/controls/useClassMapControl'
 import type { NodeId } from '../../../../lib/core/ids'
-import type { VariantId } from '../../../../lib/tailwind/categories'
+import type { StyleTarget } from '../../../../lib/tailwind/variants'
 import { backgroundColorClassMap, opacityClassMap, shadowClassMap } from '../../../../lib/tailwind/classMaps/appearance'
 import { Slider } from '../../../ui/slider'
 import { ColorInput } from '../controls/ColorInput'
@@ -25,13 +25,13 @@ const SHADOW_OPTIONS: readonly StyleSelectOption<string>[] = [
 export function InspectorAppearance({ title = 'Appearance' }: { title?: string }) {
   const selection = useStyledSelection()
   if (!selection) return null
-  return <AppearanceFields key={selection.id} id={selection.id} variant={selection.variant} title={title} />
+  return <AppearanceFields key={selection.id} id={selection.id} target={selection.target} title={title} />
 }
 
-function AppearanceFields({ id, variant, title }: { id: NodeId; variant: VariantId; title: string }) {
-  const background = useClassMapControl(id, backgroundColorClassMap, '', variant)
-  const opacity = useClassMapControl(id, opacityClassMap, 100, variant)
-  const shadow = useClassMapControl(id, shadowClassMap, 'none', variant)
+function AppearanceFields({ id, target, title }: { id: NodeId; target: StyleTarget; title: string }) {
+  const background = useClassMapControl(id, backgroundColorClassMap, '', target)
+  const opacity = useClassMapControl(id, opacityClassMap, 100, target)
+  const shadow = useClassMapControl(id, shadowClassMap, 'none', target)
 
   return (
     <StyleSection title={title}>

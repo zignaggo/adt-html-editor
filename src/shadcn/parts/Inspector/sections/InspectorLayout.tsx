@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { useClassMapControl } from '../../../../lib/components/Inspector/controls/useClassMapControl'
 import type { NodeId } from '../../../../lib/core/ids'
-import type { VariantId } from '../../../../lib/tailwind/categories'
+import type { StyleTarget } from '../../../../lib/tailwind/variants'
 import {
   alignItemsClassMap,
   displayClassMap,
@@ -81,15 +81,15 @@ const ALIGN_COLUMN: readonly IconOption[] = [
 export function InspectorLayout({ title = 'Layout' }: { title?: string }) {
   const selection = useStyledSelection()
   if (!selection) return null
-  return <LayoutFields key={selection.id} id={selection.id} variant={selection.variant} title={title} />
+  return <LayoutFields key={selection.id} id={selection.id} target={selection.target} title={title} />
 }
 
-function LayoutFields({ id, variant, title }: { id: NodeId; variant: VariantId; title: string }) {
-  const display = useClassMapControl(id, displayClassMap, 'block', variant)
-  const direction = useClassMapControl(id, flexDirectionClassMap, 'row', variant)
-  const justify = useClassMapControl(id, justifyContentClassMap, 'start', variant)
-  const align = useClassMapControl(id, alignItemsClassMap, 'stretch', variant)
-  const gap = useClassMapControl(id, gapClassMap, 0, variant)
+function LayoutFields({ id, target, title }: { id: NodeId; target: StyleTarget; title: string }) {
+  const display = useClassMapControl(id, displayClassMap, 'block', target)
+  const direction = useClassMapControl(id, flexDirectionClassMap, 'row', target)
+  const justify = useClassMapControl(id, justifyContentClassMap, 'start', target)
+  const align = useClassMapControl(id, alignItemsClassMap, 'stretch', target)
+  const gap = useClassMapControl(id, gapClassMap, 0, target)
 
   const isFlexLike = ['flex', 'inline-flex', 'grid', 'inline-grid'].includes(display.value)
   const isColumn = direction.value === 'col' || direction.value === 'col-reverse'

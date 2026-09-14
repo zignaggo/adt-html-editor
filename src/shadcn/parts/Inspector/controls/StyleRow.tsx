@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { RotateCcwIcon } from 'lucide-react'
 import type { ClassMapOverride } from '../../../../lib/components/Inspector/controls/useClassMapControl'
 import { cn } from '../../../lib/utils'
+import { targetLabel } from '../../../../lib/tailwind/variants'
 import { Badge } from '../../../ui/badge'
 import { Button } from '../../../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover'
@@ -74,10 +75,10 @@ function OverrideLabel({ override, children }: { override: ClassMapOverride; chi
       </PopoverTrigger>
       <PopoverContent side="bottom" align="start" sideOffset={6} className="w-64 gap-0 overflow-hidden p-0">
         <div className="flex flex-col gap-2 border-b px-3 pt-3 pb-2.5">
-          <span className="text-[10px] font-medium tracking-wider text-primary uppercase">Variant override</span>
-          <OverrideRow variant={override.variant} classes={override.classes} />
+          <span className="text-[10px] font-medium tracking-wider text-primary uppercase">Breakpoint override</span>
+          <OverrideRow label={targetLabel(override.target)} classes={override.classes} />
           <span className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">Falls back to</span>
-          <OverrideRow variant={override.fallbackVariant} classes={override.fallbackClasses} muted />
+          <OverrideRow label={targetLabel(override.fallbackTarget)} classes={override.fallbackClasses} muted />
         </div>
         <div className="flex flex-col gap-2 p-2">
           <Button
@@ -89,7 +90,7 @@ function OverrideLabel({ override, children }: { override: ClassMapOverride; chi
             }}
           >
             <RotateCcwIcon data-icon="inline-start" />
-            Reset to {override.fallbackVariant}
+            Reset to {targetLabel(override.fallbackTarget)}
           </Button>
           <p className="text-center text-[10px] text-muted-foreground">
             Tip: {MODIFIER_LABEL}+click the label to reset.
@@ -100,11 +101,11 @@ function OverrideLabel({ override, children }: { override: ClassMapOverride; chi
   )
 }
 
-function OverrideRow({ variant, classes, muted = false }: { variant: string; classes: string[]; muted?: boolean }) {
+function OverrideRow({ label, classes, muted = false }: { label: string; classes: string[]; muted?: boolean }) {
   return (
     <div className={cn('flex items-start gap-2', muted ? 'text-muted-foreground' : 'text-foreground')}>
       <Badge variant={muted ? 'outline' : 'secondary'} className="shrink-0 font-mono">
-        {variant}
+        {label}
       </Badge>
       <span className="min-w-0 flex-1 font-mono text-[10.5px] leading-snug break-all">
         {classes.length > 0 ? classes.join(' ') : '(default)'}
