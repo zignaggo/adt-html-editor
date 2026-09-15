@@ -6,7 +6,7 @@ import type { HandleId } from './handleSpecs'
 
 export type TransformGesture = {
   kind: 'resize' | 'rotate'
-  nodeId: NodeId
+  nodeIds: NodeId[]
   handle: HandleId | null
   box: Box
   angle: number

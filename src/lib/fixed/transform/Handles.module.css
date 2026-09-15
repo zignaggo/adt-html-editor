@@ -21,7 +21,9 @@
 .frame[data-locked='true'] .stem,
 .frame[data-disabled='true'] .handle,
 .frame[data-disabled='true'] .rotate,
-.frame[data-disabled='true'] .stem {
+.frame[data-disabled='true'] .stem,
+.frame[data-group='true'] .rotate,
+.frame[data-group='true'] .stem {
   display: none;
 }
 

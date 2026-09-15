@@ -11,7 +11,11 @@ export type ResizeArgs = {
   delta: Point
   keepRatio: boolean
   fromCenter: boolean
-  min: number
+  min: number | Size
+}
+
+function minOf(min: number | Size, axis: 'width' | 'height'): number {
+  return typeof min === 'number' ? min : min[axis]
 }
 
 export function pointOnBox(box: Box, angle: number, origin: Point, fraction: Point): Point {
@@ -43,8 +47,8 @@ export function resizeBox(args: ResizeArgs): Box {
   if (handle.includes('s')) height += local.y * factor
   if (handle.includes('n')) height -= local.y * factor
   if (keepRatio) ({ width, height } = constrainRatio(handle, box, width, height))
-  width = Math.max(min, width)
-  height = Math.max(min, height)
+  width = Math.max(minOf(min, 'width'), width)
+  height = Math.max(minOf(min, 'height'), height)
 
   const anchor = anchorFractionOf(handle, fromCenter)
   const fixed = pointOnBox(box, angle, origin, anchor)
@@ -104,7 +108,7 @@ export function snapResizeEdges(
   siblings: Box[],
   page: Size,
   threshold: number,
-  min = 1,
+  min: number | Size = 1,
 ): { box: Box; guides: Guide[] } {
   if (threshold <= 0) return { box, guides: [] }
   const next = { ...box }
@@ -117,7 +121,7 @@ export function snapResizeEdges(
     if (match) {
       const delta = match.at - edge
       const width = east ? box.width + delta : box.width - delta
-      if (width >= min) {
+      if (width >= minOf(min, 'width')) {
         next.width = width
         if (!east) next.x = box.x + delta
         guides.push({
@@ -137,7 +141,7 @@ export function snapResizeEdges(
     if (match) {
       const delta = match.at - edge
       const height = south ? box.height + delta : box.height - delta
-      if (height >= min) {
+      if (height >= minOf(min, 'height')) {
         next.height = height
         if (!south) next.y = box.y + delta
         guides.push({

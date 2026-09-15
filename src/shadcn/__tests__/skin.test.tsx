@@ -128,4 +128,62 @@ describe('shadcn skin parts', () => {
     setup()
     expect(screen.getByTitle('Drag to insert <h1>')).toBeTruthy()
   })
+
+  describe('with several elements selected', () => {
+    function selectTwo() {
+      const store = setup()
+      const h1 = idOf(store, 'h1')
+      const p = idOf(store, 'p')
+      act(() => store.actions.selectMany([h1, p]))
+      return { store, h1, p }
+    }
+
+    it('summarizes the selection and hides the style controls', () => {
+      selectTwo()
+      expect(screen.getByText('2 elements')).toBeTruthy()
+      expect(screen.queryByRole('combobox', { name: 'Add class' })).toBeNull()
+      expect(screen.queryByText('Nothing selected')).toBeNull()
+      expect(screen.getByText('h1 · p')).toBeTruthy()
+    })
+
+    it('deletes every selected element in one history entry', () => {
+      const { store, h1, p } = selectTwo()
+      fireEvent.click(screen.getByRole('button', { name: 'Delete 2 elements' }))
+      expect(store.state.doc.nodes[h1]).toBeUndefined()
+      expect(store.state.doc.nodes[p]).toBeUndefined()
+      expect(store.state.selectedIds).toHaveLength(0)
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('locks and unlocks the whole selection', () => {
+      const { store, h1, p } = selectTwo()
+      fireEvent.click(screen.getByRole('button', { name: 'Lock 2 elements' }))
+      expect(store.state.locked[h1]).toBe(true)
+      expect(store.state.locked[p]).toBe(true)
+      fireEvent.click(screen.getByRole('button', { name: 'Unlock 2 elements' }))
+      expect(store.state.locked[h1]).toBeUndefined()
+    })
+
+    it('selects the shared parent', () => {
+      const { store } = selectTwo()
+      fireEvent.click(screen.getByRole('button', { name: 'Select parent' }))
+      expect(store.state.selectedId).toBe(idOf(store, 'section'))
+    })
+
+    it('drops one member from a chip and falls back to the single header', () => {
+      const { store, h1 } = selectTwo()
+      fireEvent.click(screen.getByRole('button', { name: 'Deselect p' }))
+      expect(store.state.selectedIds).toEqual([h1])
+      expect(screen.queryByText('2 elements')).toBeNull()
+      expect(screen.getByRole('combobox', { name: 'Add class' })).toBeTruthy()
+    })
+
+    it('duplicates every selected element in one history entry', () => {
+      const { store } = selectTwo()
+      fireEvent.click(screen.getByRole('button', { name: 'Duplicate 2 elements' }))
+      expect(store.state.selectedIds).toHaveLength(2)
+      expect(store.state.history.past).toHaveLength(1)
+      expect(store.actions.getHtml()).toContain('<p>Body</p><p>Body</p>')
+    })
+  })
 })

@@ -34,6 +34,7 @@ export {
   InspectorVariants,
 } from './parts/Inspector/InspectorParts'
 export type { InspectorControlProps, InspectorPanelProps } from './parts/Inspector/InspectorParts'
+export { MultiSelectedHeader } from './parts/Inspector/MultiSelectedHeader'
 export { InspectorPosition } from './parts/Inspector/InspectorPosition'
 export { InspectorTransform } from './parts/Inspector/InspectorTransform'
 export { Palette, PaletteGrid, PaletteHeader, PaletteItem } from './parts/Palette/Palette'

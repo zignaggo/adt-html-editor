@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
+import type { NodeId } from '../../core/ids'
 import { isStyled, labelOf } from '../../core/model'
 import { CATEGORIES, type ControlSpec } from '../../tailwind/categories'
 import { useNode } from '../Editor/context'
+import { useSelectionSummary } from './useSelectionSummary'
 import { AttributeFields } from './AttributeFields'
 import { ClassChips } from './ClassChips'
 import { ClassCombobox } from './ClassCombobox'
@@ -11,8 +13,9 @@ import { useVariantBar } from './useVariantBar'
 import styles from './InspectorPanel.module.css'
 
 export function InspectorHeader({ children }: { children?: ReactNode }) {
-  const { selectedId } = useInspectorContext()
+  const { selectedId, selectedIds } = useInspectorContext()
   if (children) return <div className={styles.header}>{children}</div>
+  if (selectedIds.length > 1) return <MultiSelectedHeader ids={selectedIds} />
   if (!selectedId) {
     return (
       <div className={styles.header}>
@@ -21,6 +24,55 @@ export function InspectorHeader({ children }: { children?: ReactNode }) {
     )
   }
   return <SelectedHeader id={selectedId} />
+}
+
+function MultiSelectedHeader({ ids }: { ids: readonly NodeId[] }) {
+  const summary = useSelectionSummary(ids)
+  if (!summary) return null
+  return (
+    <div className={styles.header}>
+      <span className={styles.title}>{summary.count} elements</span>
+      <span className={styles.count}>
+        {summary.tags.map((entry) => (entry.count > 1 ? `${entry.tag} ×${entry.count}` : entry.tag)).join(' · ')}
+      </span>
+      <div className={styles.headerActions}>
+        <button
+          type="button"
+          className={styles.headerButton}
+          onClick={summary.duplicate}
+          aria-label={`Duplicate ${summary.count} elements`}
+        >
+          Duplicate
+        </button>
+        <button
+          type="button"
+          className={styles.headerButton}
+          onClick={summary.remove}
+          aria-label={`Delete ${summary.count} elements`}
+        >
+          Delete
+        </button>
+        <button
+          type="button"
+          className={styles.headerButton}
+          aria-pressed={summary.allLocked}
+          onClick={() => summary.setLocked(!summary.allLocked)}
+          aria-label={`${summary.allLocked ? 'Unlock' : 'Lock'} ${summary.count} elements`}
+        >
+          {summary.allLocked ? 'Unlock' : 'Lock'}
+        </button>
+        <button
+          type="button"
+          className={styles.headerButton}
+          disabled={!summary.commonParentId}
+          onClick={summary.selectParent}
+          aria-label="Select parent"
+        >
+          Parent
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function SelectedHeader({ id }: { id: string }) {
@@ -35,8 +87,8 @@ function SelectedHeader({ id }: { id: string }) {
 }
 
 export function InspectorEmpty({ children }: { children?: ReactNode }) {
-  const { selectedId } = useInspectorContext()
-  if (selectedId) return null
+  const { selectedIds } = useInspectorContext()
+  if (selectedIds.length > 0) return null
   return (
     <p className={styles.empty}>{children ?? 'Select an element to edit its styles.'}</p>
   )

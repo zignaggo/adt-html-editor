@@ -26,7 +26,7 @@ export function useFixedDropMonitor() {
             ? env.pageElement?.querySelector<HTMLElement>(`[data-adt-id="${source.data.nodeId}"]`) ?? null
             : null
           beginFixedDrag(env, {
-            nodeId: isNodeDrag(source.data) ? source.data.nodeId : null,
+            memberIds: isNodeDrag(source.data) ? [source.data.nodeId] : [],
             template: isPaletteDrag(source.data) ? source.data.template : null,
             element,
             input: location.current.input,

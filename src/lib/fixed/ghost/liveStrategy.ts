@@ -5,6 +5,7 @@ import { createGhostBox, moveGhostBox, type GhostStrategy } from './strategy'
 import styles from './ghost.module.css'
 
 const RETURN_MS = 160
+const MAX_LIVE_CLONES = 12
 
 function prefersReducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -12,7 +13,7 @@ function prefersReducedMotion(): boolean {
 
 export function createLiveStrategy(): GhostStrategy {
   let ghost: HTMLElement | null = null
-  let originBox: HTMLDivElement | null = null
+  let originBoxes: HTMLDivElement[] = []
   let origin: Box | null = null
 
   return {
@@ -21,24 +22,38 @@ export function createLiveStrategy(): GhostStrategy {
     generatePreview({ nativeSetDragImage }) {
       disableNativeDragPreview({ nativeSetDragImage })
     },
-    start({ element, layer, origin: start, size }) {
+    start({ layer, origin: start, size, members }) {
       origin = start
-      originBox = createGhostBox(layer, size, styles.origin)
-      moveGhostBox(originBox, start)
-      if (element) {
-        ghost = createGhostBox(layer, size, styles.clone)
-        ghost.appendChild(cloneForPreview(element, size))
-      } else {
-        ghost = createGhostBox(layer, size, styles.target)
+      originBoxes = members.map((member) => {
+        const box = createGhostBox(layer, member.size, styles.origin)
+        moveGhostBox(box, { x: start.x + member.offset.x, y: start.y + member.offset.y })
+        return box
+      })
+
+      const clonable = members.filter((member) => member.element !== null)
+      const cloning = clonable.length > 0 && clonable.length <= MAX_LIVE_CLONES
+      const wrapper = createGhostBox(layer, size, cloning ? styles.clone : styles.target)
+      if (cloning) {
+        for (const member of clonable) {
+          const slot = document.createElement('div')
+          slot.style.position = 'absolute'
+          slot.style.left = `${member.offset.x}px`
+          slot.style.top = `${member.offset.y}px`
+          slot.style.width = `${member.size.width}px`
+          slot.style.height = `${member.size.height}px`
+          slot.appendChild(cloneForPreview(member.element as HTMLElement, member.size))
+          wrapper.appendChild(slot)
+        }
       }
+      ghost = wrapper
       moveGhostBox(ghost, start)
     },
     move(position) {
       if (ghost) moveGhostBox(ghost, position)
     },
     end({ cancelled }) {
-      originBox?.remove()
-      originBox = null
+      for (const box of originBoxes) box.remove()
+      originBoxes = []
       const leaving = ghost
       ghost = null
       if (!leaving) return

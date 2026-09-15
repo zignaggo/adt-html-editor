@@ -135,6 +135,12 @@ export {
   useDocument,
   useRootId,
   useIsSelected,
+  useIsAnchor,
+  useSelectedId,
+  useSelectedIds,
+  useSelectionCount,
+  selectSelectedId,
+  selectSelectedIds,
   useIsCollapsed,
   useIsLocked,
   useLayoutMode,
@@ -145,10 +151,19 @@ export {
 } from './components/Editor/context'
 export type {
   EditorApi,
+  EditorSelectorOptions,
   FixedLayoutConfig,
   LayoutMode,
   StyleMode,
 } from './components/Editor/context'
+
+export {
+  EMPTY_SELECTION,
+  commonParentOf,
+  normalizeSelection,
+  sameSelection,
+  sortByDocumentOrder,
+} from './core/selection'
 
 export { parseHtml, looksLikeFullDocument } from './core/html/parse'
 export { serializeHtml } from './core/html/serialize'
@@ -161,7 +176,11 @@ export type {
   EditorState,
   EditorStore,
   NodeTemplate,
+  PlaceManyOptions,
   PlaceOptions,
+  PlaceUpdate,
+  SelectOptions,
+  TransactionOptions,
 } from './core/store'
 
 export type { NodeId } from './core/ids'
@@ -215,3 +234,7 @@ export type { PaletteFamily, PaletteShade, KeywordColor } from './tailwind/palet
 export { alignName, lineHeightRatio, parsePx, rgbToHex, weightName } from './style/computed'
 export { useNodeSummary } from './components/Inspector/useNodeSummary'
 export type { NodeCrumb, NodeSummary } from './components/Inspector/useNodeSummary'
+export { useSelectionSummary } from './components/Inspector/useSelectionSummary'
+export type { SelectionSummary, SelectionTag } from './components/Inspector/useSelectionSummary'
+export { rowsBetween } from './components/Layers/flatten'
+export { copySubtree, copySubtrees, readClipboard } from './core/clipboard'

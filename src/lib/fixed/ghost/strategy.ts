@@ -11,11 +11,17 @@ export type GhostPreviewArgs = {
   scale: number
 }
 
-export type GhostStartArgs = {
+export type GhostMember = {
   element: HTMLElement | null
+  offset: Point
+  size: Size
+}
+
+export type GhostStartArgs = {
   layer: HTMLElement
   origin: Box
   size: Size
+  members: GhostMember[]
 }
 
 export type GhostStrategy = {

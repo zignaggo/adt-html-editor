@@ -91,6 +91,7 @@ export function CanvasViewport({ className }: { className?: string }) {
           aria-busy={!stylesReady || undefined}
           onPointerMove={interactions.onPointerMove}
           onPointerLeave={interactions.onPointerLeave}
+          onMouseDown={interactions.onMouseDown}
           onClick={interactions.onClick}
           onDoubleClick={interactions.onDoubleClick}
           onKeyDown={interactions.onKeyDown}

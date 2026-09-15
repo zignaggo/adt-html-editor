@@ -35,8 +35,11 @@ export function useFixedDraggable(target: DragTargetRef, nodeId: NodeId, enabled
       },
       onDragStart({ location }) {
         setIsDragging(true)
+        const { selectedIds } = store.state
+        const grouped = selectedIds.includes(nodeId)
+        if (!grouped) store.actions.select(nodeId)
         beginFixedDrag(getEnv(), {
-          nodeId,
+          memberIds: grouped ? selectedIds : [nodeId],
           template: null,
           element,
           input: location.current.input,

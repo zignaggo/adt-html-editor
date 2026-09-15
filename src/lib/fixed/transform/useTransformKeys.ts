@@ -2,7 +2,10 @@ import type { KeyboardEvent } from 'react'
 import { isStyled } from '../../core/model'
 import { useEditorContext, useEditorStoreApi, useFixedLayout } from '../../components/Editor/context'
 import { sizeDeclarations } from '../position'
+import { useFixedDragEnv } from '../useFixedDragEnv'
 import { readElementTransform } from './elementTransform'
+import { groupResizeStyles, takeGroupSnapshot } from './gesture'
+import { minGroupSize } from './groupBox'
 import { readLayoutBox } from './layoutBox'
 import { withRotation } from './transformValue'
 
@@ -29,6 +32,7 @@ export function useTransformKeys(): (event: KeyboardEvent<HTMLElement>) => boole
   const store = useEditorStoreApi()
   const { canvasRootRef } = useEditorContext()
   const { precision } = useFixedLayout()
+  const getEnv = useFixedDragEnv()
 
   return (event) => {
     if ((event.target as HTMLElement).isContentEditable) return false
@@ -38,8 +42,30 @@ export function useTransformKeys(): (event: KeyboardEvent<HTMLElement>) => boole
     if (sizeDelta && event.altKey) return false
 
     const { state, actions } = store
-    const { selectedId } = state
-    if (!selectedId || state.locked[selectedId]) return false
+    const { selectedId, selectedIds } = state
+    if (selectedIds.length === 0 || selectedIds.some((id) => state.locked[id])) return false
+
+    if (selectedIds.length > 1) {
+      if (!sizeDelta) return false
+      const snapshot = takeGroupSnapshot(getEnv(), selectedIds)
+      if (!snapshot) return false
+      event.preventDefault()
+      const step = event.shiftKey ? FAST_SIZE_STEP : SIZE_STEP
+      const min = minGroupSize(snapshot.members.map((member) => member.box), snapshot.box, 1)
+      const box = {
+        ...snapshot.box,
+        width: Math.max(min.width, snapshot.box.width + sizeDelta[0] * step),
+        height: Math.max(min.height, snapshot.box.height + sizeDelta[1] * step),
+      }
+      const styles = groupResizeStyles(snapshot, box, precision)
+      actions.placeNodes(
+        snapshot.members.map((member, index) => ({ id: member.nodeId, style: styles[index] })),
+        { coalesce: true },
+      )
+      return true
+    }
+
+    if (!selectedId) return false
     const node = state.doc.nodes[selectedId]
     if (!node || !isStyled(node)) return false
     const root = canvasRootRef.current

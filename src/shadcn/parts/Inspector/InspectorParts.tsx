@@ -65,6 +65,7 @@ import { Textarea } from '../../ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '../../ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip'
 import { elementIconFor, kindLabelFor } from './elementIcon'
+import { MultiSelectedHeader } from './MultiSelectedHeader'
 import { InspectorPosition } from './InspectorPosition'
 import { InspectorTransform } from './InspectorTransform'
 import { InspectorStyles } from './sections/InspectorStyles'
@@ -107,18 +108,27 @@ function DefaultInspector() {
 }
 
 export function InspectorHeader({ children }: { children?: ReactNode }) {
-  const { selectedId } = useInspectorContext()
+  const { selectedId, selectedIds } = useInspectorContext()
   return (
     <div className="flex min-h-10 shrink-0 flex-col justify-center px-3">
-      {children ??
-        (selectedId ? (
-          <SelectedHeader id={selectedId} />
-        ) : (
-          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Styles
-          </span>
-        ))}
+      {children ?? <HeaderContent selectedId={selectedId} selectedIds={selectedIds} />}
     </div>
+  )
+}
+
+function HeaderContent({
+  selectedId,
+  selectedIds,
+}: {
+  selectedId: NodeId | null
+  selectedIds: readonly NodeId[]
+}) {
+  if (selectedIds.length > 1) return <MultiSelectedHeader ids={selectedIds} />
+  if (selectedId) return <SelectedHeader id={selectedId} />
+  return (
+    <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      Styles
+    </span>
   )
 }
 
@@ -226,8 +236,8 @@ function AncestorCrumbs({ summary }: { summary: NodeSummary }) {
 }
 
 export function InspectorEmpty({ children }: { children?: ReactNode }) {
-  const { selectedId } = useInspectorContext()
-  if (selectedId) return null
+  const { selectedIds } = useInspectorContext()
+  if (selectedIds.length > 0) return null
   return (
     <Empty className="border-0">
       <EmptyHeader>

@@ -5,6 +5,7 @@ import type { BreakpointId, StateVariant, StyleTarget } from '../../tailwind/var
 
 export type InspectorContextValue = {
   selectedId: NodeId | null
+  selectedIds: readonly NodeId[]
   breakpoint: BreakpointId
   state: StateVariant | null
   setState: (state: StateVariant | null) => void

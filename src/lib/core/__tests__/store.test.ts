@@ -301,4 +301,166 @@ describe('editor store', () => {
       '<section id="a"><p id="p1">one</p><p id="p2">two</p></section><aside id="b"></aside>',
     )
   })
+
+  describe('multi selection', () => {
+    function expectAnchorInvariant() {
+      expect(store.state.selectedId).toBe(store.state.selectedIds[0] ?? null)
+    }
+
+    it('select replaces the whole selection', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.selectMany([p1, p2])
+      store.actions.select(p1)
+      expect(store.state.selectedIds).toEqual([p1])
+      expectAnchorInvariant()
+    })
+
+    it('toggleSelected adds the node as the anchor', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.select(p1)
+      store.actions.toggleSelected(p2)
+      expect(store.state.selectedIds).toEqual([p2, p1])
+      expectAnchorInvariant()
+    })
+
+    it('toggleSelected removes a member and promotes the next anchor', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.selectMany([p1, p2])
+      store.actions.toggleSelected(p1)
+      expect(store.state.selectedIds).toEqual([p2])
+      expectAnchorInvariant()
+    })
+
+    it('toggling in a child drops a selected ancestor and vice versa', () => {
+      const section = firstByTag(store, 'section')
+      const [p1] = idsByTag(store, 'p')
+      store.actions.select(section)
+      store.actions.toggleSelected(p1)
+      expect(store.state.selectedIds).toEqual([p1])
+      store.actions.toggleSelected(section)
+      expect(store.state.selectedIds).toEqual([section])
+    })
+
+    it('select(null) empties the selection', () => {
+      const [p1] = idsByTag(store, 'p')
+      store.actions.select(p1)
+      store.actions.select(null)
+      expect(store.state.selectedIds).toEqual([])
+      expect(store.state.selectedId).toBeNull()
+    })
+
+    it('selectMany normalizes and reveals collapsed ancestors', () => {
+      const section = firstByTag(store, 'section')
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.setCollapsed(section, true)
+      store.actions.selectMany([p1, p2, p1])
+      expect(store.state.selectedIds).toEqual([p1, p2])
+      expect(store.state.collapsed[section]).toBeUndefined()
+    })
+
+    it('removeNodes deletes every node in one history entry', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.selectMany([p1, p2])
+      store.actions.removeNodes([p1, p2])
+      expect(store.state.doc.nodes[p1]).toBeUndefined()
+      expect(store.state.doc.nodes[p2]).toBeUndefined()
+      expect(store.state.selectedIds).toEqual([])
+      expect(store.state.history.past).toHaveLength(1)
+      store.actions.undo()
+      expect(store.state.doc.nodes[p1]).toBeDefined()
+      expect(store.state.doc.nodes[p2]).toBeDefined()
+      expect(store.state.selectedIds).toEqual([p1, p2])
+    })
+
+    it('duplicateNodes interleaves clones after each source and selects them', () => {
+      const section = firstByTag(store, 'section')
+      const [p1, p2] = idsByTag(store, 'p')
+      const clones = store.actions.duplicateNodes([p2, p1])
+      expect(childrenOf(store.state.doc, section)).toEqual([p1, clones[0], p2, clones[1]])
+      expect(store.state.selectedIds).toEqual(clones)
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('placeNodes writes every update in one entry', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      expect(
+        store.actions.placeNodes([
+          { id: p1, style: 'left: 1px' },
+          { id: p2, style: 'left: 2px' },
+        ]),
+      ).toBe(true)
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('placeNodes coalesces repeated group nudges', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      const updates = (x: number) => [
+        { id: p1, style: `left: ${x}px` },
+        { id: p2, style: `left: ${x + 1}px` },
+      ]
+      store.actions.placeNodes(updates(1), { coalesce: true })
+      store.actions.placeNodes(updates(3), { coalesce: true })
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('placeNodes with a single id coalesces with placeNode', () => {
+      const [p1] = idsByTag(store, 'p')
+      store.actions.placeNode(p1, { style: 'left: 1px', coalesce: true })
+      store.actions.placeNodes([{ id: p1, style: 'left: 2px' }], { coalesce: true })
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('setLockedMany locks every node without touching history', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.setLockedMany([p1, p2], true)
+      expect(store.state.locked[p1]).toBe(true)
+      expect(store.state.locked[p2]).toBe(true)
+      expect(store.state.history.past).toHaveLength(0)
+    })
+  })
+
+  describe('transaction', () => {
+    it('collapses several commits into one entry and merges classes', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      const section = firstByTag(store, 'section')
+      store.actions.transaction(() => {
+        store.actions.setClasses(p1, ['a'])
+        store.actions.setClasses(p2, ['b'])
+        store.actions.setClasses(section, ['c'])
+      })
+      expect(store.state.history.past).toHaveLength(1)
+      expect(store.state.usedClasses.has('a')).toBe(true)
+      expect(store.state.usedClasses.has('b')).toBe(true)
+      expect(store.state.usedClasses.has('c')).toBe(true)
+    })
+
+    it('one undo reverts the whole transaction', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.transaction(() => {
+        store.actions.setClasses(p1, ['a'])
+        store.actions.setClasses(p2, ['b'])
+      })
+      store.actions.undo()
+      expect(store.state.doc.nodes[p1]).toMatchObject({ classes: [] })
+      expect(store.state.doc.nodes[p2]).toMatchObject({ classes: [] })
+    })
+
+    it('a nested transaction joins the outer one', () => {
+      const [p1, p2] = idsByTag(store, 'p')
+      store.actions.transaction(() => {
+        store.actions.setClasses(p1, ['a'])
+        store.actions.transaction(() => store.actions.setClasses(p2, ['b']))
+      })
+      expect(store.state.history.past).toHaveLength(1)
+    })
+
+    it('pushes nothing when no commit changed the document', () => {
+      store.actions.transaction(() => {})
+      expect(store.state.history.past).toHaveLength(0)
+    })
+
+    it('returns the callback result', () => {
+      expect(store.actions.transaction(() => 42)).toBe(42)
+    })
+  })
 })

@@ -84,6 +84,18 @@ async function setup() {
   return { store, root, box, id }
 }
 
+async function setupGroup() {
+  const first = await setup()
+  const other = first.root.querySelector<HTMLElement>('p[data-adt-id]')
+  if (!other) throw new Error('paragraph missing')
+  layout(other, { x: 700, y: 900, width: 200, height: 40 }, first.root)
+  const otherId = other.getAttribute('data-adt-id')
+  if (!otherId) throw new Error('paragraph id missing')
+  act(() => first.store.actions.selectMany([first.id, otherId]))
+  await nextFrames()
+  return { ...first, other, otherId }
+}
+
 function styleOf(store: EditorStore, id: string): string | undefined {
   const node = store.state.doc.nodes[id]
   return node && isStyled(node) ? node.attrs.style : undefined
@@ -184,5 +196,78 @@ describe('Canvas.Handles', () => {
     fireEvent.pointerMove(handle, { clientX: 440, clientY: 340, pointerId: 5 })
     fireEvent.pointerUp(handle, { clientX: 440, clientY: 340, pointerId: 5 })
     expect(styleOf(store, id)).toBe(original)
+  })
+
+  describe('with several elements selected', () => {
+    it('frames the union of the members and hides rotation', async () => {
+      await setupGroup()
+      const frame = document.querySelector<HTMLElement>('[data-adt-handles-frame]')
+      expect(frame?.dataset.visible).toBe('true')
+      expect(frame?.dataset.group).toBe('true')
+      expect(frame?.style.left).toBe('100px')
+      expect(frame?.style.top).toBe('200px')
+      expect(frame?.style.width).toBe('800px')
+      expect(frame?.style.height).toBe('740px')
+      expect(screen.getByRole('status').parentElement).toBeTruthy()
+      expect(frame?.querySelector('[data-rotate]')).toBeTruthy()
+    })
+
+    it('scales every member from a corner in one history entry', async () => {
+      const { store, id, otherId } = await setupGroup()
+      const before = store.state.history.past.length
+      const handle = screen.getByRole('button', { name: 'Resize from bottom-right' })
+
+      fireEvent.pointerDown(handle, { clientX: 900, clientY: 940, button: 0, pointerId: 10 })
+      fireEvent.pointerMove(handle, { clientX: 960, clientY: 990, pointerId: 10 })
+      fireEvent.pointerUp(handle, { clientX: 960, clientY: 990, pointerId: 10 })
+
+      expect(styleOf(store, id)).toBe(
+        'position: absolute; left: 100px; top: 200px; width: 323px; height: 128px',
+      )
+      expect(styleOf(store, otherId)).toBe(
+        'position: absolute; left: 745px; top: 947px; width: 215px; height: 43px',
+      )
+      expect(store.state.history.past.length).toBe(before + 1)
+      expect(store.state.selectedIds).toEqual([id, otherId])
+    })
+
+    it('restores every member when the gesture is cancelled', async () => {
+      const { store, id, otherId, box, other } = await setupGroup()
+      const originalBox = styleOf(store, id)
+      const originalOther = styleOf(store, otherId)
+      const handle = screen.getByRole('button', { name: 'Resize from bottom-right' })
+
+      fireEvent.pointerDown(handle, { clientX: 900, clientY: 940, button: 0, pointerId: 11 })
+      fireEvent.pointerMove(handle, { clientX: 960, clientY: 990, pointerId: 11 })
+      expect(box.getAttribute('style')).toContain('width: 323px')
+
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(box.getAttribute('style')).toBe(originalBox)
+      expect(other.getAttribute('style')).toBe(originalOther)
+      expect(store.state.history.past.length).toBe(0)
+    })
+
+    it('does nothing when any member is locked', async () => {
+      const { store, id, otherId } = await setupGroup()
+      const original = styleOf(store, id)
+      act(() => store.actions.setLocked(otherId, true))
+      await nextFrames()
+      const handle = screen.getByRole('button', { name: 'Resize from bottom-right' })
+      fireEvent.pointerDown(handle, { clientX: 900, clientY: 940, button: 0, pointerId: 12 })
+      fireEvent.pointerMove(handle, { clientX: 960, clientY: 990, pointerId: 12 })
+      fireEvent.pointerUp(handle, { clientX: 960, clientY: 990, pointerId: 12 })
+      expect(styleOf(store, id)).toBe(original)
+    })
+
+    it('ignores the rotate handle', async () => {
+      const { store, id, otherId } = await setupGroup()
+      const original = styleOf(store, id)
+      const handle = screen.getByRole('button', { name: 'Rotate' })
+      fireEvent.pointerDown(handle, { clientX: 500, clientY: 100, button: 0, pointerId: 13 })
+      fireEvent.pointerMove(handle, { clientX: 900, clientY: 570, pointerId: 13 })
+      fireEvent.pointerUp(handle, { clientX: 900, clientY: 570, pointerId: 13 })
+      expect(styleOf(store, id)).toBe(original)
+      expect(styleOf(store, otherId)).not.toContain('rotate')
+    })
   })
 })

@@ -1,10 +1,11 @@
-import { useState, type FocusEvent, type MouseEvent } from 'react'
+import { useRef, useState, type MouseEvent, type PointerEvent } from 'react'
 import type { ItemMode } from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item'
 import type { NodeId } from '../../core/ids'
 import { isRoot, labelOf, type AnyNode } from '../../core/model'
 import { useNodeDraggable } from '../../dnd/useNodeDraggable'
 import { INDENT_PER_LEVEL, useTreeDropTarget } from '../../dnd/useTreeDropTarget'
 import { useEditor, useIsCollapsed, useIsSelected, useNode } from '../Editor/context'
+import { useLayersContext } from './context'
 
 export type UseLayerRowOptions = {
   id: NodeId
@@ -26,8 +27,9 @@ export type LayerRowAria = {
   'data-dragging': true | undefined
   'data-selected': true | undefined
   'data-muted': true | undefined
+  onPointerDown: (event: PointerEvent<HTMLElement>) => void
   onClick: (event: MouseEvent<HTMLElement>) => void
-  onFocus: (event: FocusEvent<HTMLElement>) => void
+  onFocus: () => void
 }
 
 export type LayerRowChevron = {
@@ -62,10 +64,12 @@ export function useLayerRow({
   isMatch = true,
 }: UseLayerRowOptions): LayerRow {
   const [element, setElement] = useState<HTMLElement | null>(null)
+  const pointerFocus = useRef(false)
   const node = useNode(id)
   const isSelected = useIsSelected(id)
   const isCollapsed = useIsCollapsed(id)
-  const { select, toggleCollapsed } = useEditor()
+  const { select, toggleSelected, toggleCollapsed } = useEditor()
+  const { actions: layers } = useLayersContext()
 
   const isDragging = useNodeDraggable(element, id, 'tree', node ? !isRoot(node) : false)
   useTreeDropTarget(element, id, level, mode)
@@ -97,8 +101,28 @@ export function useLayerRow({
       'data-dragging': isDragging || undefined,
       'data-selected': isSelected || undefined,
       'data-muted': isMatch ? undefined : true,
-      onClick: selectSelf,
-      onFocus: selectSelf,
+      onPointerDown: () => {
+        pointerFocus.current = true
+      },
+      onClick: (event) => {
+        pointerFocus.current = false
+        if (event.shiftKey) {
+          layers.selectRange(id)
+          return
+        }
+        if (event.metaKey || event.ctrlKey) {
+          toggleSelected(id)
+          return
+        }
+        selectSelf()
+      },
+      onFocus: () => {
+        if (pointerFocus.current) {
+          pointerFocus.current = false
+          return
+        }
+        selectSelf()
+      },
     },
     chevronProps: {
       type: 'button',

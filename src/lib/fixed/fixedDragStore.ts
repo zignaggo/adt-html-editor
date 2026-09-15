@@ -4,10 +4,17 @@ import type { Box, Point, Size } from './geometry'
 import type { Guide } from './guides/computeGuides'
 import { createSessionStore } from './sessionStore'
 
+export type FixedDragMember = {
+  id: NodeId
+  element: HTMLElement
+  style: string | undefined
+  origin: Box
+  styleOrigin: Point
+}
+
 export type FixedDragSession = {
-  nodeId: NodeId | null
+  members: FixedDragMember[]
   template: NodeTemplate | null
-  sourceElement: HTMLElement | null
   origin: Box
   grab: Point
   size: Size

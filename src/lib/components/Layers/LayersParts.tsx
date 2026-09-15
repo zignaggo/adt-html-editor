@@ -86,6 +86,7 @@ export type LayersScrollerProps = {
   ref: (element: HTMLDivElement | null) => void
   role: 'tree'
   'aria-label': string
+  'aria-multiselectable': true
   tabIndex: -1
   className: string | undefined
   onKeyDown: (event: KeyboardEvent<HTMLElement>) => void
@@ -181,6 +182,7 @@ export function LayersTree({
       ref={attachScroll}
       role="tree"
       aria-label="Element tree"
+      aria-multiselectable
       tabIndex={-1}
       className={className}
       onKeyDown={onKeyDown}

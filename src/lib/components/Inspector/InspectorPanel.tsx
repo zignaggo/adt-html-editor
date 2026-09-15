@@ -1,8 +1,7 @@
 import { useDeferredValue, useState, type ReactNode } from 'react'
 import { CATEGORIES } from '../../tailwind/categories'
 import type { StateVariant, StyleTarget } from '../../tailwind/variants'
-import { useBreakpoint, useEditorSelector } from '../Editor/context'
-import type { EditorState } from '../../core/store'
+import { selectSelectedIds, useBreakpoint, useEditorSelector } from '../Editor/context'
 import { InspectorPosition } from '../../fixed/InspectorPosition'
 import { InspectorTransform } from '../../fixed/InspectorTransform'
 import { InspectorContext, type InspectorContextValue } from './context'
@@ -19,11 +18,10 @@ import {
 } from './InspectorParts'
 import styles from './InspectorPanel.module.css'
 
-const selectSelectedId = (state: EditorState) => state.selectedId
-
 export function InspectorProvider({ children }: { children: ReactNode }) {
-  const selected = useEditorSelector(selectSelectedId)
-  const selectedId = useDeferredValue(selected)
+  const selected = useEditorSelector(selectSelectedIds)
+  const selectedIds = useDeferredValue(selected)
+  const selectedId = selectedIds.length === 1 ? selectedIds[0] : null
   const [state, setState] = useState<StateVariant | null>(null)
   const breakpoint = useBreakpoint()
   const target: StyleTarget = { breakpoint, state }
@@ -31,6 +29,7 @@ export function InspectorProvider({ children }: { children: ReactNode }) {
 
   const context: InspectorContextValue = {
     selectedId,
+    selectedIds,
     breakpoint,
     state,
     setState,

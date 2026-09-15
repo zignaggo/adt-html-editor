@@ -215,4 +215,33 @@ Extra snap without `Shift`: within 1° of a multiple of 90° it sticks (common e
 
 ## 7. Out of scope
 
-Multi-selection, batch alignment and distribution, skew, editing `transform-origin` through the UI, 3D rotation, pinch resizing, handles on elements inside transformed ancestors.
+Batch alignment and distribution, skew, editing `transform-origin` through the UI, 3D rotation, pinch resizing, handles on elements inside transformed ancestors.
+
+---
+
+## 8. Group gestures (shipped after the original plan)
+
+Multi-selection was added later and reuses everything above. `EditorState` carries `selectedIds` with
+`selectedId` as the anchor, and `placeNodes` commits every member under one history entry.
+
+**Frame.** With more than one member, `Handles` frames the union of the members' layout boxes
+(`transform/groupBox.ts`), forces angle 0, labels itself `N elements` and sets `data-group="true"`,
+which hides the rotate handle. It is disabled when any member is locked or sits under a transformed
+ancestor.
+
+**Resize.** `takeGroupSnapshot` records one `MemberSnapshot` per member plus the union box.
+`startGroupResizeGesture` resizes that union with the existing `resizeBox` (angle 0, center origin)
+and maps each member through `scaleBoxWithin`, so positions and sizes scale proportionally.
+`minGroupSize` raises the minimum so no member can collapse below 1 px; `ResizeArgs.min` therefore
+accepts a `Size` as well as a number. Only the axes that actually scaled get `width`/`height`
+written. A member with a rotation keeps its `transform` and has its unrotated layout box scaled.
+Single selection keeps the original rotation-aware path untouched.
+
+**Drag.** The drag session holds `members` instead of one node. The delta is computed once from the
+union box and applied to every member through its own `styleOrigin`. Members that are locked or under
+a transformed ancestor are skipped. A group drag never reparents; a single drag still moves the
+element into the page container as before. The live ghost renders one clone per member inside a
+single moved wrapper, falling back to a group outline above `MAX_LIVE_CLONES`.
+
+**Keyboard.** Arrow nudge moves every member in one coalesced entry; `Ctrl/Cmd+arrows` scales the
+group from its top-left; `[` / `]` are ignored with more than one member.

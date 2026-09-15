@@ -279,6 +279,9 @@ import { HtmlEditor } from 'adt-html-editor/shadcn'
 
 | Key | Action |
 |---|---|
+| `Shift+click` (in the canvas) | Add/remove the element from the selection |
+| `Ctrl/Cmd+click` (in the tree) | Add/remove the row from the selection |
+| `Shift+click` (in the tree) | Select the visible range from the anchor |
 | `↑` / `↓` | Navigate the tree |
 | `←` / `→` | Collapse/expand, or go up/down one level |
 | `Alt+↑` / `Alt+↓` | Reorder among siblings |
@@ -292,7 +295,12 @@ import { HtmlEditor } from 'adt-html-editor/shadcn'
 | `Esc` | Cancel editing / clear selection |
 | `↑` `↓` `←` `→` (fixed layout) | Nudge by 1 px (`Shift` = 10 px) |
 | `Ctrl/Cmd+arrows` (fixed layout) | Resize by 1 px (`Shift` = 10 px) |
-| `[` / `]` (fixed layout) | Rotate by 1° (`Shift` = 15°) |
+| `[` / `]` (fixed layout) | Rotate by 1° (`Shift` = 15°), single selection only |
+
+With more than one element selected, the fixed layout draws a frame around the union of their boxes.
+Dragging any member moves the whole group by the same delta, and the eight handles scale every
+member's position and size proportionally to that frame. Each gesture commits a single history entry.
+Rotation and reparenting stay single-selection operations.
 
 ## Tailwind in the canvas
 

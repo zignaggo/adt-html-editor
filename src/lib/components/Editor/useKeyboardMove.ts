@@ -12,6 +12,10 @@ export function useKeyboardMove(): KeyboardMove {
     const { state, actions } = store
     const id = state.selectedId
     if (!id) return false
+    if (state.selectedIds.length > 1) {
+      announce('select a single element to move it')
+      return false
+    }
 
     const target = resolveKeyboardMove(state.doc, id, direction)
     if (!target) {

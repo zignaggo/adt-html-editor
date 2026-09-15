@@ -1,5 +1,6 @@
 .selection,
-.hover {
+.hover,
+.outline {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,17 +14,23 @@
 }
 
 .selection[data-visible='false'],
-.hover[data-visible='false'] {
+.hover[data-visible='false'],
+.outline[data-visible='false'] {
   opacity: 0;
 }
 
 .selection[data-visible='true'],
-.hover[data-visible='true'] {
+.hover[data-visible='true'],
+.outline[data-visible='true'] {
   opacity: 1;
 }
 
 .selection {
   box-shadow: 0 0 0 1.5px var(--adt-accent);
+}
+
+.outline {
+  box-shadow: 0 0 0 1px var(--adt-accent);
 }
 
 .hover {

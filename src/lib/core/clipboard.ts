@@ -4,9 +4,9 @@ import { serializeHtml } from './html/serialize'
 
 let stored: string | null = null
 
-export function copySubtree(doc: EditorDocument, id: NodeId): string | null {
-  const node = doc.nodes[id]
-  if (!node || id === doc.rootId) return null
+export function copySubtrees(doc: EditorDocument, ids: readonly NodeId[]): string | null {
+  const children = ids.filter((id) => doc.nodes[id] && id !== doc.rootId)
+  if (children.length === 0) return null
   const isolated: EditorDocument = {
     rootId: 'clip-root',
     envelope: { kind: 'fragment' },
@@ -20,12 +20,16 @@ export function copySubtree(doc: EditorDocument, id: NodeId): string | null {
         attrOrder: [],
         classes: [],
         parentId: null,
-        children: [id],
+        children,
       },
     },
   }
   stored = serializeHtml(isolated)
   return stored
+}
+
+export function copySubtree(doc: EditorDocument, id: NodeId): string | null {
+  return copySubtrees(doc, [id])
 }
 
 export function readClipboard(): string | null {

@@ -42,9 +42,17 @@ export function useEditorStoreApi(): EditorStore {
   return useEditorContext().store
 }
 
-export function useEditorSelector<T>(selector: (state: EditorState) => T): T {
-  return useSelector(useEditorContext().store, selector)
+export type EditorSelectorOptions<T> = { compare?: (a: T, b: T) => boolean }
+
+export function useEditorSelector<T>(
+  selector: (state: EditorState) => T,
+  options?: EditorSelectorOptions<T>,
+): T {
+  return useSelector(useEditorContext().store, selector, options)
 }
+
+export const selectSelectedId = (state: EditorState) => state.selectedId
+export const selectSelectedIds = (state: EditorState) => state.selectedIds
 
 const EMPTY_CHILDREN: NodeId[] = []
 
@@ -59,7 +67,23 @@ export function useChildren(id: NodeId): NodeId[] {
   })
 }
 
+export function useSelectedId(): NodeId | null {
+  return useEditorSelector(selectSelectedId)
+}
+
+export function useSelectedIds(): readonly NodeId[] {
+  return useEditorSelector(selectSelectedIds)
+}
+
+export function useSelectionCount(): number {
+  return useEditorSelector((state) => state.selectedIds.length)
+}
+
 export function useIsSelected(id: NodeId): boolean {
+  return useEditorSelector((state) => state.selectedIds.includes(id))
+}
+
+export function useIsAnchor(id: NodeId): boolean {
   return useEditorSelector((state) => state.selectedId === id)
 }
 

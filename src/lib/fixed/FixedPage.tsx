@@ -85,6 +85,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
             aria-busy={!stylesReady || undefined}
             onPointerMove={interactions.onPointerMove}
             onPointerLeave={interactions.onPointerLeave}
+            onMouseDown={interactions.onMouseDown}
             onClick={interactions.onClick}
             onDoubleClick={interactions.onDoubleClick}
             onKeyDown={onKeyDown}
