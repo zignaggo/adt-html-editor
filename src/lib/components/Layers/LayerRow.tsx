@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { ItemMode } from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item'
 import type { NodeId } from '../../core/ids'
 import { LayerLabel } from './LayerLabel'
@@ -13,7 +14,7 @@ export type LayerRowProps = {
   isMatch?: boolean
 }
 
-export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }: LayerRowProps) {
+export const LayerRow = memo(function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }: LayerRowProps) {
   const { setElement, node, classes, indent, rowProps, chevronProps } = useLayerRow({
     id,
     level,
@@ -58,4 +59,4 @@ export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }:
       ) : null}
     </div>
   )
-}
+})

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { ReactNode } from 'react'
 import { ChevronRightIcon, SearchIcon, XIcon } from 'lucide-react'
 import { useLayersContext } from '../../../lib/components/Layers/context'
@@ -176,7 +177,7 @@ export type LayerRowProps = {
   isMatch?: boolean
 }
 
-export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }: LayerRowProps) {
+export const LayerRow = memo(function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }: LayerRowProps) {
   const { setElement, node, classes, indent, isCollapsed, rowProps, chevronProps } = useLayerRow({
     id,
     level,
@@ -220,7 +221,7 @@ export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }:
       ) : null}
     </div>
   )
-}
+})
 
 function LayerLabel({ node }: { node: NonNullable<ReturnType<typeof useLayerRow>['node']> }) {
   if (node.kind === 'element' || node.kind === 'opaque') {

@@ -1,4 +1,4 @@
-import { useRef, type ElementType } from 'react'
+import { memo, useRef, type ElementType } from 'react'
 import type { NodeId } from '../../core/ids'
 import { VOID_TAGS } from '../../core/model'
 import { useEditorSelector, useNode } from '../Editor/context'
@@ -16,7 +16,7 @@ const INERT_OPAQUE: ReadonlySet<string> = new Set([
   'iframe',
 ])
 
-export function CanvasNode({ id }: { id: NodeId }) {
+export const CanvasNode = memo(function CanvasNode({ id }: { id: NodeId }) {
   const node = useNode(id)
   const elementRef = useRef<HTMLElement | null>(null)
   const isEditing = useEditorSelector((state) => state.editingTextId === id)
@@ -74,4 +74,4 @@ export function CanvasNode({ id }: { id: NodeId }) {
       ))}
     </Tag>
   )
-}
+})

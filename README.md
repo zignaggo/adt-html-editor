@@ -10,7 +10,10 @@ Consumed via `file:` / `bun link` — not published to npm.
 bun add file:../adt-html-editor
 ```
 
-`react` and `react-dom` (>= 19) are peer dependencies.
+`react` and `react-dom` (>= 19) are peer dependencies. Every `react` subpath is
+external, including `react/compiler-runtime`, so the consuming app's own React
+is the only one in the bundle. The Tailwind worker is inlined into the bundle:
+no asset from `dist/assets` has to be served.
 
 ```tsx
 import { HtmlEditor } from 'adt-html-editor'
@@ -225,6 +228,12 @@ bun add @base-ui/react lucide-react class-variance-authority cn cmdk react-resiz
 @source '../node_modules/adt-html-editor/dist';
 /* plus the shadcn theme tokens from `shadcn init` (--background, --primary, …) */
 ```
+
+An app that is not built on Base UI does not need the `shadcn` package for this:
+the skin only uses its `data-open`, `data-closed`, `data-checked`,
+`data-unchecked`, `data-selected`, `data-disabled`, `data-active`,
+`data-horizontal` and `data-vertical` custom variants plus the `no-scrollbar`
+utility, so copying those declarations into your own CSS is enough.
 
 ```tsx
 import 'adt-html-editor/style.css'

@@ -1,4 +1,5 @@
 import type { ParsedCandidate, WorkerRequest, WorkerResponse } from './worker'
+import TailwindWorker from './worker?worker&inline'
 
 type RequestPayload = WorkerRequest extends infer T ? (T extends { id: number } ? Omit<T, 'id'> : never) : never
 
@@ -17,7 +18,7 @@ let variantsPromise: Promise<string[]> | null = null
 
 function getWorker(): Worker {
   if (worker) return worker
-  worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
+  worker = new TailwindWorker()
   worker.addEventListener('message', (event: MessageEvent<WorkerResponse>) => {
     const entry = pending.get(event.data.id)
     if (!entry) return

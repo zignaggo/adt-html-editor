@@ -15,12 +15,15 @@ import type { NodeId } from '../../core/ids'
 import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
 import { useEditorSelector } from '../Editor/context'
+import type { EditorState } from '../../core/store'
 import { useLayersContext } from './context'
 import type { LayerRowInfo } from './flatten'
 import { LayerRow } from './LayerRow'
 import { useLayersSearch } from './useLayersSearch'
 import { useTreeKeyboard } from './useTreeKeyboard'
 import styles from './LayersPanel.module.css'
+
+const selectSelectedId = (state: EditorState) => state.selectedId
 
 const ROW_HEIGHT = 30
 const VIRTUALIZE_ABOVE = 300
@@ -113,7 +116,7 @@ export function LayersTree({
     scrollRef.current = element
     meta.registerTree(element)
   }
-  const selectedId = useEditorSelector((state) => state.selectedId)
+  const selectedId = useEditorSelector(selectSelectedId)
   const [viewport, setViewport] = useState({ scrollTop: 0, height: 0 })
 
   const onKeyDown = useTreeKeyboard(rows)

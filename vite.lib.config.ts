@@ -30,10 +30,15 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        'react-dom/client',
+        // Every subpath, not just the entries: `react/compiler-runtime` (added
+        // by the React Compiler) is CJS and calls `require('react')`, which
+        // throws in the browser once bundled.
+        /^react(\/|$)/,
+        /^react-dom(\/|$)/,
+        // CJS-only, and it requires react itself. Bundled here it would emit a
+        // `require('react')` the browser cannot run; left external, the app's
+        // bundler converts it to ESM with its own react.
+        /^use-sync-external-store(\/|$)/,
         ...SKIN_EXTERNALS,
       ],
       output: {
