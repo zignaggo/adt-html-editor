@@ -9,7 +9,6 @@ const SKIN_PEERS = [
   '@base-ui/react',
   'lucide-react',
   'class-variance-authority',
-  'cn',
   'cmdk',
   'react-resizable-panels',
 ]
@@ -47,6 +46,7 @@ describe.skipIf(!existsSync(resolve(DIST, 'index.js')))('published bundle graph'
     const externals = [...externalsReachableFrom(resolve(DIST, 'index.js'))]
     expect(externals.filter(isSkinPeer)).toEqual([])
     expect(externals).toContain('react')
+    expect(externals).toContain('cn')
   })
 
   it('reaches the shadcn peers only from the skin entry', () => {

@@ -16,7 +16,8 @@ import {
   InspectorSection,
   InspectorVariants,
 } from './InspectorParts'
-import styles from './InspectorPanel.module.css'
+import { PANEL_CLASS } from './inspectorStyles'
+import { cn } from 'cn'
 
 export function InspectorProvider({ children }: { children: ReactNode }) {
   const selected = useEditorSelector(selectSelectedIds)
@@ -50,7 +51,7 @@ export function InspectorPanel({ className, children }: InspectorPanelProps) {
   return (
     <InspectorProvider>
       <aside
-        className={className ? `${styles.panel} ${className}` : styles.panel}
+        className={cn(PANEL_CLASS, className)}
         aria-label="Styles"
       >
         {children ?? <DefaultInspector />}

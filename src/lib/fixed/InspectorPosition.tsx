@@ -4,8 +4,13 @@ import { InspectorSection } from '../components/Inspector/InspectorParts'
 import { useLayoutMode } from '../components/Editor/context'
 import { NumberField } from './NumberField'
 import { usePositionFields, type StackingOrder } from './usePositionFields'
-import inspectorStyles from '../components/Inspector/InspectorPanel.module.css'
-import styles from './InspectorPosition.module.css'
+import { FIELDS_CLASS } from '../components/Inspector/inspectorStyles'
+import {
+  LOCK_CLASS,
+  ORDER_BUTTON_CLASS,
+  POSITION_GRID_CLASS,
+  STACKING_ORDER_CLASS,
+} from './positionStyles'
 
 export function InspectorPosition({ title = 'Position' }: { title?: string }) {
   const layout = useLayoutMode()
@@ -24,15 +29,15 @@ function PositionFields({ id }: { id: NodeId }) {
   const { box, locked, commitPosition, commitSize, stacking, setLocked } = fields
 
   return (
-    <div className={inspectorStyles.fields}>
-      <div className={styles.grid}>
+    <div className={FIELDS_CLASS}>
+      <div className={POSITION_GRID_CLASS}>
         <NumberField label="X" value={box?.x} disabled={locked} onCommit={(v) => commitPosition('x', v)} />
         <NumberField label="Y" value={box?.y} disabled={locked} onCommit={(v) => commitPosition('y', v)} />
         <NumberField label="W" value={box?.width} disabled={locked} onCommit={(v) => commitSize('width', v)} />
         <NumberField label="H" value={box?.height} disabled={locked} onCommit={(v) => commitSize('height', v)} />
       </div>
       {stacking ? <StackingButtons stacking={stacking} /> : null}
-      <label className={styles.lock}>
+      <label className={LOCK_CLASS}>
         <input type="checkbox" checked={locked} onChange={(event) => setLocked(event.target.checked)} />
         <span>Lock position</span>
       </label>
@@ -43,17 +48,17 @@ function PositionFields({ id }: { id: NodeId }) {
 function StackingButtons({ stacking }: { stacking: StackingOrder }) {
   const { index, last } = stacking
   return (
-    <div className={styles.order} role="group" aria-label="Stacking order">
-      <button type="button" className={styles.orderButton} disabled={index <= 0} onClick={stacking.toBack}>
+    <div className={STACKING_ORDER_CLASS} role="group" aria-label="Stacking order">
+      <button type="button" className={ORDER_BUTTON_CLASS} disabled={index <= 0} onClick={stacking.toBack}>
         To back
       </button>
-      <button type="button" className={styles.orderButton} disabled={index <= 0} onClick={stacking.backward}>
+      <button type="button" className={ORDER_BUTTON_CLASS} disabled={index <= 0} onClick={stacking.backward}>
         Backward
       </button>
-      <button type="button" className={styles.orderButton} disabled={index >= last} onClick={stacking.forward}>
+      <button type="button" className={ORDER_BUTTON_CLASS} disabled={index >= last} onClick={stacking.forward}>
         Forward
       </button>
-      <button type="button" className={styles.orderButton} disabled={index >= last} onClick={stacking.toFront}>
+      <button type="button" className={ORDER_BUTTON_CLASS} disabled={index >= last} onClick={stacking.toFront}>
         To front
       </button>
     </div>

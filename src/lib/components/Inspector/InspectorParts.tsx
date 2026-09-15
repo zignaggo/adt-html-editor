@@ -10,16 +10,32 @@ import { ClassCombobox } from './ClassCombobox'
 import { useInspectorContext } from './context'
 import { ControlGroup } from './controls/ControlGroup'
 import { useVariantBar } from './useVariantBar'
-import styles from './InspectorPanel.module.css'
+import {
+  ACCORDION_BODY_CLASS,
+  ACCORDION_BUTTON_CLASS,
+  ACCORDION_CHEVRON_CLASS,
+  COUNT_CLASS,
+  EMPTY_CLASS,
+  HEADER_ACTIONS_CLASS,
+  HEADER_BUTTON_CLASS,
+  HEADER_CLASS,
+  SCROLL_CLASS,
+  SECTION_CLASS,
+  SECTION_TITLE_CLASS,
+  TITLE_CLASS,
+  VARIANT_BAR_CLASS,
+  VARIANT_BREAKPOINT_CLASS,
+  VARIANT_BUTTON_CLASS,
+} from './inspectorStyles'
 
 export function InspectorHeader({ children }: { children?: ReactNode }) {
   const { selectedId, selectedIds } = useInspectorContext()
-  if (children) return <div className={styles.header}>{children}</div>
+  if (children) return <div className={HEADER_CLASS}>{children}</div>
   if (selectedIds.length > 1) return <MultiSelectedHeader ids={selectedIds} />
   if (!selectedId) {
     return (
-      <div className={styles.header}>
-        <span className={styles.title}>Styles</span>
+      <div className={HEADER_CLASS}>
+        <span className={TITLE_CLASS}>Styles</span>
       </div>
     )
   }
@@ -30,15 +46,15 @@ function MultiSelectedHeader({ ids }: { ids: readonly NodeId[] }) {
   const summary = useSelectionSummary(ids)
   if (!summary) return null
   return (
-    <div className={styles.header}>
-      <span className={styles.title}>{summary.count} elements</span>
-      <span className={styles.count}>
+    <div className={HEADER_CLASS}>
+      <span className={TITLE_CLASS}>{summary.count} elements</span>
+      <span className={COUNT_CLASS}>
         {summary.tags.map((entry) => (entry.count > 1 ? `${entry.tag} ×${entry.count}` : entry.tag)).join(' · ')}
       </span>
-      <div className={styles.headerActions}>
+      <div className={HEADER_ACTIONS_CLASS}>
         <button
           type="button"
-          className={styles.headerButton}
+          className={HEADER_BUTTON_CLASS}
           onClick={summary.duplicate}
           aria-label={`Duplicate ${summary.count} elements`}
         >
@@ -46,7 +62,7 @@ function MultiSelectedHeader({ ids }: { ids: readonly NodeId[] }) {
         </button>
         <button
           type="button"
-          className={styles.headerButton}
+          className={HEADER_BUTTON_CLASS}
           onClick={summary.remove}
           aria-label={`Delete ${summary.count} elements`}
         >
@@ -54,7 +70,7 @@ function MultiSelectedHeader({ ids }: { ids: readonly NodeId[] }) {
         </button>
         <button
           type="button"
-          className={styles.headerButton}
+          className={HEADER_BUTTON_CLASS}
           aria-pressed={summary.allLocked}
           onClick={() => summary.setLocked(!summary.allLocked)}
           aria-label={`${summary.allLocked ? 'Unlock' : 'Lock'} ${summary.count} elements`}
@@ -63,7 +79,7 @@ function MultiSelectedHeader({ ids }: { ids: readonly NodeId[] }) {
         </button>
         <button
           type="button"
-          className={styles.headerButton}
+          className={HEADER_BUTTON_CLASS}
           disabled={!summary.commonParentId}
           onClick={summary.selectParent}
           aria-label="Select parent"
@@ -79,9 +95,9 @@ function SelectedHeader({ id }: { id: string }) {
   const node = useNode(id)
   if (!node) return null
   return (
-    <div className={styles.header}>
-      <span className={styles.title}>{labelOf(node)}</span>
-      {isStyled(node) ? <span className={styles.count}>{node.classes.length}</span> : null}
+    <div className={HEADER_CLASS}>
+      <span className={TITLE_CLASS}>{labelOf(node)}</span>
+      {isStyled(node) ? <span className={COUNT_CLASS}>{node.classes.length}</span> : null}
     </div>
   )
 }
@@ -90,7 +106,7 @@ export function InspectorEmpty({ children }: { children?: ReactNode }) {
   const { selectedIds } = useInspectorContext()
   if (selectedIds.length > 0) return null
   return (
-    <p className={styles.empty}>{children ?? 'Select an element to edit its styles.'}</p>
+    <p className={EMPTY_CLASS}>{children ?? 'Select an element to edit its styles.'}</p>
   )
 }
 
@@ -99,14 +115,14 @@ export function InspectorVariants() {
   if (!bar.selectedId) return null
 
   return (
-    <div className={styles.variantBar} role="group" aria-label="State">
-      <span className={styles.variantBreakpoint}>{bar.breakpoint.label}</span>
+    <div className={VARIANT_BAR_CLASS} role="group" aria-label="State">
+      <span className={VARIANT_BREAKPOINT_CLASS}>{bar.breakpoint.label}</span>
       {bar.states.map((entry) => (
         <button
           key={entry}
           type="button"
           aria-pressed={bar.isActive(entry)}
-          className={styles.variantButton}
+          className={VARIANT_BUTTON_CLASS}
           data-active={bar.isActive(entry) || undefined}
           onClick={() => bar.toggle(entry)}
         >
@@ -120,7 +136,7 @@ export function InspectorVariants() {
 export function InspectorBody({ children }: { children?: ReactNode }) {
   const { selectedId } = useInspectorContext()
   if (!selectedId) return null
-  return <div className={styles.scroll}>{children}</div>
+  return <div className={SCROLL_CLASS}>{children}</div>
 }
 
 export function InspectorSection({
@@ -131,8 +147,8 @@ export function InspectorSection({
   children?: ReactNode
 }) {
   return (
-    <section className={styles.section}>
-      {title ? <h3 className={styles.sectionTitle}>{title}</h3> : null}
+    <section className={SECTION_CLASS}>
+      {title ? <h3 className={SECTION_TITLE_CLASS}>{title}</h3> : null}
       {children}
     </section>
   )
@@ -177,10 +193,10 @@ export function InspectorCategory({ id, title }: { id: string; title?: string })
   const isOpen = openCategory === id
 
   return (
-    <section className={styles.section}>
+    <section className={SECTION_CLASS}>
       <button
         type="button"
-        className={styles.accordionButton}
+        className={ACCORDION_BUTTON_CLASS}
         aria-expanded={isOpen}
         aria-controls={`adt-panel-${id}`}
         onClick={() => setOpenCategory(isOpen ? '' : id)}
@@ -191,7 +207,7 @@ export function InspectorCategory({ id, title }: { id: string; title?: string })
           width="12"
           height="12"
           aria-hidden="true"
-          className={styles.accordionChevron}
+          className={ACCORDION_CHEVRON_CLASS}
           data-open={isOpen || undefined}
         >
           <path
@@ -204,7 +220,7 @@ export function InspectorCategory({ id, title }: { id: string; title?: string })
           />
         </svg>
       </button>
-      <div id={`adt-panel-${id}`} hidden={!isOpen} className={styles.accordionBody}>
+      <div id={`adt-panel-${id}`} hidden={!isOpen} className={ACCORDION_BODY_CLASS}>
         {category.controls.map((control) => (
           <ControlGroup key={control.id} id={selectedId} control={control} target={target} />
         ))}

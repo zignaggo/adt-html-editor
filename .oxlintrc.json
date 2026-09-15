@@ -20,7 +20,6 @@
               "@base-ui/react/*",
               "lucide-react",
               "class-variance-authority",
-              "cn",
               "cmdk",
               "react-resizable-panels"
             ]

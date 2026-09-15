@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import type { NodeId } from '../../core/ids'
 import { useAttributeFields } from './useAttributeFields'
-import styles from './InspectorPanel.module.css'
+import {
+  ADD_BUTTON_CLASS,
+  FIELDS_CLASS,
+  FIELD_CLASS,
+  FIELD_LABEL_CLASS,
+  INPUT_CLASS,
+  NEW_ATTRIBUTE_CLASS,
+  TEXTAREA_CLASS,
+} from './inspectorStyles'
 
 export function AttributeFields({ id }: { id: NodeId }) {
   const fields = useAttributeFields(id)
@@ -10,11 +18,11 @@ export function AttributeFields({ id }: { id: NodeId }) {
 
   if (fields.kind === 'text') {
     return (
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>{fields.label}</span>
+      <label className={FIELD_CLASS}>
+        <span className={FIELD_LABEL_CLASS}>{fields.label}</span>
         <textarea
           key={fields.node.id}
-          className={styles.textarea}
+          className={TEXTAREA_CLASS}
           defaultValue={fields.value}
           rows={3}
           spellCheck={false}
@@ -25,13 +33,13 @@ export function AttributeFields({ id }: { id: NodeId }) {
   }
 
   return (
-    <div className={styles.fields}>
+    <div className={FIELDS_CLASS}>
       {fields.fields.map((field) => (
-        <label key={`${fields.node.id}:${field.name}`} className={styles.field}>
-          <span className={styles.fieldLabel}>{field.name}</span>
+        <label key={`${fields.node.id}:${field.name}`} className={FIELD_CLASS}>
+          <span className={FIELD_LABEL_CLASS}>{field.name}</span>
           <input
             type="text"
-            className={styles.input}
+            className={INPUT_CLASS}
             defaultValue={field.value}
             spellCheck={false}
             onBlur={(event) => fields.setAttribute(field.name, event.target.value)}
@@ -54,10 +62,10 @@ function NewAttribute({ onAdd }: { onAdd: (name: string, value: string) => boole
   }
 
   return (
-    <div className={styles.newAttribute}>
+    <div className={NEW_ATTRIBUTE_CLASS}>
       <input
         type="text"
-        className={styles.input}
+        className={INPUT_CLASS}
         placeholder="attribute"
         aria-label="New attribute name"
         value={name}
@@ -66,7 +74,7 @@ function NewAttribute({ onAdd }: { onAdd: (name: string, value: string) => boole
       />
       <input
         type="text"
-        className={styles.input}
+        className={INPUT_CLASS}
         placeholder="value"
         aria-label="New attribute value"
         value={value}
@@ -78,7 +86,7 @@ function NewAttribute({ onAdd }: { onAdd: (name: string, value: string) => boole
           commit()
         }}
       />
-      <button type="button" className={styles.addButton} onClick={commit}>
+      <button type="button" className={ADD_BUTTON_CLASS} onClick={commit}>
         Add
       </button>
     </div>

@@ -2,7 +2,12 @@ import { disableNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/elem
 import type { Box } from '../geometry'
 import { cloneForPreview } from './snapshot'
 import { createGhostBox, moveGhostBox, type GhostStrategy } from './strategy'
-import styles from './ghost.module.css'
+import {
+  ghostCloneClass,
+  ghostOriginClass,
+  ghostReturningClass,
+  ghostTargetClass,
+} from './ghostStyles'
 
 const RETURN_MS = 160
 const MAX_LIVE_CLONES = 12
@@ -25,14 +30,14 @@ export function createLiveStrategy(): GhostStrategy {
     start({ layer, origin: start, size, members }) {
       origin = start
       originBoxes = members.map((member) => {
-        const box = createGhostBox(layer, member.size, styles.origin)
+        const box = createGhostBox(layer, member.size, ghostOriginClass)
         moveGhostBox(box, { x: start.x + member.offset.x, y: start.y + member.offset.y })
         return box
       })
 
       const clonable = members.filter((member) => member.element !== null)
       const cloning = clonable.length > 0 && clonable.length <= MAX_LIVE_CLONES
-      const wrapper = createGhostBox(layer, size, cloning ? styles.clone : styles.target)
+      const wrapper = createGhostBox(layer, size, cloning ? ghostCloneClass : ghostTargetClass)
       if (cloning) {
         for (const member of clonable) {
           const slot = document.createElement('div')
@@ -61,7 +66,7 @@ export function createLiveStrategy(): GhostStrategy {
         leaving.remove()
         return
       }
-      leaving.classList.add(styles.returning)
+      leaving.classList.add(...ghostReturningClass.split(' '))
       moveGhostBox(leaving, origin)
       setTimeout(() => leaving.remove(), RETURN_MS)
     },

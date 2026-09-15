@@ -3,12 +3,11 @@ import { MyClassInput, MyRadiusSlider } from './CustomControls'
 import { HistoryControls } from './HistoryControls'
 import { MyPalette } from './CustomPalette'
 import { MyTreeRow } from './CustomTreeRow'
-import styles from './CustomLayout.module.css'
 
 export function CustomLayout() {
   return (
-    <div className={styles.grid}>
-      <HtmlEditor.Canvas className={styles.canvas}>
+    <div className="grid h-full min-h-0 w-full grid-cols-[minmax(0,1fr)_minmax(220px,280px)] grid-rows-[minmax(0,1fr)_190px] [grid-template-areas:'canvas_inspector''dock_inspector']">
+      <HtmlEditor.Canvas className="min-h-0 min-w-0 [grid-area:canvas]">
         <HtmlEditor.Canvas.Viewport />
         <HtmlEditor.Canvas.Toolbar>
           <HtmlEditor.Canvas.DarkToggle>Dark theme</HtmlEditor.Canvas.DarkToggle>
@@ -22,7 +21,7 @@ export function CustomLayout() {
         </HtmlEditor.Canvas.Toolbar>
       </HtmlEditor.Canvas>
 
-      <HtmlEditor.Inspector className={styles.inspector}>
+      <HtmlEditor.Inspector className="min-h-0 [grid-area:inspector]">
         <HtmlEditor.Inspector.Header />
         <HtmlEditor.Inspector.Empty>
           Nothing selected. Click something on the canvas.
@@ -47,9 +46,9 @@ export function CustomLayout() {
         </HtmlEditor.Inspector.Body>
       </HtmlEditor.Inspector>
 
-      <div className={styles.dock}>
+      <div className="grid min-h-0 grid-cols-[minmax(220px,320px)_minmax(0,1fr)] border-t border-border [grid-area:dock]">
         <HistoryControls />
-        <HtmlEditor.Layers className={styles.layers}>
+        <HtmlEditor.Layers className="min-h-0">
           <HtmlEditor.Layers.Header>
             <HtmlEditor.Layers.Title>Structure</HtmlEditor.Layers.Title>
             <HtmlEditor.Layers.Count />
@@ -61,7 +60,7 @@ export function CustomLayout() {
             )}
           />
         </HtmlEditor.Layers>
-        <HtmlEditor.Palette className={styles.palette}>
+        <HtmlEditor.Palette className="min-w-0 overflow-auto">
           <MyPalette />
         </HtmlEditor.Palette>
       </div>

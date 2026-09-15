@@ -21,34 +21,48 @@ import type { LayerRowInfo } from './flatten'
 import { LayerRow } from './LayerRow'
 import { useLayersSearch } from './useLayersSearch'
 import { useTreeKeyboard } from './useTreeKeyboard'
-import styles from './LayersPanel.module.css'
+import { cn } from 'cn'
 
 const selectSelectedId = (state: EditorState) => state.selectedId
+
+const emptyClass = 'mx-3 my-4 text-2xs text-pretty text-muted-foreground/70'
 
 const ROW_HEIGHT = 30
 const VIRTUALIZE_ABOVE = 300
 const OVERSCAN = 10
 
 export function LayersHeader({ children }: { children?: ReactNode }) {
-  return <div className={styles.header}>{children}</div>
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+      {children}
+    </div>
+  )
 }
 
 export function LayersTitle({ children }: { children?: ReactNode }) {
-  return <span className={styles.title}>{children}</span>
+  return (
+    <span className="text-2xs font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+      {children}
+    </span>
+  )
 }
 
 export function LayersCount() {
   const { state } = useLayersContext()
-  return <span className={styles.count}>{state.matchCount}</span>
+  return (
+    <span className="min-w-5 rounded-sm bg-accent px-1.5 py-px text-center text-2xs text-muted-foreground tabular-nums">
+      {state.matchCount}
+    </span>
+  )
 }
 
 export function LayersEmpty({ children }: { children?: ReactNode }) {
   const { rows, state } = useLayersContext()
   if (rows.length > 0) return null
   if (state.isSearching) {
-    return <p className={styles.empty}>No elements match “{state.query.trim()}”.</p>
+    return <p className={emptyClass}>No elements match “{state.query.trim()}”.</p>
   }
-  return <p className={styles.empty}>{children ?? 'No elements. Drag something from the palette.'}</p>
+  return <p className={emptyClass}>{children ?? 'No elements. Drag something from the palette.'}</p>
 }
 
 export type LayersSearchProps = {
@@ -65,11 +79,15 @@ export function LayersSearch({
   const search = useLayersSearch()
 
   return (
-    <div className={className ? `${styles.search} ${className}` : styles.search}>
+    <div className={cn('border-b border-border px-3 py-1.5', className)}>
       <input
         ref={(element) => search.registerInput(element)}
         type="search"
-        className={styles.searchInput}
+        className={cn(
+          'box-border min-h-[26px] w-full rounded-sm border-0 bg-card px-1.5 py-1 font-mono text-2xs text-foreground',
+          'ring-1 ring-border transition-shadow duration-100 ease-out ring-inset hover:ring-foreground/25',
+          'placeholder:text-muted-foreground/70',
+        )}
         aria-label={ariaLabel}
         placeholder={placeholder}
         autoComplete="off"
@@ -102,7 +120,17 @@ export type LayersTreeProps = {
 }
 
 function DefaultScroller({ className, ...props }: LayersScrollerProps) {
-  return <div {...props} className={className ? `${styles.scroll} ${className}` : styles.scroll} />
+  return (
+    <div
+      {...props}
+      className={cn(
+        'min-h-0 flex-1 overflow-auto overscroll-contain pt-1 pb-4 [scrollbar-width:thin]',
+        '[scrollbar-color:var(--scrollbar-thumb)_transparent]',
+        'focus-visible:-outline-offset-2!',
+        className,
+      )}
+    />
+  )
 }
 
 export function LayersTree({
@@ -200,11 +228,11 @@ export function LayersTree({
       }
     >
       <div
-        className={isVirtual ? styles.virtualSizer : undefined}
+        className={isVirtual ? 'relative w-full' : undefined}
         style={isVirtual ? { height: `${rows.length * ROW_HEIGHT}px` } : undefined}
       >
         <div
-          className={isVirtual ? styles.virtualWindow : undefined}
+          className={isVirtual ? 'absolute top-0 left-0 w-full will-change-transform' : undefined}
           style={isVirtual ? { transform: `translateY(${first * ROW_HEIGHT}px)` } : undefined}
         >
           {visible.map((row) =>

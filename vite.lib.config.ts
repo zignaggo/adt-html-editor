@@ -1,19 +1,19 @@
 import { resolve } from 'node:path'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
 export const SKIN_EXTERNALS = [
   /^@base-ui\/react(\/|$)/,
   /^lucide-react(\/|$)/,
   /^class-variance-authority(\/|$)/,
-  /^cn(\/|$)/,
   /^cmdk(\/|$)/,
   /^react-resizable-panels(\/|$)/,
 ]
 
 export default defineConfig({
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwindcss()],
   resolve: {
     alias: { '@shadcn': resolve(import.meta.dirname, 'src/shadcn') },
   },
@@ -39,6 +39,7 @@ export default defineConfig({
         // `require('react')` the browser cannot run; left external, the app's
         // bundler converts it to ESM with its own react.
         /^use-sync-external-store(\/|$)/,
+        /^cn(\/|$)/,
         ...SKIN_EXTERNALS,
       ],
       output: {

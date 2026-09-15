@@ -3,7 +3,7 @@ import { useEditorSelector, useEditorStoreApi } from '../Editor/context'
 import { LayersContext, type LayersContextValue } from './context'
 import { createLayerFilter, flattenTree, rowsBetween } from './flatten'
 import { LayersCount, LayersHeader, LayersSearch, LayersTitle, LayersTree } from './LayersParts'
-import styles from './LayersPanel.module.css'
+import { cn } from 'cn'
 
 export function LayersProvider({ children }: { children: ReactNode }) {
   const store = useEditorStoreApi()
@@ -51,7 +51,7 @@ export type LayersPanelProps = {
 export function LayersPanel({ className, children }: LayersPanelProps) {
   return (
     <LayersProvider>
-      <div className={className ? `${styles.panel} ${className}` : styles.panel}>
+      <div className={cn('flex min-h-0 flex-col border-r border-border bg-muted', className)}>
         {children ?? <DefaultLayers />}
       </div>
     </LayersProvider>

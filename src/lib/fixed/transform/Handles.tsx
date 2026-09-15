@@ -27,7 +27,15 @@ import { readGroupBox } from './groupBox'
 import { HANDLE_SPECS, cursorFor, type HandleId } from './handleSpecs'
 import { hasTransformedAncestor } from './layoutBox'
 import { runPointerGesture } from './pointerGesture'
-import styles from './Handles.module.css'
+import {
+  BADGE_CLASS,
+  FRAME_CLASS,
+  FRAME_LABEL_CLASS,
+  HANDLE_CLASS,
+  ROTATE_CLASS,
+  STEM_CLASS,
+} from './handleStyles'
+import { cn } from 'cn'
 
 const HANDLES_ATTRIBUTE = 'data-adt-handles'
 const DISABLED_HINT = 'Move this element to the page to resize or rotate it'
@@ -234,20 +242,20 @@ export function Handles({ className, children }: HandlesProps) {
     <HandlesContext value={context}>
       <div
         ref={frameRef}
-        className={className ? `${styles.frame} ${className}` : styles.frame}
+        className={cn(FRAME_CLASS, className)}
         data-adt-handles-frame=""
         data-visible="false"
         onClick={stop}
         onDoubleClick={stop}
       >
-        <span ref={labelRef} className={styles.label} aria-hidden="true" />
+        <span ref={labelRef} className={FRAME_LABEL_CLASS} aria-hidden="true" />
         {children ?? (
           <>
             <HandlesResize />
             <HandlesRotate />
           </>
         )}
-        <GestureBadge className={styles.badge} />
+        <GestureBadge className={BADGE_CLASS} />
       </div>
     </HandlesContext>
   )
@@ -261,7 +269,7 @@ export function HandlesResize() {
         <button
           key={spec.id}
           type="button"
-          className={styles.handle}
+          className={HANDLE_CLASS}
           data-handle={spec.id}
           aria-label={spec.label}
           tabIndex={-1}
@@ -277,10 +285,10 @@ export function HandlesRotate() {
   const { startRotate } = useHandlesContext()
   return (
     <>
-      <span className={styles.stem} aria-hidden="true" />
+      <span className={STEM_CLASS} aria-hidden="true" />
       <button
         type="button"
-        className={styles.rotate}
+        className={ROTATE_CLASS}
         data-rotate=""
         aria-label="Rotate"
         tabIndex={-1}

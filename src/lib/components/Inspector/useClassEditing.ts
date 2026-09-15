@@ -1,4 +1,4 @@
-import { twMerge } from 'tailwind-merge'
+import { cn } from 'cn'
 import type { NodeId } from '../../core/ids'
 import { isStyled } from '../../core/model'
 import { matchesTarget, stripVariants, withTarget, type StyleTarget } from '../../tailwind/variants'
@@ -34,14 +34,14 @@ function buildClassEditing(
       const trimmed = className.trim()
       if (!trimmed) return
       const next = trimmed.includes(':') ? trimmed : withTarget(trimmed, target)
-      const merged = twMerge(currentClasses().join(' '), next)
+      const merged = cn(currentClasses().join(' '), next)
       setClasses(id, merged.split(/\s+/).filter(Boolean))
     },
 
     applyRaw(className: string) {
       const trimmed = className.trim()
       if (!trimmed) return
-      const merged = twMerge(currentClasses().join(' '), trimmed)
+      const merged = cn(currentClasses().join(' '), trimmed)
       setClasses(id, merged.split(/\s+/).filter(Boolean))
     },
 

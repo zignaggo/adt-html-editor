@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useClassEditing, useInspectorContext, useStyleControl } from '../lib'
-import styles from './CustomControls.module.css'
+
+const FIELD_CLASS = 'flex flex-col gap-1.5'
+const LABEL_CLASS = 'flex items-center justify-between gap-2 text-[11px] text-muted-foreground'
+const VALUE_CLASS = 'font-mono text-foreground tabular-nums'
 
 export function MyClassInput() {
   const { selectedId, target } = useInspectorContext()
@@ -17,14 +20,14 @@ export function MyClassInput() {
   }
 
   return (
-    <div className={styles.field}>
-      <label className={styles.label} htmlFor="my-class-input">
+    <div className={FIELD_CLASS}>
+      <label className={LABEL_CLASS} htmlFor="my-class-input">
         Input from another project
       </label>
-      <div className={styles.row}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5">
         <input
           id="my-class-input"
-          className={styles.input}
+          className="min-h-7 rounded-lg border border-dashed border-purple-500 bg-purple-500/8 px-2 font-mono text-[11px] text-inherit"
           value={draft}
           placeholder="e.g. rounded-2xl"
           spellCheck={false}
@@ -35,7 +38,11 @@ export function MyClassInput() {
             submit()
           }}
         />
-        <button type="button" className={styles.button} onClick={submit}>
+        <button
+          type="button"
+          className="min-h-7 cursor-pointer rounded-lg border-0 bg-purple-500 px-2.5 font-[inherit] text-[11px] text-white transition-[scale,background-color] duration-100 ease-out active:scale-95"
+          onClick={submit}
+        >
           Apply
         </button>
       </div>
@@ -57,13 +64,13 @@ export function MyRadiusSlider() {
   const current = control.value ? steps.indexOf(control.value) : 0
 
   return (
-    <div className={styles.field}>
-      <label className={styles.label} htmlFor="my-radius">
-        Radius (custom slider) <span className={styles.value}>{control.value ?? 'none'}</span>
+    <div className={FIELD_CLASS}>
+      <label className={LABEL_CLASS} htmlFor="my-radius">
+        Radius (custom slider) <span className={VALUE_CLASS}>{control.value ?? 'none'}</span>
       </label>
       <input
         id="my-radius"
-        className={styles.slider}
+        className="w-full accent-purple-500"
         type="range"
         min={0}
         max={steps.length - 1}

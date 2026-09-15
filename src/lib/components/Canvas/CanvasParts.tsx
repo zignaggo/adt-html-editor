@@ -10,22 +10,28 @@ import { useCanvasContext, type CanvasWidthPreset } from './context'
 import { SelectionOverlay } from './SelectionOverlay'
 import { useCanvasInteractions } from './useCanvasInteractions'
 import { useDarkToggle, useWidthPresets } from './useCanvasControls'
-import styles from './Canvas.module.css'
+import { cn } from 'cn'
+import { CANVAS_CLASS } from '../../styles/canvasStyles'
+import { PRESET_BUTTON_CLASS, PRESET_GROUP_CLASS } from './canvasStyles'
 
 export function CanvasToolbar({ children }: { children?: ReactNode }) {
-  return <div className={styles.toolbar}>{children}</div>
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-1.5">
+      {children}
+    </div>
+  )
 }
 
 export function CanvasWidthPresets({ presets }: { presets?: CanvasWidthPreset[] }) {
   const control = useWidthPresets(presets)
 
   return (
-    <div className={styles.presets} role="group" aria-label="Canvas width">
+    <div className={PRESET_GROUP_CLASS} role="group" aria-label="Canvas width">
       {control.presets.map((preset) => (
         <button
           key={preset.id}
           type="button"
-          className={styles.presetButton}
+          className={PRESET_BUTTON_CLASS}
           data-active={control.isActive(preset.id) || undefined}
           aria-pressed={control.isActive(preset.id)}
           onClick={() => control.select(preset.id)}
@@ -42,7 +48,7 @@ export function CanvasDarkToggle({ children }: { children?: ReactNode }) {
   return (
     <button
       type="button"
-      className={styles.presetButton}
+      className={PRESET_BUTTON_CLASS}
       data-active={isDark || undefined}
       aria-pressed={isDark}
       onClick={toggle}
@@ -77,15 +83,18 @@ export function CanvasViewport({ className }: { className?: string }) {
     <div
       ref={scrollRef}
       data-adt-canvas-scroll=""
-      className={className ? `${styles.scroll} ${className}` : styles.scroll}
+      className={cn('flex min-h-0 flex-1 items-start justify-center overflow-auto p-4', className)}
     >
-      <div className={styles.page} style={width ? { width: `${width}px` } : undefined}>
+      <div
+        className="min-h-full w-full overflow-clip rounded-lg bg-white shadow-lg transition-[width] duration-200 ease-out"
+        style={width ? { width: `${width}px` } : undefined}
+      >
         <div
           ref={canvasRootRef as RefObject<HTMLDivElement>}
           role="group"
           aria-label="Editable preview"
           tabIndex={0}
-          className={`adt-canvas${isDark ? ' adt-dark' : ''}`}
+          className={cn(CANVAS_CLASS, isDark && 'adt-dark')}
           data-adt-canvas=""
           data-adt-styles={stylesReady ? 'ready' : 'pending'}
           aria-busy={!stylesReady || undefined}
@@ -100,7 +109,9 @@ export function CanvasViewport({ className }: { className?: string }) {
             <CanvasNode key={childId} id={childId} />
           ))}
           {children.length === 0 ? (
-            <p className={styles.empty}>Empty canvas. Drag an element from the palette.</p>
+            <p className="m-0 p-4 text-center font-sans text-xs text-pretty text-muted-foreground/70">
+              Empty canvas. Drag an element from the palette.
+            </p>
           ) : null}
         </div>
       </div>

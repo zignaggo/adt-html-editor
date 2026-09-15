@@ -3,7 +3,12 @@ import type { NodeId } from '../../core/ids'
 import type { StyleTarget } from '../../tailwind/variants'
 import { useClassEditing } from './useClassEditing'
 import { useClassSuggestions } from './useClassSuggestions'
-import styles from './InspectorPanel.module.css'
+import {
+  COMBOBOX_CLASS,
+  INPUT_CLASS,
+  SUGGESTIONS_CLASS,
+  SUGGESTION_CLASS,
+} from './inspectorStyles'
 
 export type ClassComboboxProps = {
   id: NodeId
@@ -28,7 +33,7 @@ export function ClassCombobox({ id, target, placeholder = 'Add class…' }: Clas
   }
 
   return (
-    <div className={styles.combobox}>
+    <div className={COMBOBOX_CLASS}>
       <input
         ref={inputRef}
         type="text"
@@ -38,7 +43,7 @@ export function ClassCombobox({ id, target, placeholder = 'Add class…' }: Clas
         aria-autocomplete="list"
         aria-label="Add class"
         placeholder={placeholder}
-        className={styles.input}
+        className={INPUT_CLASS}
         value={query}
         spellCheck={false}
         autoComplete="off"
@@ -73,14 +78,14 @@ export function ClassCombobox({ id, target, placeholder = 'Add class…' }: Clas
       />
 
       {isOpen && suggestions.length > 0 ? (
-        <ul id="adt-class-suggestions" role="listbox" className={styles.suggestions}>
+        <ul id="adt-class-suggestions" role="listbox" className={SUGGESTIONS_CLASS}>
           {suggestions.map((className, index) => (
             <li key={className}>
               <button
                 type="button"
                 role="option"
                 aria-selected={index === activeIndex}
-                className={styles.suggestion}
+                className={SUGGESTION_CLASS}
                 data-active={index === activeIndex || undefined}
                 onMouseEnter={() => setActiveIndex(index)}
                 onMouseDown={(event) => event.preventDefault()}

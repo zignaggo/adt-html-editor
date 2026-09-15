@@ -1,10 +1,10 @@
-import { useReducer, useRef } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { HtmlEditor, parseHtml, serializeHtml, type HtmlEditorHandle } from '../lib'
 import { CustomLayout } from './CustomLayout'
 import { FixedImageLayout } from './FixedImageLayout'
 import { FIXTURES } from './fixtures'
 import { DefaultLayout as ShadcnDefaultLayout } from '../shadcn/parts/Editor/HtmlEditor'
-import styles from './App.module.css'
+import { BUTTON_CLASS, PICKER_CLASS, SELECT_CLASS } from './playgroundStyles'
 
 type RoundTrip = { ok: boolean; message: string } | null
 
@@ -63,6 +63,11 @@ const initial: State = {
 export function App() {
   const [state, dispatch] = useReducer(reducer, initial)
   const handleRef = useRef<HtmlEditorHandle | null>(null)
+  const [isDark, setIsDark] = useState(() => matchMedia('(prefers-color-scheme: dark)').matches)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark)
+  }, [isDark])
 
   const runRoundTrip = () => {
     const once = serializeHtml(parseHtml(state.input))
@@ -77,12 +82,13 @@ export function App() {
   }
 
   return (
-    <div className={styles.app}>
-      <header className={styles.topbar}>
-        <strong className={styles.brand}>adt-html-editor</strong>
-        <label className={styles.fixturePicker}>
+    <div className="grid h-screen grid-rows-[auto_minmax(0,1fr)_auto] bg-background text-foreground antialiased">
+      <header className="flex items-center gap-4 border-b border-border bg-muted px-4 py-2">
+        <strong className="font-mono text-[13px]">adt-html-editor</strong>
+        <label className={PICKER_CLASS}>
           <span>Fixture</span>
           <select
+            className={SELECT_CLASS}
             value={state.fixtureId}
             onChange={(event) => {
               const fixture = FIXTURES.find((entry) => entry.id === event.target.value)
@@ -96,9 +102,10 @@ export function App() {
             ))}
           </select>
         </label>
-        <label className={styles.fixturePicker}>
+        <label className={PICKER_CLASS}>
           <span>Layout</span>
           <select
+            className={SELECT_CLASS}
             value={state.layoutMode}
             onChange={(event) =>
               dispatch({ type: 'setLayout', value: event.target.value as LayoutMode })
@@ -110,12 +117,21 @@ export function App() {
             <option value="shadcn">shadcn skin</option>
           </select>
         </label>
-        <div className={styles.actions}>
-          <button type="button" onClick={runRoundTrip}>
+        <div className="ms-auto flex items-center gap-2">
+          <button
+            type="button"
+            className={BUTTON_CLASS}
+            aria-pressed={isDark}
+            onClick={() => setIsDark((current) => !current)}
+          >
+            {isDark ? 'Light' : 'Dark'}
+          </button>
+          <button type="button" className={BUTTON_CLASS} onClick={runRoundTrip}>
             Run round-trip
           </button>
           <button
             type="button"
+            className={BUTTON_CLASS}
             onClick={() =>
               dispatch({ type: 'setOutput', value: handleRef.current?.getHtml() ?? '' })
             }
@@ -123,14 +139,17 @@ export function App() {
             Finish (getHtml)
           </button>
           {state.roundTrip ? (
-            <span className={styles.status} data-ok={state.roundTrip.ok || undefined}>
+            <span
+              className="rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] text-destructive tabular-nums data-ok:bg-emerald-600/15 data-ok:text-emerald-700"
+              data-ok={state.roundTrip.ok || undefined}
+            >
               {state.roundTrip.message}
             </span>
           ) : null}
         </div>
       </header>
 
-      <main className={styles.editorArea}>
+      <main className="min-h-0 overflow-hidden">
         {state.layoutMode === 'default' ? (
           <HtmlEditor.DefaultLayout
             key={`default-${state.documentHtml}`}
@@ -167,27 +186,28 @@ export function App() {
         )}
       </main>
 
-      {/*<footer className={styles.io}>
-        <div className={styles.pane}>
-          <label className={styles.paneTitle} htmlFor="pg-input">
+      {/*<footer className="grid grid-cols-2 gap-3 border-t border-border bg-muted px-4 py-3">
+        <div className={PANE_CLASS}>
+          <label className={PANE_TITLE_CLASS} htmlFor="pg-input">
             Input
           </label>
           <textarea
             id="pg-input"
+            className={PANE_TEXTAREA_CLASS}
             value={state.input}
             spellCheck={false}
             onChange={(event) => dispatch({ type: 'editInput', value: event.target.value })}
           />
-          <button type="button" onClick={() => dispatch({ type: 'loadIntoEditor' })}>
+          <button type="button" className={BUTTON_CLASS} onClick={() => dispatch({ type: 'loadIntoEditor' })}>
             Load into editor
           </button>
         </div>
-        <div className={styles.pane}>
-          <label className={styles.paneTitle} htmlFor="pg-output">
+        <div className={PANE_CLASS}>
+          <label className={PANE_TITLE_CLASS} htmlFor="pg-output">
             Output (onChange)
           </label>
-          <textarea id="pg-output" value={state.output} readOnly spellCheck={false} />
-          <span className={styles.byteCount}>{state.output.length} bytes</span>
+          <textarea id="pg-output" className={PANE_TEXTAREA_CLASS} value={state.output} readOnly spellCheck={false} />
+          <span className="text-[11px] text-muted-foreground tabular-nums">{state.output.length} bytes</span>
         </div>
       </footer>*/}
     </div>

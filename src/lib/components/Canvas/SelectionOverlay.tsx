@@ -3,7 +3,19 @@ import type { NodeId } from '../../core/ids'
 import { subscribeHovered } from '../../core/hover'
 import { labelOf } from '../../core/model'
 import { useEditorContext, useEditorStoreApi } from '../Editor/context'
-import styles from './SelectionOverlay.module.css'
+
+const overlayClass =
+  'pointer-events-none fixed top-0 left-0 z-30 rounded-sm will-change-transform ' +
+  'transition-opacity duration-100 ease-out data-[visible=false]:opacity-0 data-[visible=true]:opacity-100'
+
+const selectionClass = `${overlayClass} ring-[1.5px] ring-primary`
+const outlineClass = `${overlayClass} ring-1 ring-primary`
+const hoverClass = `${overlayClass} ring-1 ring-primary/55`
+
+const labelClass =
+  'absolute -top-[18px] -left-[1.5px] rounded-t-sm bg-primary px-1.5 py-px font-mono text-[10px] ' +
+  'leading-4 whitespace-nowrap text-primary-foreground ' +
+  'data-[flip=below]:top-full data-[flip=below]:rounded-t-none data-[flip=below]:rounded-b-sm'
 
 export function SelectionOverlay() {
   const { canvasRootRef } = useEditorContext()
@@ -62,7 +74,7 @@ export function SelectionOverlay() {
         }
         if (!box) {
           box = document.createElement('div')
-          box.className = styles.outline
+          box.className = outlineClass
           box.dataset.visible = 'false'
           box.setAttribute('data-adt-selection-outline', '')
           poolRoot.appendChild(box)
@@ -124,9 +136,9 @@ export function SelectionOverlay() {
 
   return (
     <>
-      <div ref={hoverRef} className={styles.hover} data-visible="false" aria-hidden="true" />
-      <div ref={selectionRef} className={styles.selection} data-visible="false" aria-hidden="true">
-        <span ref={labelRef} className={styles.label} />
+      <div ref={hoverRef} className={hoverClass} data-visible="false" aria-hidden="true" />
+      <div ref={selectionRef} className={selectionClass} data-visible="false" aria-hidden="true">
+        <span ref={labelRef} className={labelClass} />
       </div>
       <div ref={poolRef} aria-hidden="true" />
     </>

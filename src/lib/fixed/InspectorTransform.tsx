@@ -4,8 +4,8 @@ import { InspectorSection } from '../components/Inspector/InspectorParts'
 import { useLayoutMode } from '../components/Editor/context'
 import { NumberField } from './NumberField'
 import { useTransformFields } from './useTransformFields'
-import inspectorStyles from '../components/Inspector/InspectorPanel.module.css'
-import styles from './InspectorPosition.module.css'
+import { FIELDS_CLASS } from '../components/Inspector/inspectorStyles'
+import { LOCK_CLASS, ORDER_BUTTON_CLASS, POSITION_GRID_CLASS } from './positionStyles'
 
 export function InspectorTransform({ title = 'Transform' }: { title?: string }) {
   const layout = useLayoutMode()
@@ -23,8 +23,8 @@ function TransformFields({ id }: { id: NodeId }) {
   if (!fields.available) return null
 
   return (
-    <div className={inspectorStyles.fields}>
-      <div className={styles.grid}>
+    <div className={FIELDS_CLASS}>
+      <div className={POSITION_GRID_CLASS}>
         <NumberField
           label="Angle"
           unit="degrees"
@@ -35,14 +35,14 @@ function TransformFields({ id }: { id: NodeId }) {
         />
         <button
           type="button"
-          className={styles.orderButton}
+          className={ORDER_BUTTON_CLASS}
           disabled={fields.locked || fields.angle === null || fields.angle === 0}
           onClick={fields.resetRotation}
         >
           Reset rotation
         </button>
       </div>
-      <label className={styles.lock}>
+      <label className={LOCK_CLASS}>
         <input
           type="checkbox"
           checked={fields.aspectLocked}
@@ -50,7 +50,7 @@ function TransformFields({ id }: { id: NodeId }) {
         />
         <span>Lock aspect ratio</span>
       </label>
-      <label className={styles.lock}>
+      <label className={LOCK_CLASS}>
         <input
           type="checkbox"
           checked={fields.autoHeight}

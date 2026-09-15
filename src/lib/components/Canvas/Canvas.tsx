@@ -17,7 +17,7 @@ import {
   type CanvasZoom,
 } from './context'
 import { CanvasDarkToggle, CanvasToolbar, CanvasViewport, CanvasWidthPresets } from './CanvasParts'
-import styles from './Canvas.module.css'
+import { cn } from 'cn'
 
 const LazyFixedPage = lazy(() =>
   import('../../fixed/FixedPage').then((module) => ({ default: module.FixedPage })),
@@ -84,7 +84,7 @@ export type CanvasProps = {
 export function Canvas({ className, children }: CanvasProps) {
   return (
     <CanvasProvider>
-      <div className={className ? `${styles.wrapper} ${className}` : styles.wrapper}>
+      <div className={cn('flex min-h-0 min-w-0 flex-col bg-muted', className)}>
         {children ?? <DefaultCanvas />}
       </div>
     </CanvasProvider>
