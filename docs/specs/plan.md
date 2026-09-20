@@ -63,7 +63,7 @@ The playground simulates the workflow: input textarea → editor → output text
 | Tailwind compilation | `tailwindcss` v4 `compile()` running in a **Web Worker**, loaded on demand | Real JIT for any class, off the main thread, without scanning the editor DOM. |
 | Class parsing/autocomplete | `__unstable__loadDesignSystem` (same worker): `parseCandidate`, `getClassList` | Single source of truth to group, validate and suggest classes. |
 | Class conflicts | `tailwind-merge` | Already resolves `p-4` vs `px-2`, variants, arbitrary values. |
-| Editor (UI) styles | CSS Modules + tokens in CSS variables (`--adt-*`) | Zero collision with the consumer's or the canvas's Tailwind; single CSS file in `dist/style.css`. |
+| Editor (UI) styles | Tailwind classes against the shadcn token names (`--background`, `--foreground`, `--primary`, `--border`, `--ring`, `--radius`, …), compiled into `dist/style.css` at build time, with a default for every token declared inside `@layer theme` so a consuming app's own `:root` wins. No preflight; the only global rule is `box-sizing` scoped to `.adt-chrome`. | Superseded the original CSS Modules + `--adt-*` decision in commit `31f1bd3`; an app produced by `shadcn init` gets the editor in its own palette with no configuration, and the editor still never resets the host app. |
 | Public API | Compound components + provider (`<HtmlEditor>` / `.Layers` / `.Canvas` / `.Inspector`) | The consumer builds whatever layout it wants; follows `architecture-compound-components`. |
 | Build | Vite `build.lib` (ESM), `react`/`react-dom` as peerDependencies, separate playground in `src/playground` | Library and test app in the same repo without mixing. |
 
