@@ -44,6 +44,20 @@ function setup() {
   return { store, root, h1: pick('h1'), p: pick('p'), aside: pick('aside') }
 }
 
+function stubRect(
+  element: HTMLElement,
+  box: { left: number; top: number; width: number; height: number },
+) {
+  const rect = {
+    ...box,
+    right: box.left + box.width,
+    bottom: box.top + box.height,
+    x: box.left,
+    y: box.top,
+  }
+  element.getBoundingClientRect = () => ({ ...rect, toJSON: () => rect }) as DOMRect
+}
+
 function tagOf(store: EditorStore, id: string): string {
   const node = store.state.doc.nodes[id]
   return node && 'tag' in node ? node.tag : node.kind
@@ -121,6 +135,28 @@ describe('canvas selection', () => {
     fireEvent.click(h1)
     fireEvent.keyDown(root, { key: 'Enter' })
     expect(store.state.editingTextId).not.toBeNull()
+  })
+
+  it('keeps the outline inside the canvas viewport when the page is zoomed', async () => {
+    const { h1 } = setup()
+    const stage = document.querySelector<HTMLElement>('[data-adt-canvas-scroll]')
+    if (!stage) throw new Error('stage missing')
+
+    stubRect(stage, { left: 260, top: 88, width: 720, height: 772 })
+    stubRect(h1, { left: 200, top: 40, width: 900, height: 120 })
+
+    fireEvent.click(h1)
+    await nextFrames()
+
+    const clip = stage.querySelector<HTMLElement>('.overflow-hidden.fixed')
+    if (!clip) throw new Error('clip layer missing')
+    expect(clip.style.transform).toBe('translate3d(260px, 88px, 0)')
+    expect([clip.style.width, clip.style.height]).toEqual(['720px', '772px'])
+
+    const label = clip.querySelector('span')
+    const box = label?.parentElement
+    expect(box?.style.transform).toBe('translate3d(-60px, -48px, 0)')
+    expect(clip.contains(box ?? null)).toBe(true)
   })
 
   it('draws one outline per member above a single selection', async () => {
