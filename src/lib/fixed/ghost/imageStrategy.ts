@@ -1,6 +1,6 @@
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source'
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview'
-import { cloneForPreview, scaledWrapper } from './snapshot'
+import { cloneForPreview, scaledWrapper } from '../../dnd/snapshot'
 import { createOutlineStrategy, type GhostStrategy } from './strategy'
 
 const MAX_PREVIEW_PX = 2000

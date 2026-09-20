@@ -5,6 +5,7 @@ export const CANVAS_CLASS =
   'data-[adt-fixed-drag]:select-none data-[adt-fixed-gesture]:select-none ' +
   '[&_img]:outline [&_img]:-outline-offset-1 [&_img]:outline-black/10 dark:[&_img]:outline-white/10 ' +
   '[&_[data-adt-fixed-dragging]]:opacity-35 ' +
+  '[&_[data-adt-dragging]]:opacity-40 ' +
   '[&_[data-adt-editing]]:rounded-[2px] [&_[data-adt-editing]]:outline-2 ' +
   '[&_[data-adt-editing]]:outline-offset-2 ' +
   '[&_[data-adt-editing]]:outline-primary'

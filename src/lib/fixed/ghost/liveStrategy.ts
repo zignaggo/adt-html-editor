@@ -1,6 +1,6 @@
 import { disableNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/disable-native-drag-preview'
 import type { Box } from '../geometry'
-import { cloneForPreview } from './snapshot'
+import { cloneForPreview } from '../../dnd/snapshot'
 import { createGhostBox, moveGhostBox, type GhostStrategy } from './strategy'
 import {
   ghostCloneClass,

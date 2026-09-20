@@ -5,7 +5,9 @@ import type { NodeId } from '../core/ids'
 import { labelOf } from '../core/model'
 import { useEditorStoreApi } from '../components/Editor/context'
 import { nodeDrag, type DragSurface } from './data'
-import { renderDragPreview } from './preview'
+import { renderDragPreview, renderElementPreview } from './preview'
+
+const DRAGGING_ATTRIBUTE = 'data-adt-dragging'
 
 export function useNodeDraggable(
   target: DragTargetRef,
@@ -27,7 +29,17 @@ export function useNodeDraggable(
         const node = store.state.doc.nodes[nodeId]
         return nodeDrag({ nodeId, surface, label: node ? labelOf(node) : nodeId })
       },
-      onGenerateDragPreview({ nativeSetDragImage }) {
+      onGenerateDragPreview({ nativeSetDragImage, location, source }) {
+        if (
+          surface === 'canvas' &&
+          renderElementPreview(nativeSetDragImage, {
+            element: source.element,
+            input: location.current.input,
+          })
+        ) {
+          return
+        }
+
         const node = store.state.doc.nodes[nodeId]
         const classes = node && 'classes' in node ? node.classes : []
         renderDragPreview(nativeSetDragImage, {
@@ -35,8 +47,14 @@ export function useNodeDraggable(
           detail: classes.length > 0 ? classes.slice(0, 3).join(' ') : undefined,
         })
       },
-      onDragStart: () => setIsDragging(true),
-      onDrop: () => setIsDragging(false),
+      onDragStart: () => {
+        if (surface === 'canvas') element.setAttribute(DRAGGING_ATTRIBUTE, '')
+        setIsDragging(true)
+      },
+      onDrop: () => {
+        element.removeAttribute(DRAGGING_ATTRIBUTE)
+        setIsDragging(false)
+      },
     })
   }, [target, nodeId, surface, enabled, store])
 

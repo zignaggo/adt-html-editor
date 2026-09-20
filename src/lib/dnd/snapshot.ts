@@ -1,6 +1,6 @@
-import type { Size } from '../geometry'
+export type PreviewSize = { width: number; height: number }
 
-export function cloneForPreview(element: HTMLElement, size: Size): HTMLElement {
+export function cloneForPreview(element: HTMLElement, size: PreviewSize): HTMLElement {
   const clone = element.cloneNode(true) as HTMLElement
   clone.removeAttribute('data-adt-id')
   clone.removeAttribute('data-adt-fixed-dragging')
@@ -23,7 +23,7 @@ export function cloneForPreview(element: HTMLElement, size: Size): HTMLElement {
   return clone
 }
 
-export function scaledWrapper(size: Size, scale: number): HTMLDivElement {
+export function scaledWrapper(size: PreviewSize, scale: number): HTMLDivElement {
   const wrapper = document.createElement('div')
   wrapper.style.position = 'absolute'
   wrapper.style.left = '0'
