@@ -96,6 +96,20 @@ describe('canvas selection', () => {
     expect(store.state.selectedIds.map((id) => tagOf(store, id))).toEqual(['h1'])
   })
 
+  it('the pan modifier neither selects nor starts text editing', () => {
+    const { store, h1, p } = setup()
+    fireEvent.click(h1)
+
+    fireEvent.click(p, { ctrlKey: true })
+    expect(store.state.selectedIds.map((id) => tagOf(store, id))).toEqual(['h1'])
+
+    fireEvent.click(p, { metaKey: true })
+    expect(store.state.selectedIds.map((id) => tagOf(store, id))).toEqual(['h1'])
+
+    fireEvent.doubleClick(p, { ctrlKey: true })
+    expect(store.state.editingTextId).toBeNull()
+  })
+
   it('shift+click on empty canvas keeps the selection', () => {
     const { store, root, h1 } = setup()
     fireEvent.click(h1)

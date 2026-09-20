@@ -4,6 +4,7 @@ import type {
   PointerEvent as ReactPointerEvent,
 } from 'react'
 import { setHovered } from '../../core/hover'
+import { isPanModifier, panModeActive } from '../../core/panMode'
 import { useEditor, useEditorStoreApi } from '../Editor/context'
 
 export type CanvasInteractions = {
@@ -16,7 +17,7 @@ export type CanvasInteractions = {
 }
 
 function isToggleClick(event: ReactMouseEvent<HTMLElement>): boolean {
-  return event.shiftKey || event.metaKey || event.ctrlKey
+  return event.shiftKey
 }
 
 export function useCanvasInteractions(): CanvasInteractions {
@@ -27,12 +28,13 @@ export function useCanvasInteractions(): CanvasInteractions {
     (event.target as HTMLElement).closest('[data-adt-id]')?.getAttribute('data-adt-id') ?? null
 
   return {
-    onPointerMove: (event) => setHovered(nodeIdAt(event)),
+    onPointerMove: (event) => setHovered(panModeActive() ? null : nodeIdAt(event)),
     onPointerLeave: () => setHovered(null),
     onMouseDown: (event) => {
-      if (event.shiftKey) event.preventDefault()
+      if (event.shiftKey || isPanModifier(event)) event.preventDefault()
     },
     onClick: (event) => {
+      if (isPanModifier(event) || panModeActive()) return
       const id = nodeIdAt(event)
       if (!isToggleClick(event)) {
         select(id)
@@ -43,6 +45,7 @@ export function useCanvasInteractions(): CanvasInteractions {
       event.currentTarget.focus({ preventScroll: true })
     },
     onDoubleClick: (event) => {
+      if (isPanModifier(event) || panModeActive()) return
       const id = nodeIdAt(event)
       if (id) beginTextEdit(id)
     },

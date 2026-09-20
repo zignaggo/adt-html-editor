@@ -17,6 +17,7 @@ import { cn } from 'cn'
 import { useCanvasContext } from './context'
 import { CanvasStageContext, EMPTY_STAGE_SIZE, STAGE_PADDING, useCanvasStage } from './stage'
 import { useCanvasAutoPan } from './useCanvasAutoPan'
+import { useCanvasPanGesture } from './useCanvasPanGesture'
 import { notifyCanvasViewport } from './viewport'
 
 const MIN_SCALE = 0.1
@@ -33,6 +34,11 @@ const TRACK_PAD = { disabled: false, activationKeys: (keys: string[]) => !isZoom
 const PANNING = { excluded: ['adt-canvas'], velocityDisabled: true }
 const DOUBLE_CLICK = { disabled: true }
 const WRAPPER_STYLE = { width: '100%', height: '100%' }
+
+const PAN_CURSOR_CLASS =
+  'data-[adt-pan=active]:cursor-grab data-[adt-pan=active]:[&_*]:cursor-grab! ' +
+  'data-[adt-pan=panning]:cursor-grabbing data-[adt-pan=panning]:[&_*]:cursor-grabbing! ' +
+  'data-[adt-pan=panning]:select-none'
 
 export type CanvasStageProps = {
   className?: string
@@ -76,7 +82,7 @@ export function CanvasStage({ className, children, ref }: CanvasStageProps) {
     <div
       ref={stageRef}
       data-adt-canvas-scroll=""
-      className={cn('relative flex min-h-0 flex-1 overflow-hidden', className)}
+      className={cn('relative flex min-h-0 flex-1 overflow-hidden', PAN_CURSOR_CLASS, className)}
     >
       <TransformWrapper
         minScale={MIN_SCALE}
@@ -136,6 +142,7 @@ function CanvasStageSync({
 
   useTransformEffect(notifyCanvasViewport)
   useCanvasAutoPan(stageRef)
+  useCanvasPanGesture(stageRef)
 
   useEffect(() => {
     const stage = stageRef.current
