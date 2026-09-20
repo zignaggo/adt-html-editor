@@ -1,5 +1,6 @@
 import { createContext, use } from 'react'
 import invariant from 'tiny-invariant'
+import type { NodeId } from '../../core/ids'
 import type { LayerRowInfo } from './flatten'
 
 export type LayersState = {
@@ -13,6 +14,7 @@ export type LayersActions = {
   clearSearch: () => void
   focusTree: () => void
   focusSearch: () => void
+  selectRange: (id: NodeId) => void
 }
 
 export type LayersMeta = {

@@ -9,14 +9,19 @@ import { useEditor, useEditorStoreApi } from '../Editor/context'
 export type CanvasInteractions = {
   onPointerMove: (event: ReactPointerEvent<HTMLElement>) => void
   onPointerLeave: () => void
+  onMouseDown: (event: ReactMouseEvent<HTMLElement>) => void
   onClick: (event: ReactMouseEvent<HTMLElement>) => void
   onDoubleClick: (event: ReactMouseEvent<HTMLElement>) => void
   onKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void
 }
 
+function isToggleClick(event: ReactMouseEvent<HTMLElement>): boolean {
+  return event.shiftKey || event.metaKey || event.ctrlKey
+}
+
 export function useCanvasInteractions(): CanvasInteractions {
   const store = useEditorStoreApi()
-  const { select, beginTextEdit, removeNode } = useEditor()
+  const { select, toggleSelected, beginTextEdit, removeNodes } = useEditor()
 
   const nodeIdAt = (event: { target: EventTarget }) =>
     (event.target as HTMLElement).closest('[data-adt-id]')?.getAttribute('data-adt-id') ?? null
@@ -24,7 +29,19 @@ export function useCanvasInteractions(): CanvasInteractions {
   return {
     onPointerMove: (event) => setHovered(nodeIdAt(event)),
     onPointerLeave: () => setHovered(null),
-    onClick: (event) => select(nodeIdAt(event)),
+    onMouseDown: (event) => {
+      if (event.shiftKey) event.preventDefault()
+    },
+    onClick: (event) => {
+      const id = nodeIdAt(event)
+      if (!isToggleClick(event)) {
+        select(id)
+        return
+      }
+      if (!id) return
+      toggleSelected(id)
+      event.currentTarget.focus({ preventScroll: true })
+    },
     onDoubleClick: (event) => {
       const id = nodeIdAt(event)
       if (id) beginTextEdit(id)
@@ -37,18 +54,19 @@ export function useCanvasInteractions(): CanvasInteractions {
         return
       }
 
-      const id = nodeIdAt(event) ?? store.state.selectedId
-      if (!id) return
+      const { selectedIds } = store.state
+      if (selectedIds.length === 0) return
 
       if (event.key === 'Enter') {
+        if (selectedIds.length !== 1) return
         event.preventDefault()
-        beginTextEdit(id)
+        beginTextEdit(selectedIds[0])
         return
       }
 
       if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault()
-        removeNode(id)
+        removeNodes(selectedIds)
       }
     },
   }

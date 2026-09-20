@@ -5,6 +5,7 @@ import invariant from 'tiny-invariant'
 import type { NodeId } from '../../core/ids'
 import type { AnyNode, EditorDocument } from '../../core/model'
 import type { EditorActions, EditorState, EditorStore } from '../../core/store'
+import type { BreakpointId } from '../../tailwind/variants'
 
 export type StyleMode = 'tailwind' | 'inline-css'
 
@@ -25,6 +26,7 @@ export type EditorContextValue = {
   layout: LayoutMode
   fixedLayout: FixedLayoutConfig
   aspectLock: Store<boolean>
+  breakpoint: Store<BreakpointId>
   canvasRootRef: { current: HTMLElement | null }
 }
 
@@ -40,9 +42,17 @@ export function useEditorStoreApi(): EditorStore {
   return useEditorContext().store
 }
 
-export function useEditorSelector<T>(selector: (state: EditorState) => T): T {
-  return useSelector(useEditorContext().store, selector)
+export type EditorSelectorOptions<T> = { compare?: (a: T, b: T) => boolean }
+
+export function useEditorSelector<T>(
+  selector: (state: EditorState) => T,
+  options?: EditorSelectorOptions<T>,
+): T {
+  return useSelector(useEditorContext().store, selector, options)
 }
+
+export const selectSelectedId = (state: EditorState) => state.selectedId
+export const selectSelectedIds = (state: EditorState) => state.selectedIds
 
 const EMPTY_CHILDREN: NodeId[] = []
 
@@ -57,7 +67,23 @@ export function useChildren(id: NodeId): NodeId[] {
   })
 }
 
+export function useSelectedId(): NodeId | null {
+  return useEditorSelector(selectSelectedId)
+}
+
+export function useSelectedIds(): readonly NodeId[] {
+  return useEditorSelector(selectSelectedIds)
+}
+
+export function useSelectionCount(): number {
+  return useEditorSelector((state) => state.selectedIds.length)
+}
+
 export function useIsSelected(id: NodeId): boolean {
+  return useEditorSelector((state) => state.selectedIds.includes(id))
+}
+
+export function useIsAnchor(id: NodeId): boolean {
   return useEditorSelector((state) => state.selectedId === id)
 }
 
@@ -79,6 +105,10 @@ export function useFixedLayout(): FixedLayoutConfig {
 
 export function useAspectLocked(): boolean {
   return useSelector(useEditorContext().aspectLock, (locked) => locked)
+}
+
+export function useBreakpoint(): BreakpointId {
+  return useSelector(useEditorContext().breakpoint, (breakpoint) => breakpoint)
 }
 
 export function useCanUndo(): boolean {

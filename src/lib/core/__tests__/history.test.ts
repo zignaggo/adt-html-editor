@@ -13,7 +13,7 @@ function firstByTag(store: ReturnType<typeof createEditorStore>, tag: string) {
 }
 
 describe('pushSnapshot', () => {
-  const snapshot = { doc: {} as never, selectedId: null }
+  const snapshot = { doc: {} as never, selectedIds: [] }
 
   it('pushes when there is no coalesce key', () => {
     const one = pushSnapshot(emptyHistory(), snapshot, null, 1000)

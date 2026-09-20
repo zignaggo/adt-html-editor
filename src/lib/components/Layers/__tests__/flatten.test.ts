@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseHtml } from '../../../core/html/parse'
 import { serializeHtml } from '../../../core/html/serialize'
 import { childrenOf, isLayoutWhitespace } from '../../../core/model'
-import { createLayerFilter, flattenTree } from '../flatten'
+import { createLayerFilter, flattenTree, rowsBetween } from '../flatten'
 
 // Line breaks between inlines are preserved by the parser (they affect spacing on the canvas).
 const NAV = '<nav>\n  <a href="#a">A</a>\n  <a href="#b">B</a>\n</nav>'
@@ -105,5 +105,32 @@ describe('flattenTree with a filter', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0].hasChildren).toBe(true)
     expect(rows[0].mode).toBe('last-in-group')
+  })
+})
+
+describe('rowsBetween', () => {
+  const rows = ['a', 'b', 'c', 'd'].map((id) => ({
+    id,
+    level: 0,
+    mode: 'standard' as const,
+    hasChildren: false,
+    isMatch: true,
+  }))
+
+  it('walks forward from the anchor', () => {
+    expect(rowsBetween(rows, 'b', 'd')).toEqual(['b', 'c', 'd'])
+  })
+
+  it('walks backward and keeps the anchor first', () => {
+    expect(rowsBetween(rows, 'c', 'a')).toEqual(['c', 'a', 'b'])
+  })
+
+  it('falls back to the target when the anchor is not visible', () => {
+    expect(rowsBetween(rows, 'zz', 'c')).toEqual(['c'])
+    expect(rowsBetween(rows, null, 'c')).toEqual(['c'])
+  })
+
+  it('returns a single id when anchor and target match', () => {
+    expect(rowsBetween(rows, 'b', 'b')).toEqual(['b'])
   })
 })

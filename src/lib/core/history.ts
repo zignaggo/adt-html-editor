@@ -3,7 +3,7 @@ import type { EditorDocument } from './model'
 
 export type Snapshot = {
   doc: EditorDocument
-  selectedId: NodeId | null
+  selectedIds: readonly NodeId[]
 }
 
 export type HistoryEntry = {

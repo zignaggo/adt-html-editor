@@ -100,6 +100,21 @@ function termMatches(node: AnyNode, term: string): boolean {
   )
 }
 
+/** Visible ids from `anchorId` to `targetId` inclusive, anchor first. Falls back to `[targetId]` when the anchor is hidden. */
+export function rowsBetween(
+  rows: readonly LayerRowInfo[],
+  anchorId: NodeId | null,
+  targetId: NodeId,
+): NodeId[] {
+  const anchorIndex = anchorId ? rows.findIndex((row) => row.id === anchorId) : -1
+  const targetIndex = rows.findIndex((row) => row.id === targetId)
+  if (anchorIndex === -1 || targetIndex === -1) return [targetId]
+  const from = Math.min(anchorIndex, targetIndex)
+  const to = Math.max(anchorIndex, targetIndex)
+  const range = rows.slice(from, to + 1).map((row) => row.id)
+  return [rows[anchorIndex].id, ...range.filter((id) => id !== rows[anchorIndex].id)]
+}
+
 /** Siblings of `id` in real document order (includes layout whitespace — use it to compute insertion indices). */
 export function siblingsOf(doc: EditorDocument, id: NodeId): NodeId[] {
   const parentId = doc.nodes[id]?.parentId

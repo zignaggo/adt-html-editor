@@ -1,7 +1,8 @@
 import type { KeyboardEvent } from 'react'
 import { announce } from '@atlaskit/pragmatic-drag-and-drop-live-region'
 import { labelOf } from '../../core/model'
-import { copySubtree, readClipboard } from '../../core/clipboard'
+import { copySubtrees, readClipboard } from '../../core/clipboard'
+import { sortByDocumentOrder } from '../../core/selection'
 import { useEditorStoreApi } from '../Editor/context'
 import { siblingsOf, type LayerRowInfo } from './flatten'
 
@@ -23,23 +24,30 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
       return
     }
 
+    const selectedIds = state.selectedIds
+    const anchorNode = doc.nodes[selectedId]
+    const selectionName =
+      selectedIds.length > 1
+        ? `${selectedIds.length} elements`
+        : anchorNode
+          ? labelOf(anchorNode)
+          : 'element'
+
     if (modifier && key === 'd') {
       event.preventDefault()
-      actions.duplicateNode(selectedId)
+      actions.duplicateNodes(selectedIds)
       return
     }
 
     if (modifier && (key === 'c' || key === 'x')) {
       event.preventDefault()
-      const node = doc.nodes[selectedId]
-      if (!copySubtree(doc, selectedId)) return
-      const name = node ? labelOf(node) : 'element'
+      if (!copySubtrees(doc, sortByDocumentOrder(doc, selectedIds))) return
       if (key === 'x') {
-        actions.removeNode(selectedId)
-        announce(`${name} cut`)
+        actions.removeNodes(selectedIds)
+        announce(`${selectionName} cut`)
         return
       }
-      announce(`${name} copied`)
+      announce(`${selectionName} copied`)
       return
     }
 
@@ -56,9 +64,8 @@ export function useTreeKeyboard(rows: LayerRowInfo[]) {
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault()
-      const node = doc.nodes[selectedId]
-      actions.removeNode(selectedId)
-      if (node) announce(`${labelOf(node)} removed`)
+      actions.removeNodes(selectedIds)
+      announce(`${selectionName} removed`)
       return
     }
 

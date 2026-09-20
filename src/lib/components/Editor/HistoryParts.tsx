@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react'
 import { useHistory } from './useHistory'
-import styles from './History.module.css'
+import { cn } from 'cn'
+
+const historyButtonClass =
+  'h-[26px] min-w-16 cursor-default rounded-sm border-0 bg-transparent px-2 font-[inherit] text-2xs font-medium text-muted-foreground ' +
+  'transition-[background-color,color,opacity,scale] duration-100 ease-out ' +
+  'hover:not-disabled:bg-card hover:not-disabled:text-foreground hover:not-disabled:shadow-sm ' +
+  'active:not-disabled:scale-95 disabled:opacity-40'
 
 export type HistoryProps = {
   className?: string
@@ -13,7 +19,7 @@ export function HistoryGroup({ className, children }: HistoryProps) {
     <div
       role="group"
       aria-label="History"
-      className={className ? `${styles.group} ${className}` : styles.group}
+      className={cn('flex gap-0.5 rounded-md bg-accent p-0.5', className)}
     >
       {children ?? (
         <>
@@ -35,7 +41,7 @@ export function HistoryUndo({ className, children }: HistoryButtonProps) {
   return (
     <button
       type="button"
-      className={className ? `${styles.button} ${className}` : styles.button}
+      className={cn(historyButtonClass, className)}
       disabled={!canUndo}
       aria-keyshortcuts="Control+Z Meta+Z"
       title="Undo (Ctrl+Z)"
@@ -51,7 +57,7 @@ export function HistoryRedo({ className, children }: HistoryButtonProps) {
   return (
     <button
       type="button"
-      className={className ? `${styles.button} ${className}` : styles.button}
+      className={cn(historyButtonClass, className)}
       disabled={!canRedo}
       aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y"
       title="Redo (Ctrl+Shift+Z)"

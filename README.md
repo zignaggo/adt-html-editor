@@ -10,12 +10,36 @@ Consumed via `file:` / `bun link` — not published to npm.
 bun add file:../adt-html-editor
 ```
 
-`react` and `react-dom` (>= 19) are peer dependencies.
+`react` and `react-dom` (>= 19) are peer dependencies. Every `react` subpath is
+external, including `react/compiler-runtime`, so the consuming app's own React
+is the only one in the bundle. The Tailwind worker is inlined into the bundle:
+no asset from `dist/assets` has to be served.
 
 ```tsx
 import { HtmlEditor } from 'adt-html-editor'
 import 'adt-html-editor/style.css'
 ```
+
+`style.css` is self-contained: the chrome is written in Tailwind classes and the
+build compiles them into it, so an app without Tailwind gets the editor fully
+styled. It ships no preflight — the only global rule is a `box-sizing: border-box`
+scoped to `.adt-chrome` — so it never resets the host app.
+
+### Theming
+
+The chrome is written against the shadcn token names (`--background`,
+`--foreground`, `--muted`, `--primary`, `--border`, `--ring`, `--radius`, …).
+`style.css` declares a default for each of them inside `@layer theme` — the
+product palette, blue `--primary` and all — so an app that already defines them
+in an unlayered `:root` (anything produced by `shadcn init`) wins and the editor
+takes that app's colors with no extra configuration. Adding `dark` to an ancestor
+switches the editor to the dark set, and `color-scheme` follows on `.adt-editor`
+so native scrollbars and form controls match.
+
+The `--sidebar-*`, `--chart-*` and `--brand-*` ramps are declared and registered
+as Tailwind namespaces (`bg-sidebar`, `text-brand-600`, …) even though the core
+chrome does not use them yet, so a skin built on top of the same tokens gets them
+for free.
 
 ## Usage
 
@@ -210,10 +234,77 @@ For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensio
 - **Resize and rotate.** `Canvas.Handles` draws the selected element's layout box (not its bounding box, so rotated elements get a rotated frame) with eight resize handles and a rotate handle; `Canvas.Handles.Resize` and `Canvas.Handles.Rotate` can be composed separately. Gestures use pointer events, preview directly on the element so text reflows live, and commit once on release (`width`/`height`/`left`/`top` in px, or `transform: rotate()` appended to the existing `transform` list). `Shift` keeps the aspect ratio or snaps the angle to 15°, `Alt` resizes from the center or disables snapping, `Esc` cancels. Edges snap to sibling and page guides when the element is not rotated; angles within 1° of a right angle stick. Resizing an inline element writes `display: inline-block`. Handles are hidden for locked elements and disabled inside transformed ancestors (drag the element to the page first). `Inspector.Transform` shows the angle, a reset button, an aspect-ratio lock shared with the handles and the W/H fields, and an "Auto height" toggle that removes `height`.
 - **Output.** Only `style` attributes and node parents change, so all fidelity guarantees above hold. Palette drops and tree-to-page drops use the same placement.
 
+## shadcn skin
+
+The same editor with [shadcn/ui](https://ui.shadcn.com) chrome ships as a second entry point, `adt-html-editor/shadcn`. The main entry pulls in none of the skin's UI libraries: they are optional peers that your bundler only reaches when you import the subpath.
+
+```bash
+bun add @base-ui/react lucide-react class-variance-authority cmdk react-resizable-panels
+```
+
+`cn` is not in that list: both entries merge classes with it, so it is a regular dependency of the package and installs itself.
+
+```css
+/* your global CSS (Tailwind v4) */
+@import 'tailwindcss';
+@import 'shadcn/tailwind.css';
+@source '../node_modules/adt-html-editor/dist';
+/* plus the shadcn theme tokens from `shadcn init` (--background, --primary, …) */
+```
+
+An app that is not built on Base UI does not need the `shadcn` package for this:
+the skin only uses its `data-open`, `data-closed`, `data-checked`,
+`data-unchecked`, `data-selected`, `data-disabled`, `data-active`,
+`data-horizontal` and `data-vertical` custom variants plus the `no-scrollbar`
+utility, so copying those declarations into your own CSS is enough.
+
+```tsx
+import 'adt-html-editor/style.css'
+import { HtmlEditor } from 'adt-html-editor/shadcn'
+
+<HtmlEditor.DefaultLayout defaultValue={html} onChange={setHtml} />
+```
+
+- **Same parts, same names.** `HtmlEditor.Layers`, `Canvas`, `Inspector`, `Palette`, `History`, `Layout` and `DefaultLayout` exist on both entries with the same sub-parts, so switching skins is a one-line import change. The skin adds `HtmlEditor.Sidebar` (`Search`, `Tabs`, `Layers`, `Palette`): one search field above a Layers / Palette tab pair, filtering the tree or the blocks depending on the active tab. Its `DefaultLayout` uses the sidebar instead of stacking the palette over the layers, and palette items render a schematic preview of the block they insert. Canvas internals that live inside the page (`FixedPage`, `Guides`, `LiveGhost`, `ImageGhost`, `Handles`, `Viewport`) are re-exported from the core.
+- **Headless core.** Every skin part is a thin view over a core hook (`useLayerRow`, `useLayersSearch`, `useHistory`, `useZoom`, `useWidthPresets`, `useDarkToggle`, `useVariantBar`, `useClassEditing`, `useClassSuggestions`, `useStyleControl`, `useAttributeFields`, `usePositionFields`, `useTransformFields`, `usePaletteDraggable`) and the `LayersProvider`, `CanvasProvider` and `InspectorProvider` contexts, all exported from the main entry. Write your own skin the same way.
+- **Base UI.** Components are generated by the shadcn CLI (`components.json`, style `base-nova`) on top of `@base-ui/react`; `src/shadcn/ui` is updated through `shadcn add --diff`, never edited by hand.
+- **Styling.** The skin has no CSS of its own: your Tailwind compiles its classes (hence the `@source` line) and your theme tokens color it. `adt-html-editor/style.css` is still required for the selection overlay, ghosts, guides and resize handles, which live inside the page and do not depend on your Tailwind. Both entries read the same shadcn tokens, so one theme colors the skin and the core alike. The core's chrome utilities are on the element itself under `adt-chrome`, which the skin never applies, so nothing in `style.css` overrides shadcn classes.
+- **Guarantee.** A build test walks the import graph of `dist/index.js` and fails if any skin dependency becomes reachable from the core entry.
+
+### Style sections
+
+The skin inspector renders property-oriented sections instead of raw class toggles: **Layout** (display, direction, justify, align, gap), **Spacing** (padding and margin as one value or four sides), **Sizing** (width and height with a unit picker, optional min/max fields behind a `+` button), **Typography** (family, size with a token picker, weight, style, align, leading, colour), **Appearance** (background, opacity slider, shadow) and **Borders** (width, radius per corner, colour).
+
+- **Inputs commit while you type.** Numeric fields keep a local draft, write the class 200 ms after the last keystroke, flush on blur or `Enter` and revert on `Escape`. Each write updates one node and compiles only the new classes in the Tailwind worker.
+- **Breakpoints follow the canvas, desktop-first.** The width preset selected in the canvas toolbar decides which breakpoint the inspector writes to: Desktop writes plain classes, Tablet writes `max-lg:` classes and Mobile writes `max-sm:` classes (the same scheme as the adt-studio style editor; `breakpointForWidth` maps any preset width to one of the three). A field shows the value for the current breakpoint, falling back to the wider ones. Writing a value that equals the fallback removes the override instead of adding a redundant class. Labels of overridden fields turn into a badge with a popover listing both levels and a reset action (`Ctrl`/`⌘`+click resets directly).
+- **States are a separate select.** The select above the sections lists only `hover`, `focus`, `active` and `dark`; with none selected you edit the default state. A state combines with the current breakpoint (`max-lg:hover:bg-red-500`), and its values fall back to the same state on wider breakpoints, then to the default state.
+- **Inherited values are marked.** Where no class sets a property, the field shows the computed value from the canvas with a dot and a tooltip.
+- **Class maps are headless.** Every section is built on `useClassMapControl(id, classMap, fallback, target)` from the main entry, where `target` is `{ breakpoint, state }` (read it from `useInspectorContext()` or `useVariantBar()`), with pure `ClassMap` objects (`paddingClassMap`, `widthClassMap`, `fontSizeClassMap`, `backgroundColorClassMap`, …) that translate between a control value and Tailwind classes. `useOptionalFields` and `useComputedStyles` back the `+` menu and the inherited indicators. Reuse them to build sections for other properties, or use the exported controls (`NumericInput`, `UnitInput`, `TokenInput`, `BoxInput`, `ColorInput`, `StyleSelect`, `StyleRow`, `StyleSection`, `AddFieldButton`) with your own maps.
+
+```tsx
+import { HtmlEditor } from 'adt-html-editor/shadcn'
+
+<HtmlEditor.Inspector>
+  <HtmlEditor.Inspector.Header />
+  <HtmlEditor.Inspector.Variants />
+  <HtmlEditor.Inspector.Body>
+    <HtmlEditor.Inspector.Typography />
+    <HtmlEditor.Inspector.Spacing />
+    <HtmlEditor.Inspector.Section title="Classes">
+      <HtmlEditor.Inspector.ClassInput />
+      <HtmlEditor.Inspector.ClassList />
+    </HtmlEditor.Inspector.Section>
+  </HtmlEditor.Inspector.Body>
+</HtmlEditor.Inspector>
+```
+
 ## Shortcuts
 
 | Key | Action |
 |---|---|
+| `Shift+click` (in the canvas) | Add/remove the element from the selection |
+| `Ctrl/Cmd+click` (in the tree) | Add/remove the row from the selection |
+| `Shift+click` (in the tree) | Select the visible range from the anchor |
 | `↑` / `↓` | Navigate the tree |
 | `←` / `→` | Collapse/expand, or go up/down one level |
 | `Alt+↑` / `Alt+↓` | Reorder among siblings |
@@ -227,7 +318,12 @@ For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensio
 | `Esc` | Cancel editing / clear selection |
 | `↑` `↓` `←` `→` (fixed layout) | Nudge by 1 px (`Shift` = 10 px) |
 | `Ctrl/Cmd+arrows` (fixed layout) | Resize by 1 px (`Shift` = 10 px) |
-| `[` / `]` (fixed layout) | Rotate by 1° (`Shift` = 15°) |
+| `[` / `]` (fixed layout) | Rotate by 1° (`Shift` = 15°), single selection only |
+
+With more than one element selected, the fixed layout draws a frame around the union of their boxes.
+Dragging any member moves the whole group by the same delta, and the eight handles scale every
+member's position and size proportionally to that frame. Each gesture commits a single history entry.
+Rotation and reparenting stay single-selection operations.
 
 ## Tailwind in the canvas
 
@@ -239,9 +335,11 @@ The generated CSS is isolated in `@scope (.adt-canvas)` — with a selector-pref
 @media (width >= 48rem)  →  @container adt-canvas (width >= 48rem)
 ```
 
-That is, `sm:` / `md:` / `lg:` respond to the **canvas width**, not the editor window's. Feature media queries (`hover`, `prefers-color-scheme`, …) are not rewritten.
+That is, `sm:` / `md:` / `lg:` and the desktop-first `max-lg:` / `max-sm:` written by the inspector respond to the **canvas width**, not the editor window's. Feature media queries (`hover`, `prefers-color-scheme`, …) are not rewritten.
 
-Class conflicts are resolved with `tailwind-merge`. The canvas dark mode uses the `dark:` variant bound to the `.adt-dark` class.
+Class conflicts are resolved with [`cn`](https://github.com/shadcn-ui/cn) — both for the classes written into the document and for the `className` a caller passes to any part. The canvas dark mode uses the `dark:` variant bound to the `.adt-dark` class.
+
+The editor chrome is a separate compilation: `src/lib/styles/base.css` is a Tailwind entry point (theme + utilities, no preflight) that scans the library's own components and is emitted as `dist/style.css` at build time. Nothing in the chrome is hand-written CSS — components carry Tailwind classes, and the ones shared between files live in `*Styles.ts` modules next to them.
 
 ## Development
 

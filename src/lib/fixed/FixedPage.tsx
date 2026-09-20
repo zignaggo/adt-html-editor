@@ -4,13 +4,14 @@ import { useCanvasInteractions } from '../components/Canvas/useCanvasInteraction
 import { CanvasNode } from '../components/Canvas/CanvasNode'
 import { SelectionOverlay } from '../components/Canvas/SelectionOverlay'
 import { useChildren, useEditorContext, useFixedLayout, useRootId } from '../components/Editor/context'
-import ghostStyles from './ghost/ghost.module.css'
 import { useDocumentStylesheet } from './stylesheet/useDocumentStylesheet'
 import { useFixedDropMonitor } from './useFixedDropMonitor'
 import { useFixedNudge } from './useFixedNudge'
 import { useTransformKeys } from './transform/useTransformKeys'
 import { useFixedPageDropTarget } from './useFixedPageDropTarget'
-import styles from './FixedPage.module.css'
+import { ghostLayerClass } from './ghost/ghostStyles'
+import { cn } from 'cn'
+import { CANVAS_CLASS, CANVAS_FIXED_CLASS } from '../styles/canvasStyles'
 
 const FIT_PADDING = 48
 const MIN_FIT = 0.05
@@ -59,14 +60,14 @@ export function FixedPage({ className, children }: FixedPageProps) {
     <div
       ref={scrollRef}
       data-adt-canvas-scroll=""
-      className={className ? `${styles.scroll} ${className}` : styles.scroll}
+      className={cn('flex min-h-0 flex-1 items-start overflow-auto p-4', className)}
     >
       <div
-        className={styles.stage}
+        className="relative mx-auto flex-none"
         style={{ width: `${page.width * scale}px`, height: `${page.height * scale}px` }}
       >
         <div
-          className={styles.page}
+          className="absolute top-0 left-0 origin-top-left bg-white shadow-lg"
           style={{
             width: `${page.width}px`,
             height: `${page.height}px`,
@@ -78,13 +79,20 @@ export function FixedPage({ className, children }: FixedPageProps) {
             role="group"
             aria-label="Editable page"
             tabIndex={0}
-            className={`adt-canvas ${styles.root}${isDark ? ' adt-dark' : ''}`}
+            className={cn(
+              CANVAS_CLASS,
+              CANVAS_FIXED_CLASS,
+              'relative h-full w-full overflow-visible',
+              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+              isDark && 'adt-dark',
+            )}
             data-adt-canvas=""
             data-adt-layout="fixed"
             data-adt-styles={stylesReady ? 'ready' : 'pending'}
             aria-busy={!stylesReady || undefined}
             onPointerMove={interactions.onPointerMove}
             onPointerLeave={interactions.onPointerLeave}
+            onMouseDown={interactions.onMouseDown}
             onClick={interactions.onClick}
             onDoubleClick={interactions.onDoubleClick}
             onKeyDown={onKeyDown}
@@ -94,7 +102,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
             ))}
             <div
               ref={(element) => registerGhostLayer(element)}
-              className={ghostStyles.layer}
+              className={ghostLayerClass}
               aria-hidden="true"
             />
             {children}

@@ -1,18 +1,23 @@
 import { startTransition, useState } from 'react'
 import type { NodeId } from '../../../core/ids'
-import {
-  COLOR_SWATCHES,
-  PALETTE_COLORS,
-  type ControlSpec,
-  type VariantId,
-} from '../../../tailwind/categories'
+import { COLOR_SWATCHES, PALETTE_COLORS, type ControlSpec } from '../../../tailwind/categories'
+import type { StyleTarget } from '../../../tailwind/variants'
 import { useStyleControl } from './useStyleControl'
-import styles from '../InspectorPanel.module.css'
+import {
+  CLEAR_BUTTON_CLASS,
+  CONTROL_CLASS,
+  CONTROL_LABEL_CLASS,
+  CONTROL_OPTIONS_CLASS,
+  INLINE_INPUT_CLASS,
+  OPTION_BUTTON_CLASS,
+  SWATCHES_CLASS,
+  SWATCH_CLASS,
+} from '../inspectorStyles'
 
 export type ControlGroupProps = {
   id: NodeId
   control: ControlSpec
-  variant: VariantId
+  target: StyleTarget
 }
 
 export function ControlGroup(props: ControlGroupProps) {
@@ -21,18 +26,18 @@ export function ControlGroup(props: ControlGroupProps) {
   return <OptionsControl {...props} />
 }
 
-function OptionsControl({ id, control, variant }: ControlGroupProps) {
-  const { value, options, toggle } = useStyleControl(id, control, variant)
+function OptionsControl({ id, control, target }: ControlGroupProps) {
+  const { value, options, toggle } = useStyleControl(id, control, target)
 
   return (
-    <div className={styles.control}>
-      <span className={styles.controlLabel}>{control.label}</span>
-      <div className={styles.controlOptions} role="group" aria-label={control.label}>
+    <div className={CONTROL_CLASS}>
+      <span className={CONTROL_LABEL_CLASS}>{control.label}</span>
+      <div className={CONTROL_OPTIONS_CLASS} role="group" aria-label={control.label}>
         {options.map((option) => (
           <button
             key={option.value}
             type="button"
-            className={styles.optionButton}
+            className={OPTION_BUTTON_CLASS}
             data-active={value === option.value || undefined}
             aria-pressed={value === option.value}
             onClick={() => startTransition(() => toggle(option.value))}
@@ -45,31 +50,31 @@ function OptionsControl({ id, control, variant }: ControlGroupProps) {
   )
 }
 
-function ColorControl({ id, control, variant }: ControlGroupProps) {
-  const { value, toggle, clear } = useStyleControl(id, control, variant)
+function ColorControl({ id, control, target }: ControlGroupProps) {
+  const { value, toggle, clear } = useStyleControl(id, control, target)
 
   return (
-    <div className={styles.control}>
-      <span className={styles.controlLabel}>
+    <div className={CONTROL_CLASS}>
+      <span className={CONTROL_LABEL_CLASS}>
         {control.label}
         {value ? (
           <button
             type="button"
-            className={styles.clearButton}
+            className={CLEAR_BUTTON_CLASS}
             onClick={() => startTransition(clear)}
           >
             clear
           </button>
         ) : null}
       </span>
-      <div className={styles.swatches} role="group" aria-label={control.label}>
+      <div className={SWATCHES_CLASS} role="group" aria-label={control.label}>
         {PALETTE_COLORS.map((color) => {
           const candidate = `${control.roots[0]}-${color}`
           return (
             <button
               key={color}
               type="button"
-              className={styles.swatch}
+              className={SWATCH_CLASS}
               data-active={value === candidate || undefined}
               aria-pressed={value === candidate}
               aria-label={color}
@@ -85,30 +90,30 @@ function ColorControl({ id, control, variant }: ControlGroupProps) {
   )
 }
 
-function TextControl({ id, control, variant }: ControlGroupProps) {
-  const { value, options, set, clear } = useStyleControl(id, control, variant)
+function TextControl({ id, control, target }: ControlGroupProps) {
+  const { value, options, set, clear } = useStyleControl(id, control, target)
   const [draft, setDraft] = useState('')
 
   return (
-    <div className={styles.control}>
-      <span className={styles.controlLabel}>
+    <div className={CONTROL_CLASS}>
+      <span className={CONTROL_LABEL_CLASS}>
         {control.label}
         {value ? (
           <button
             type="button"
-            className={styles.clearButton}
+            className={CLEAR_BUTTON_CLASS}
             onClick={() => startTransition(clear)}
           >
             clear
           </button>
         ) : null}
       </span>
-      <div className={styles.controlOptions}>
+      <div className={CONTROL_OPTIONS_CLASS}>
         {options.map((option) => (
           <button
             key={option.value}
             type="button"
-            className={styles.optionButton}
+            className={OPTION_BUTTON_CLASS}
             data-active={value === option.value || undefined}
             aria-pressed={value === option.value}
             onClick={() => startTransition(() => set(option.value))}
@@ -118,7 +123,7 @@ function TextControl({ id, control, variant }: ControlGroupProps) {
         ))}
         <input
           type="text"
-          className={styles.inlineInput}
+          className={INLINE_INPUT_CLASS}
           placeholder={value ?? `${control.roots[0]}-…`}
           value={draft}
           spellCheck={false}

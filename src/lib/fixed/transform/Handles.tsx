@@ -16,14 +16,30 @@ import { measureScale } from '../geometry'
 import { useFixedDragEnv } from '../useFixedDragEnv'
 import { readElementTransform } from './elementTransform'
 import { GestureBadge } from './GestureBadge'
-import { startResizeGesture, startRotateGesture, takeGestureSnapshot } from './gesture'
+import {
+  startGroupResizeGesture,
+  startResizeGesture,
+  startRotateGesture,
+  takeGestureSnapshot,
+  takeGroupSnapshot,
+} from './gesture'
+import { readGroupBox } from './groupBox'
 import { HANDLE_SPECS, cursorFor, type HandleId } from './handleSpecs'
-import { hasTransformedAncestor, readLayoutBox } from './layoutBox'
+import { hasTransformedAncestor } from './layoutBox'
 import { runPointerGesture } from './pointerGesture'
-import styles from './Handles.module.css'
+import {
+  BADGE_CLASS,
+  FRAME_CLASS,
+  FRAME_LABEL_CLASS,
+  HANDLE_CLASS,
+  ROTATE_CLASS,
+  STEM_CLASS,
+} from './handleStyles'
+import { cn } from 'cn'
 
 const HANDLES_ATTRIBUTE = 'data-adt-handles'
 const DISABLED_HINT = 'Move this element to the page to resize or rotate it'
+const GROUP_ORIGIN = { x: 0.5, y: 0.5 }
 
 type HandlePointerEvent = ReactPointerEvent<HTMLElement>
 
@@ -76,44 +92,55 @@ export function Handles({ className, children }: HandlesProps) {
 
     let frameId = 0
     let dragging = false
-    let checked: HTMLElement | null = null
+    let checkedKey = ''
     let disabled = false
 
     const sync = () => {
       frameId = 0
-      const { selectedId, editingTextId, locked, doc } = store.state
-      const element = selectedId
-        ? root.querySelector<HTMLElement>(`[data-adt-id="${selectedId}"]`)
-        : null
-      if (!selectedId || !element || dragging || editingTextId === selectedId) {
+      const { selectedId, selectedIds, editingTextId, locked, doc } = store.state
+      const group = selectedIds.length > 0 ? readGroupBox(root, selectedIds) : null
+      const editing = editingTextId !== null && selectedIds.includes(editingTextId)
+      if (!group || dragging || editing) {
         frame.dataset.visible = 'false'
         return
       }
-      const node = doc.nodes[selectedId]
+
+      const many = selectedIds.length > 1
+      const node = selectedId ? doc.nodes[selectedId] : undefined
       const style = node && isStyled(node) ? node.attrs.style : undefined
-      const box = readLayoutBox(element, root)
-      const transform = readElementTransform(element, style, box)
+      const box = group.box
+      const transform = many ? null : readElementTransform(group.elements[0], style, box)
+      const angle = transform?.angle ?? 0
+      const origin = transform?.origin ?? GROUP_ORIGIN
       const scale = measureScale(root.getBoundingClientRect(), page.width)
-      if (element !== checked) {
-        checked = element
-        disabled = hasTransformedAncestor(element, root)
+      const key = selectedIds.join('|')
+      if (key !== checkedKey) {
+        checkedKey = key
+        disabled = group.elements.some((element) => hasTransformedAncestor(element, root))
       }
 
       frame.dataset.visible = 'true'
-      frame.dataset.locked = locked[selectedId] ? 'true' : 'false'
+      frame.dataset.group = many ? 'true' : 'false'
+      frame.dataset.locked = selectedIds.some((id) => locked[id]) ? 'true' : 'false'
       frame.dataset.disabled = disabled ? 'true' : 'false'
       frame.title = disabled ? DISABLED_HINT : ''
       frame.style.left = `${box.x}px`
       frame.style.top = `${box.y}px`
       frame.style.width = `${box.width}px`
       frame.style.height = `${box.height}px`
-      frame.style.transform = transform.angle === 0 ? '' : `rotate(${transform.angle}deg)`
-      frame.style.transformOrigin = `${transform.origin.x * 100}% ${transform.origin.y * 100}%`
+      frame.style.transform = angle === 0 ? '' : `rotate(${angle}deg)`
+      frame.style.transformOrigin = `${origin.x * 100}% ${origin.y * 100}%`
       frame.style.setProperty('--adt-inverse-scale', String(1 / scale))
-      frame.style.setProperty('--adt-frame-angle', `${transform.angle}deg`)
-      if (labelRef.current) labelRef.current.textContent = node ? labelOf(node) : ''
+      frame.style.setProperty('--adt-frame-angle', `${angle}deg`)
+      if (labelRef.current) {
+        labelRef.current.textContent = many
+          ? `${selectedIds.length} elements`
+          : node
+            ? labelOf(node)
+            : ''
+      }
       for (const handle of frame.querySelectorAll<HTMLElement>('[data-handle]')) {
-        handle.style.cursor = cursorFor(handle.dataset.handle as HandleId, transform.angle)
+        handle.style.cursor = cursorFor(handle.dataset.handle as HandleId, angle)
       }
     }
 
@@ -157,32 +184,53 @@ export function Handles({ className, children }: HandlesProps) {
     event.stopPropagation()
     const env = getEnv()
     const root = env.pageElement
-    const { selectedId, locked } = store.state
-    if (!root || !selectedId || locked[selectedId]) return null
-    const element = root.querySelector<HTMLElement>(`[data-adt-id="${selectedId}"]`)
-    if (!element || hasTransformedAncestor(element, root)) return null
-    const snapshot = takeGestureSnapshot(env, selectedId, element)
-    if (!snapshot) return null
+    const { selectedIds, locked } = store.state
+    if (!root || selectedIds.length === 0) return null
+    if (selectedIds.some((id) => locked[id])) return null
+
+    const elements: HTMLElement[] = []
+    for (const id of selectedIds) {
+      const element = root.querySelector<HTMLElement>(`[data-adt-id="${id}"]`)
+      if (!element) return null
+      elements.push(element)
+    }
+    if (elements.some((element) => hasTransformedAncestor(element, root))) return null
+
     capturePointer(event.currentTarget, event.pointerId)
-    return { env, snapshot }
+
+    if (selectedIds.length === 1) {
+      const snapshot = takeGestureSnapshot(env, selectedIds[0], elements[0])
+      return snapshot ? ({ env, kind: 'single', snapshot } as const) : null
+    }
+    const snapshot = takeGroupSnapshot(env, selectedIds)
+    return snapshot ? ({ env, kind: 'group', snapshot } as const) : null
   }
 
   const context: HandlesContextValue = {
     startResize(handle, event) {
       const started = begin(event)
       if (!started) return
-      const controller = startResizeGesture(
-        started.env,
-        started.snapshot,
-        handle,
-        event.nativeEvent,
-        aspectLock.state,
-      )
+      const controller =
+        started.kind === 'single'
+          ? startResizeGesture(
+              started.env,
+              started.snapshot,
+              handle,
+              event.nativeEvent,
+              aspectLock.state,
+            )
+          : startGroupResizeGesture(
+              started.env,
+              started.snapshot,
+              handle,
+              event.nativeEvent,
+              aspectLock.state,
+            )
       runPointerGesture(event.nativeEvent, controller)
     },
     startRotate(event) {
       const started = begin(event)
-      if (!started) return
+      if (!started || started.kind !== 'single') return
       runPointerGesture(
         event.nativeEvent,
         startRotateGesture(started.env, started.snapshot, event.nativeEvent),
@@ -194,20 +242,20 @@ export function Handles({ className, children }: HandlesProps) {
     <HandlesContext value={context}>
       <div
         ref={frameRef}
-        className={className ? `${styles.frame} ${className}` : styles.frame}
+        className={cn(FRAME_CLASS, className)}
         data-adt-handles-frame=""
         data-visible="false"
         onClick={stop}
         onDoubleClick={stop}
       >
-        <span ref={labelRef} className={styles.label} aria-hidden="true" />
+        <span ref={labelRef} className={FRAME_LABEL_CLASS} aria-hidden="true" />
         {children ?? (
           <>
             <HandlesResize />
             <HandlesRotate />
           </>
         )}
-        <GestureBadge className={styles.badge} />
+        <GestureBadge className={BADGE_CLASS} />
       </div>
     </HandlesContext>
   )
@@ -221,7 +269,7 @@ export function HandlesResize() {
         <button
           key={spec.id}
           type="button"
-          className={styles.handle}
+          className={HANDLE_CLASS}
           data-handle={spec.id}
           aria-label={spec.label}
           tabIndex={-1}
@@ -237,10 +285,10 @@ export function HandlesRotate() {
   const { startRotate } = useHandlesContext()
   return (
     <>
-      <span className={styles.stem} aria-hidden="true" />
+      <span className={STEM_CLASS} aria-hidden="true" />
       <button
         type="button"
-        className={styles.rotate}
+        className={ROTATE_CLASS}
         data-rotate=""
         aria-label="Rotate"
         tabIndex={-1}

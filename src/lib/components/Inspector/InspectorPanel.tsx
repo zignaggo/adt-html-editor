@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
-import { CATEGORIES, type VariantId } from '../../tailwind/categories'
-import { useEditorSelector } from '../Editor/context'
+import { useDeferredValue, useState, type ReactNode } from 'react'
+import { CATEGORIES } from '../../tailwind/categories'
+import type { StateVariant, StyleTarget } from '../../tailwind/variants'
+import { selectSelectedIds, useBreakpoint, useEditorSelector } from '../Editor/context'
 import { InspectorPosition } from '../../fixed/InspectorPosition'
 import { InspectorTransform } from '../../fixed/InspectorTransform'
 import { InspectorContext, type InspectorContextValue } from './context'
@@ -15,7 +16,31 @@ import {
   InspectorSection,
   InspectorVariants,
 } from './InspectorParts'
-import styles from './InspectorPanel.module.css'
+import { PANEL_CLASS } from './inspectorStyles'
+import { cn } from 'cn'
+
+export function InspectorProvider({ children }: { children: ReactNode }) {
+  const selected = useEditorSelector(selectSelectedIds)
+  const selectedIds = useDeferredValue(selected)
+  const selectedId = selectedIds.length === 1 ? selectedIds[0] : null
+  const [state, setState] = useState<StateVariant | null>(null)
+  const breakpoint = useBreakpoint()
+  const target: StyleTarget = { breakpoint, state }
+  const [openCategory, setOpenCategory] = useState<string>(CATEGORIES[0]?.id ?? '')
+
+  const context: InspectorContextValue = {
+    selectedId,
+    selectedIds,
+    breakpoint,
+    state,
+    setState,
+    target,
+    openCategory,
+    setOpenCategory,
+  }
+
+  return <InspectorContext value={context}>{children}</InspectorContext>
+}
 
 export type InspectorPanelProps = {
   className?: string
@@ -23,27 +48,15 @@ export type InspectorPanelProps = {
 }
 
 export function InspectorPanel({ className, children }: InspectorPanelProps) {
-  const selectedId = useEditorSelector((state) => state.selectedId)
-  const [variant, setVariant] = useState<VariantId>('base')
-  const [openCategory, setOpenCategory] = useState<string>(CATEGORIES[0]?.id ?? '')
-
-  const context: InspectorContextValue = {
-    selectedId,
-    variant,
-    setVariant,
-    openCategory,
-    setOpenCategory,
-  }
-
   return (
-    <InspectorContext.Provider value={context}>
+    <InspectorProvider>
       <aside
-        className={className ? `${styles.panel} ${className}` : styles.panel}
+        className={cn(PANEL_CLASS, className)}
         aria-label="Styles"
       >
         {children ?? <DefaultInspector />}
       </aside>
-    </InspectorContext.Provider>
+    </InspectorProvider>
   )
 }
 

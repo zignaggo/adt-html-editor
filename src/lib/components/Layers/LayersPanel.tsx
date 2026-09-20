@@ -1,16 +1,12 @@
 import { useDeferredValue, useRef, useState, type ReactNode } from 'react'
-import { useEditorSelector } from '../Editor/context'
+import { useEditorSelector, useEditorStoreApi } from '../Editor/context'
 import { LayersContext, type LayersContextValue } from './context'
-import { createLayerFilter, flattenTree } from './flatten'
+import { createLayerFilter, flattenTree, rowsBetween } from './flatten'
 import { LayersCount, LayersHeader, LayersSearch, LayersTitle, LayersTree } from './LayersParts'
-import styles from './LayersPanel.module.css'
+import { cn } from 'cn'
 
-export type LayersPanelProps = {
-  className?: string
-  children?: ReactNode
-}
-
-export function LayersPanel({ className, children }: LayersPanelProps) {
+export function LayersProvider({ children }: { children: ReactNode }) {
+  const store = useEditorStoreApi()
   const doc = useEditorSelector((state) => state.doc)
   const collapsed = useEditorSelector((state) => state.collapsed)
   const [query, setQuery] = useState('')
@@ -30,6 +26,9 @@ export function LayersPanel({ className, children }: LayersPanelProps) {
       clearSearch: () => setQuery(''),
       focusTree: () => treeRef.current?.focus(),
       focusSearch: () => searchRef.current?.focus(),
+      selectRange: (id) => {
+        store.actions.selectMany(rowsBetween(rows, store.state.selectedId, id))
+      },
     },
     meta: {
       registerSearch: (element) => {
@@ -41,12 +40,21 @@ export function LayersPanel({ className, children }: LayersPanelProps) {
     },
   }
 
+  return <LayersContext value={context}>{children}</LayersContext>
+}
+
+export type LayersPanelProps = {
+  className?: string
+  children?: ReactNode
+}
+
+export function LayersPanel({ className, children }: LayersPanelProps) {
   return (
-    <LayersContext value={context}>
-      <div className={className ? `${styles.panel} ${className}` : styles.panel}>
+    <LayersProvider>
+      <div className={cn('flex min-h-0 flex-col border-r border-border bg-muted', className)}>
         {children ?? <DefaultLayers />}
       </div>
-    </LayersContext>
+    </LayersProvider>
   )
 }
 

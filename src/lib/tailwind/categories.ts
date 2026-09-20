@@ -302,25 +302,6 @@ export const PALETTE_COLORS = [
   'pink-500',
 ]
 
-export const VARIANTS = ['base', 'sm', 'md', 'lg', 'xl', 'hover', 'focus', 'dark'] as const
-export type VariantId = (typeof VARIANTS)[number]
-
-export function withVariant(className: string, variant: VariantId): string {
-  return variant === 'base' ? className : `${variant}:${className}`
-}
-
-export function variantOf(className: string): VariantId {
-  const parts = className.split(':')
-  if (parts.length === 1) return 'base'
-  const found = VARIANTS.find((variant) => variant !== 'base' && parts.includes(variant))
-  return found ?? 'base'
-}
-
-export function stripVariants(className: string): string {
-  const parts = className.split(':')
-  return parts[parts.length - 1]
-}
-
 export const COLOR_SWATCHES: Record<string, string> = {
   white: '#ffffff',
   black: '#000000',

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useCanvasStylesheet } from '../../tailwind/useCanvasStylesheet'
 import type { GhostStrategy } from '../../fixed/ghost/strategy'
 import { LiveGhost } from '../../fixed/ghost/LiveGhost'
@@ -6,7 +6,8 @@ import { Guides } from '../../fixed/guides/Guides'
 import { Handles } from '../../fixed/transform/Handles'
 import { Zoom } from '../../fixed/Zoom'
 import type { FixedPageProps } from '../../fixed/FixedPage'
-import { useLayoutMode } from '../Editor/context'
+import { useEditorContext, useLayoutMode } from '../Editor/context'
+import { breakpointForWidth } from '../../tailwind/variants'
 import { HistoryGroup } from '../Editor/HistoryParts'
 import {
   CanvasContext,
@@ -16,7 +17,7 @@ import {
   type CanvasZoom,
 } from './context'
 import { CanvasDarkToggle, CanvasToolbar, CanvasViewport, CanvasWidthPresets } from './CanvasParts'
-import styles from './Canvas.module.css'
+import { cn } from 'cn'
 
 const LazyFixedPage = lazy(() =>
   import('../../fixed/FixedPage').then((module) => ({ default: module.FixedPage })),
@@ -30,14 +31,9 @@ export function CanvasFixedPage(props: FixedPageProps) {
   )
 }
 
-export type CanvasProps = {
-  className?: string
-  children?: ReactNode
-}
-
-export function Canvas({ className, children }: CanvasProps) {
+export function CanvasProvider({ children }: { children: ReactNode }) {
   const [preset, setPreset] = useState<CanvasWidthPreset>(
-    DEFAULT_WIDTH_PRESETS[DEFAULT_WIDTH_PRESETS.length - 1],
+    DEFAULT_WIDTH_PRESETS[0],
   )
   const [isDark, setIsDark] = useState(false)
   const [zoom, setZoom] = useState<CanvasZoom>('fit')
@@ -45,6 +41,11 @@ export function Canvas({ className, children }: CanvasProps) {
   const ghostLayerRef = useRef<HTMLElement | null>(null)
 
   const stylesReady = useCanvasStylesheet()
+  const { breakpoint } = useEditorContext()
+  useEffect(() => {
+    breakpoint.setState(() => breakpointForWidth(preset.width))
+    return () => breakpoint.setState(() => 'desktop')
+  }, [breakpoint, preset.width])
 
   const registerGhost = (strategy: GhostStrategy) => {
     ghostRef.current = strategy
@@ -72,12 +73,21 @@ export function Canvas({ className, children }: CanvasProps) {
     registerGhostLayer,
   }
 
+  return <CanvasContext value={context}>{children}</CanvasContext>
+}
+
+export type CanvasProps = {
+  className?: string
+  children?: ReactNode
+}
+
+export function Canvas({ className, children }: CanvasProps) {
   return (
-    <CanvasContext value={context}>
-      <div className={className ? `${styles.wrapper} ${className}` : styles.wrapper}>
+    <CanvasProvider>
+      <div className={cn('flex min-h-0 min-w-0 flex-col bg-muted', className)}>
         {children ?? <DefaultCanvas />}
       </div>
-    </CanvasContext>
+    </CanvasProvider>
   )
 }
 

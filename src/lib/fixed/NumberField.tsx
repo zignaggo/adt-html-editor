@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react'
-import inspectorStyles from '../components/Inspector/InspectorPanel.module.css'
-import styles from './InspectorPosition.module.css'
+import { FIELD_LABEL_CLASS, INPUT_CLASS } from '../components/Inspector/inspectorStyles'
+import { POSITION_FIELD_CLASS } from './positionStyles'
 
 export type NumberFieldProps = {
   label: string
@@ -30,12 +30,12 @@ export function NumberField({
     commit(event.currentTarget.value)
   }
   return (
-    <label className={styles.field}>
-      <span className={inspectorStyles.fieldLabel}>{label}</span>
+    <label className={POSITION_FIELD_CLASS}>
+      <span className={FIELD_LABEL_CLASS}>{label}</span>
       <input
         key={shown}
         type="number"
-        className={inspectorStyles.input}
+        className={INPUT_CLASS}
         aria-label={unit ? `${label} (${unit})` : label}
         defaultValue={shown}
         disabled={disabled}

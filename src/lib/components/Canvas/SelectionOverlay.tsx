@@ -3,7 +3,19 @@ import type { NodeId } from '../../core/ids'
 import { subscribeHovered } from '../../core/hover'
 import { labelOf } from '../../core/model'
 import { useEditorContext, useEditorStoreApi } from '../Editor/context'
-import styles from './SelectionOverlay.module.css'
+
+const overlayClass =
+  'pointer-events-none fixed top-0 left-0 z-30 rounded-sm will-change-transform ' +
+  'transition-opacity duration-100 ease-out data-[visible=false]:opacity-0 data-[visible=true]:opacity-100'
+
+const selectionClass = `${overlayClass} ring-[1.5px] ring-primary`
+const outlineClass = `${overlayClass} ring-1 ring-primary`
+const hoverClass = `${overlayClass} ring-1 ring-primary/55`
+
+const labelClass =
+  'absolute -top-[18px] -left-[1.5px] rounded-t-sm bg-primary px-1.5 py-px font-mono text-[10px] ' +
+  'leading-4 whitespace-nowrap text-primary-foreground ' +
+  'data-[flip=below]:top-full data-[flip=below]:rounded-t-none data-[flip=below]:rounded-b-sm'
 
 export function SelectionOverlay() {
   const { canvasRootRef } = useEditorContext()
@@ -11,14 +23,24 @@ export function SelectionOverlay() {
   const selectionRef = useRef<HTMLDivElement | null>(null)
   const hoverRef = useRef<HTMLDivElement | null>(null)
   const labelRef = useRef<HTMLSpanElement | null>(null)
+  const poolRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const root = canvasRootRef.current
-    if (!root) return
+    const poolRoot = poolRef.current
+    if (!root || !poolRoot) return
 
-    let selectedId = store.state.selectedId
+    let selectedIds = store.state.selectedIds
     let hoveredId: NodeId | null = null
     let frame = 0
+    const pool = new Map<NodeId, HTMLDivElement>()
+
+    const placeRect = (box: HTMLDivElement, rect: DOMRect) => {
+      box.dataset.visible = 'true'
+      box.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`
+      box.style.width = `${rect.width}px`
+      box.style.height = `${rect.height}px`
+    }
 
     const place = (box: HTMLDivElement | null, id: NodeId | null, withLabel: boolean) => {
       if (!box) return
@@ -28,10 +50,7 @@ export function SelectionOverlay() {
         return
       }
       const rect = target.getBoundingClientRect()
-      box.dataset.visible = 'true'
-      box.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`
-      box.style.width = `${rect.width}px`
-      box.style.height = `${rect.height}px`
+      placeRect(box, rect)
       if (withLabel && labelRef.current && id) {
         const node = store.state.doc.nodes[id]
         labelRef.current.textContent = node ? labelOf(node) : ''
@@ -39,11 +58,39 @@ export function SelectionOverlay() {
       }
     }
 
+    const syncPool = (ids: readonly NodeId[]) => {
+      const wanted = new Set(ids)
+      for (const [id, box] of pool) {
+        if (wanted.has(id)) continue
+        box.remove()
+        pool.delete(id)
+      }
+      for (const id of ids) {
+        const target = root.querySelector<HTMLElement>(`[data-adt-id="${id}"]`)
+        let box = pool.get(id)
+        if (!target) {
+          if (box) box.dataset.visible = 'false'
+          continue
+        }
+        if (!box) {
+          box = document.createElement('div')
+          box.className = outlineClass
+          box.dataset.visible = 'false'
+          box.setAttribute('data-adt-selection-outline', '')
+          poolRoot.appendChild(box)
+          pool.set(id, box)
+        }
+        placeRect(box, target.getBoundingClientRect())
+      }
+    }
+
     const sync = () => {
       frame = 0
       const delegated = root.hasAttribute('data-adt-handles')
-      place(selectionRef.current, delegated ? null : selectedId, true)
-      place(hoverRef.current, hoveredId === selectedId ? null : hoveredId, false)
+      const many = selectedIds.length > 1
+      place(selectionRef.current, delegated || many ? null : (selectedIds[0] ?? null), true)
+      syncPool(many ? selectedIds : EMPTY_IDS)
+      place(hoverRef.current, hoveredId && selectedIds.includes(hoveredId) ? null : hoveredId, false)
     }
 
     const schedule = () => {
@@ -52,8 +99,8 @@ export function SelectionOverlay() {
     }
 
     const storeSubscription = store.subscribe((state) => {
-      if (state.selectedId === selectedId) return
-      selectedId = state.selectedId
+      if (state.selectedIds === selectedIds) return
+      selectedIds = state.selectedIds
       schedule()
     })
 
@@ -82,15 +129,20 @@ export function SelectionOverlay() {
       mutation.disconnect()
       scrollParent.removeEventListener('scroll', schedule)
       window.removeEventListener('resize', schedule)
+      for (const box of pool.values()) box.remove()
+      pool.clear()
     }
   }, [canvasRootRef, store])
 
   return (
     <>
-      <div ref={hoverRef} className={styles.hover} data-visible="false" aria-hidden="true" />
-      <div ref={selectionRef} className={styles.selection} data-visible="false" aria-hidden="true">
-        <span ref={labelRef} className={styles.label} />
+      <div ref={hoverRef} className={hoverClass} data-visible="false" aria-hidden="true" />
+      <div ref={selectionRef} className={selectionClass} data-visible="false" aria-hidden="true">
+        <span ref={labelRef} className={labelClass} />
       </div>
+      <div ref={poolRef} aria-hidden="true" />
     </>
   )
 }
+
+const EMPTY_IDS: readonly NodeId[] = []

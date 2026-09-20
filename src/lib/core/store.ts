@@ -12,6 +12,12 @@ import {
 import { parseHtml } from './html/parse'
 import { serializeHtml } from './html/serialize'
 import {
+  EMPTY_SELECTION,
+  normalizeSelection,
+  sameSelection,
+  sortByDocumentOrder,
+} from './selection'
+import {
   ancestorIdsOf,
   canHaveChildren,
   childrenOf,
@@ -43,9 +49,29 @@ export type PlaceOptions = {
   coalesce?: boolean
 }
 
+export type PlaceUpdate = {
+  id: NodeId
+  style: string | null
+  parentId?: NodeId
+  index?: number
+}
+
+export type PlaceManyOptions = {
+  coalesce?: boolean
+}
+
+export type SelectOptions = {
+  mode?: 'replace' | 'toggle'
+}
+
+export type TransactionOptions = {
+  coalesceKey?: string
+}
+
 export type EditorState = {
   doc: EditorDocument
   selectedId: NodeId | null
+  selectedIds: readonly NodeId[]
   collapsed: Record<NodeId, true>
   locked: Record<NodeId, true>
   usedClasses: ReadonlySet<string>
@@ -59,15 +85,22 @@ export type EditorActions = {
   insertHtml: (html: string, at: DropPosition) => NodeId | null
   moveNode: (id: NodeId, at: DropPosition) => boolean
   removeNode: (id: NodeId) => void
+  removeNodes: (ids: readonly NodeId[]) => void
   duplicateNode: (id: NodeId) => NodeId | null
+  duplicateNodes: (ids: readonly NodeId[]) => NodeId[]
   setClasses: (id: NodeId, classes: string[]) => void
   setAttr: (id: NodeId, name: string, value: string | null) => void
   setText: (id: NodeId, value: string) => void
   placeNode: (id: NodeId, options: PlaceOptions) => boolean
-  select: (id: NodeId | null) => void
+  placeNodes: (updates: readonly PlaceUpdate[], options?: PlaceManyOptions) => boolean
+  select: (id: NodeId | null, options?: SelectOptions) => void
+  toggleSelected: (id: NodeId) => void
+  selectMany: (ids: readonly NodeId[]) => void
   toggleCollapsed: (id: NodeId) => void
   setCollapsed: (id: NodeId, collapsed: boolean) => void
   setLocked: (id: NodeId, locked: boolean) => void
+  setLockedMany: (ids: readonly NodeId[], locked: boolean) => void
+  transaction: <T>(run: () => T, options?: TransactionOptions) => T
   beginTextEdit: (id: NodeId | null) => void
   undo: () => void
   redo: () => void
@@ -83,20 +116,46 @@ export type EditorStore = Store<EditorState, EditorActions>
 type Patch = Partial<EditorState>
 
 function snapshotOf(state: EditorState): Snapshot {
-  return { doc: state.doc, selectedId: state.selectedId }
+  return { doc: state.doc, selectedIds: state.selectedIds }
 }
 
-function expandedTo(state: EditorState, id: NodeId | null): Record<NodeId, true> {
-  if (!id) return state.collapsed
-  const hidden = ancestorIdsOf(state.doc, id).filter((ancestor) => state.collapsed[ancestor])
-  if (hidden.length === 0) return state.collapsed
-  const next = { ...state.collapsed }
-  for (const ancestor of hidden) delete next[ancestor]
-  return next
+function expandedToAll(state: EditorState, ids: readonly NodeId[]): Record<NodeId, true> {
+  let next: Record<NodeId, true> | null = null
+  for (const id of ids) {
+    for (const ancestor of ancestorIdsOf(state.doc, id)) {
+      if (!state.collapsed[ancestor]) continue
+      next ??= { ...state.collapsed }
+      delete next[ancestor]
+    }
+  }
+  return next ?? state.collapsed
 }
 
-function revealing(state: EditorState, id: NodeId | null): Patch {
-  return { selectedId: id, collapsed: expandedTo(state, id) }
+function withSelection(state: EditorState, ids: readonly NodeId[]): Patch | EditorState {
+  if (sameSelection(state.selectedIds, ids) && state.editingTextId === null) return state
+  return {
+    selectedIds: ids.length === 0 ? EMPTY_SELECTION : ids,
+    selectedId: ids[0] ?? null,
+    collapsed: expandedToAll(state, ids),
+    editingTextId: null,
+  }
+}
+
+function restoredSelection(snapshot: Snapshot): Patch {
+  const alive = snapshot.selectedIds.filter((id) => snapshot.doc.nodes[id])
+  return {
+    selectedIds: alive.length === 0 ? EMPTY_SELECTION : alive,
+    selectedId: alive[0] ?? null,
+  }
+}
+
+function pruneSelection(state: EditorState): Patch | EditorState {
+  const alive = state.selectedIds.filter((id) => state.doc.nodes[id])
+  if (alive.length === state.selectedIds.length) return state
+  return {
+    selectedIds: alive.length === 0 ? EMPTY_SELECTION : alive,
+    selectedId: alive[0] ?? null,
+  }
 }
 
 function withAddedClasses(
@@ -141,6 +200,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
   const initialState: EditorState = {
     doc: initialDoc,
     selectedId: null,
+    selectedIds: EMPTY_SELECTION,
     collapsed: {},
     locked: {},
     usedClasses: classSetOf(initialDoc),
@@ -160,6 +220,17 @@ export function createEditorStore(initialHtml: string): EditorStore {
     let ownsNodes = true
     let reuseNodes = false
 
+    type OpenTransaction = {
+      before: Snapshot
+      coalesceKey: string | null
+      coalescing: boolean
+      openedAt: number
+      changed: boolean
+      classes: string[]
+    }
+
+    let open: OpenTransaction | null = null
+
     function draftNodes(doc: EditorDocument): Record<NodeId, AnyNode> {
       return reuseNodes ? doc.nodes : { ...doc.nodes }
     }
@@ -168,6 +239,26 @@ export function createEditorStore(initialHtml: string): EditorStore {
       mutate: (doc: EditorDocument) => EditorDocument | null,
       options?: CommitOptions,
     ) {
+      const transacting = open
+      if (transacting) {
+        set((state) => {
+          reuseNodes = transacting.changed || (transacting.coalescing && ownsNodes)
+          let nextDoc: EditorDocument | null
+          try {
+            nextDoc = mutate(state.doc)
+          } finally {
+            reuseNodes = false
+          }
+          if (!nextDoc) return state
+
+          ownsNodes = true
+          transacting.changed = true
+          if (options?.classes) transacting.classes.push(...options.classes)
+          return { doc: nextDoc }
+        })
+        return
+      }
+
       set((state) => {
         const now = Date.now()
         const coalesceKey = options?.coalesceKey ?? null
@@ -189,6 +280,40 @@ export function createEditorStore(initialHtml: string): EditorStore {
           usedClasses: withAddedClasses(state.usedClasses, options?.classes),
         }
       })
+    }
+
+    function runTransaction<T>(run: () => T, options?: TransactionOptions): T {
+      if (open) return run()
+
+      const state = get()
+      const now = Date.now()
+      const coalesceKey = options?.coalesceKey ?? null
+      const entry: OpenTransaction = {
+        before: snapshotOf(state),
+        coalesceKey,
+        coalescing: canCoalesce(state.history, coalesceKey, now),
+        openedAt: now,
+        changed: false,
+        classes: [],
+      }
+      open = entry
+
+      let result!: T
+      try {
+        batch(() => {
+          result = run()
+        })
+      } finally {
+        open = null
+      }
+
+      if (entry.changed) {
+        set((current) => ({
+          history: pushSnapshot(current.history, entry.before, entry.coalesceKey, entry.openedAt),
+          usedClasses: withAddedClasses(current.usedClasses, entry.classes),
+        }))
+      }
+      return result
     }
 
     function historyRestored() {
@@ -280,6 +405,54 @@ export function createEditorStore(initialHtml: string): EditorStore {
       nodes[parentId] = { ...parent, children }
     }
 
+    function removeMany(ids: readonly NodeId[]): void {
+      const targets = normalizeSelection(get().doc, ids)
+      if (targets.length === 0) return
+      batch(() => {
+        commit((doc) => {
+          const nodes = draftNodes(doc)
+          let changed = false
+          for (const id of targets) {
+            const node = doc.nodes[id]
+            if (!node?.parentId) continue
+            detach(nodes, id, node.parentId)
+            for (const gone of collectSubtree(doc, id)) delete nodes[gone]
+            changed = true
+          }
+          return changed ? { ...doc, nodes } : null
+        })
+        set(pruneSelection)
+      })
+    }
+
+    function duplicateMany(ids: readonly NodeId[]): NodeId[] {
+      const current = get().doc
+      const sources = sortByDocumentOrder(current, normalizeSelection(current, ids))
+      if (sources.length === 0) return []
+
+      const duplicatedClasses: string[] = []
+      for (const id of sources) classesInSubtree(current, id, duplicatedClasses)
+
+      const clones: NodeId[] = []
+      batch(() => {
+        commit((doc) => {
+          const nodes = draftNodes(doc)
+          for (const id of sources) {
+            const node = doc.nodes[id]
+            if (!node?.parentId) continue
+            const parent = nodes[node.parentId]
+            if (!parent || parent.kind !== 'element') continue
+            const clone = cloneSubtree(doc, id, node.parentId, nodes)
+            attach(nodes, clone, node.parentId, parent.children.indexOf(id) + 1)
+            clones.push(clone)
+          }
+          return clones.length > 0 ? { ...doc, nodes } : null
+        }, { classes: duplicatedClasses })
+        if (clones.length > 0) set((state) => withSelection(state, clones))
+      })
+      return clones
+    }
+
     return {
       replaceDocument(html) {
         const doc = parseHtml(html)
@@ -287,6 +460,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
         set({
           doc,
           selectedId: null,
+          selectedIds: EMPTY_SELECTION,
           collapsed: {},
           locked: {},
           usedClasses: classSetOf(doc),
@@ -306,7 +480,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
             attach(nodes, created, at.parentId, at.index)
             return { ...doc, nodes }
           }, { classes: classesInTemplate(template) })
-          if (created) set((state) => revealing(state, created))
+          if (created) set((state) => withSelection(state, [created as NodeId]))
         })
         return created
       },
@@ -370,7 +544,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
             return { ...doc, nodes }
           }, { classes: classSetOf(parsed) })
           const first = created[0] ?? null
-          if (first) set((state) => revealing(state, first))
+          if (first) set((state) => withSelection(state, [first]))
         })
         return created[0] ?? null
       },
@@ -407,38 +581,19 @@ export function createEditorStore(initialHtml: string): EditorStore {
       },
 
       removeNode(id) {
-        batch(() => {
-          commit((doc) => {
-            const node = doc.nodes[id]
-            if (!node?.parentId || id === doc.rootId) return null
-            const nodes = draftNodes(doc)
-            detach(nodes, id, node.parentId)
-            for (const gone of collectSubtree(doc, id)) delete nodes[gone]
-            return { ...doc, nodes }
-          })
-          set((state) =>
-            state.selectedId && !state.doc.nodes[state.selectedId] ? { selectedId: null } : state,
-          )
-        })
+        removeMany([id])
+      },
+
+      removeNodes(ids) {
+        removeMany(ids)
       },
 
       duplicateNode(id) {
-        let created: NodeId | null = null
-        const duplicatedClasses = classesInSubtree(get().doc, id)
-        batch(() => {
-          commit((doc) => {
-            const node = doc.nodes[id]
-            if (!node?.parentId || id === doc.rootId) return null
-            const parent = doc.nodes[node.parentId]
-            if (!parent || parent.kind !== 'element') return null
-            const nodes = draftNodes(doc)
-            created = cloneSubtree(doc, id, node.parentId, nodes)
-            attach(nodes, created, node.parentId, parent.children.indexOf(id) + 1)
-            return { ...doc, nodes }
-          }, { classes: duplicatedClasses })
-          if (created) set((state) => revealing(state, created))
-        })
-        return created
+        return duplicateMany([id])[0] ?? null
+      },
+
+      duplicateNodes(ids) {
+        return duplicateMany(ids)
       },
 
       setClasses(id, classes) {
@@ -532,10 +687,51 @@ export function createEditorStore(initialHtml: string): EditorStore {
         return placed
       },
 
-      select(id) {
-        set((state) =>
-          state.selectedId === id ? state : { ...revealing(state, id), editingTextId: null },
-        )
+      placeNodes(updates, options) {
+        if (updates.length === 0) return false
+        const coalesceKey = options?.coalesce
+          ? `place:${[...new Set(updates.map((update) => update.id))].sort().join(',')}`
+          : undefined
+        let placed = false
+        runTransaction(() => {
+          for (const update of updates) {
+            if (this.placeNode(update.id, { ...update, coalesce: false })) placed = true
+          }
+        }, { coalesceKey })
+        return placed
+      },
+
+      select(id, options) {
+        if (options?.mode === 'toggle') {
+          if (id) this.toggleSelected(id)
+          return
+        }
+        set((state) => withSelection(state, id ? [id] : EMPTY_SELECTION))
+      },
+
+      toggleSelected(id) {
+        set((state) => {
+          const { doc } = state
+          if (state.selectedIds.includes(id)) {
+            return withSelection(
+              state,
+              state.selectedIds.filter((other) => other !== id),
+            )
+          }
+          if (id === doc.rootId || !doc.nodes[id]) return state
+          const kept = state.selectedIds.filter(
+            (other) => !isDescendantOf(doc, other, id) && !isDescendantOf(doc, id, other),
+          )
+          return withSelection(state, [id, ...kept])
+        })
+      },
+
+      selectMany(ids) {
+        set((state) => withSelection(state, normalizeSelection(state.doc, ids)))
+      },
+
+      transaction(run, options) {
+        return runTransaction(run, options)
       },
 
       setLocked(id, locked) {
@@ -545,6 +741,19 @@ export function createEditorStore(initialHtml: string): EditorStore {
           if (locked) next[id] = true
           else delete next[id]
           return { locked: next }
+        })
+      },
+
+      setLockedMany(ids, locked) {
+        set((state) => {
+          let next: Record<NodeId, true> | null = null
+          for (const id of ids) {
+            if (Boolean(state.locked[id]) === locked) continue
+            next ??= { ...state.locked }
+            if (locked) next[id] = true
+            else delete next[id]
+          }
+          return next ? { locked: next } : state
         })
       },
 
@@ -578,7 +787,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
           historyRestored()
           return {
             doc: step.snapshot.doc,
-            selectedId: step.snapshot.selectedId,
+            ...restoredSelection(step.snapshot),
             editingTextId: null,
             history: step.history,
           }
@@ -592,7 +801,7 @@ export function createEditorStore(initialHtml: string): EditorStore {
           historyRestored()
           return {
             doc: step.snapshot.doc,
-            selectedId: step.snapshot.selectedId,
+            ...restoredSelection(step.snapshot),
             editingTextId: null,
             history: step.history,
           }

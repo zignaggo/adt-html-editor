@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from 'react'
 import { isStyled } from '../core/model'
+import type { PlaceUpdate } from '../core/store'
 import { useEditorContext, useEditorStoreApi, useFixedLayout } from '../components/Editor/context'
 import { positionDeclarations } from './position'
 import { styleOriginOf } from './transform/elementTransform'
@@ -26,29 +27,36 @@ export function useFixedNudge(): (event: KeyboardEvent<HTMLElement>) => boolean 
     if ((event.target as HTMLElement).isContentEditable) return false
 
     const { state, actions } = store
-    const { selectedId } = state
-    if (!selectedId || state.locked[selectedId]) return false
-    const node = state.doc.nodes[selectedId]
-    if (!node || !isStyled(node)) return false
+    const { selectedIds } = state
+    if (selectedIds.length === 0) return false
 
     const root = canvasRootRef.current
-    const element = root?.querySelector<HTMLElement>(`[data-adt-id="${selectedId}"]`)
-    if (!root || !element) return false
+    if (!root) return false
 
-    const current = readLayoutBox(element, root)
-    const origin = styleOriginOf(element, root)
     const step = event.shiftKey ? FAST_STEP : STEP
+    const updates: PlaceUpdate[] = []
+    for (const id of selectedIds) {
+      if (state.locked[id]) continue
+      const node = state.doc.nodes[id]
+      if (!node || !isStyled(node)) continue
+      const element = root.querySelector<HTMLElement>(`[data-adt-id="${id}"]`)
+      if (!element) continue
+      const current = readLayoutBox(element, root)
+      const origin = styleOriginOf(element, root)
+      updates.push({
+        id,
+        style: positionDeclarations(
+          node.attrs.style,
+          current.x + delta[0] * step - origin.x,
+          current.y + delta[1] * step - origin.y,
+          precision,
+        ),
+      })
+    }
+    if (updates.length === 0) return false
 
     event.preventDefault()
-    actions.placeNode(selectedId, {
-      style: positionDeclarations(
-        node.attrs.style,
-        current.x + delta[0] * step - origin.x,
-        current.y + delta[1] * step - origin.y,
-        precision,
-      ),
-      coalesce: true,
-    })
+    actions.placeNodes(updates, { coalesce: true })
     return true
   }
 }

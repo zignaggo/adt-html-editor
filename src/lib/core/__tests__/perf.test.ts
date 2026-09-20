@@ -87,4 +87,22 @@ describe('performance budget (2,000 nodes)', () => {
     const roots = childrenOf(doc, doc.rootId)
     expect(measure('collect', () => collectSubtree(doc, roots[0]))).toBeLessThan(20)
   })
+
+  it('placeNodes over 50 nodes stays under 20 ms and pushes one entry', () => {
+    const store = createEditorStore(html)
+    const targets = childrenOf(store.state.doc, store.state.doc.rootId).slice(0, 50)
+    const updates = targets.map((id, index) => ({ id, style: `left: ${index}px` }))
+    const elapsed = measure('placeNodes', () => store.actions.placeNodes(updates))
+    expect(elapsed).toBeLessThan(20)
+    expect(store.state.history.past).toHaveLength(1)
+  })
+
+  it('removeNodes over 50 nodes stays under 20 ms and pushes one entry', () => {
+    const store = createEditorStore(html)
+    const targets = childrenOf(store.state.doc, store.state.doc.rootId).slice(0, 50)
+    const elapsed = measure('removeNodes', () => store.actions.removeNodes(targets))
+    expect(elapsed).toBeLessThan(20)
+    expect(store.state.history.past).toHaveLength(1)
+    expect(store.state.doc.nodes[targets[0]]).toBeUndefined()
+  })
 })

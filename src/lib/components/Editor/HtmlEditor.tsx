@@ -40,7 +40,7 @@ import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Pal
 import { EditorProvider, type EditorProviderProps } from './EditorProvider'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
 import { useEditorShortcuts } from './useEditorShortcuts'
-import styles from './HtmlEditor.module.css'
+import { cn } from 'cn'
 
 export type HtmlEditorProps = EditorProviderProps & {
   className?: string
@@ -61,9 +61,12 @@ function EditorShell({ className, children }: { className?: string; children: Re
   return (
     <div
       ref={shellRef}
-      className={
-        className ? `adt-editor ${styles.shell} ${className}` : `adt-editor ${styles.shell}`
-      }
+      className={cn(
+        'adt-editor adt-chrome isolate flex h-full min-h-0 min-w-0 bg-background font-sans text-xs text-pretty text-foreground tabular-nums antialiased',
+        '[&_:focus-visible]:rounded-sm [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-1 [&_:focus-visible]:outline-ring',
+        '[&_h3]:text-balance',
+        className,
+      )}
     >
       {children}
     </div>
@@ -78,12 +81,12 @@ function DefaultLayout({ className, ...providerProps }: DefaultLayoutProps) {
   return (
     <HtmlEditor {...providerProps} className={className}>
       <Layout>
-        <div className={styles.left}>
+        <div className="flex min-h-0 flex-col">
           <Palette />
-          <LayersPanel className={styles.layers} />
+          <LayersPanel className="min-h-0 flex-1" />
         </div>
-        <Canvas className={styles.canvas} />
-        <InspectorPanel className={styles.inspector} />
+        <Canvas className="min-w-0" />
+        <InspectorPanel className="min-h-0" />
       </Layout>
     </HtmlEditor>
   )
@@ -91,7 +94,12 @@ function DefaultLayout({ className, ...providerProps }: DefaultLayoutProps) {
 
 function Layout({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={className ? `${styles.threePane} ${className}` : styles.threePane}>
+    <div
+      className={cn(
+        'grid min-h-0 w-full grid-cols-[minmax(220px,260px)_minmax(0,1fr)_minmax(260px,300px)]',
+        className,
+      )}
+    >
       {children}
     </div>
   )

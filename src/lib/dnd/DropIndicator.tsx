@@ -1,6 +1,20 @@
 import { useEffect, useRef } from 'react'
 import { subscribeIndicator, type IndicatorShape, type IndicatorSurface } from './dragStore'
-import styles from './DropIndicator.module.css'
+
+const indicatorClass =
+  'pointer-events-none fixed top-0 left-0 z-40 rounded-full bg-primary will-change-transform ' +
+  'transition-opacity duration-100 ease-out data-[shape=none]:opacity-0 ' +
+  'before:absolute before:hidden before:size-1.5 before:rounded-full before:bg-primary ' +
+  'before:shadow-[0_0_0_1.5px_var(--color-background)] ' +
+  'data-[shape=line-horizontal]:opacity-100 data-[shape=line-vertical]:opacity-100 ' +
+  'data-[shape=line-horizontal]:shadow-[0_0_0_1px_var(--color-background)] ' +
+  'data-[shape=line-vertical]:shadow-[0_0_0_1px_var(--color-background)] ' +
+  'data-[shape=line-horizontal]:before:block data-[shape=line-horizontal]:before:top-1/2 ' +
+  'data-[shape=line-horizontal]:before:-left-[3px] data-[shape=line-horizontal]:before:-translate-y-1/2 ' +
+  'data-[shape=line-vertical]:before:block data-[shape=line-vertical]:before:left-1/2 ' +
+  'data-[shape=line-vertical]:before:-top-[3px] data-[shape=line-vertical]:before:-translate-x-1/2 ' +
+  'data-[shape=box]:rounded-sm data-[shape=box]:bg-primary/12 data-[shape=box]:opacity-100 ' +
+  'data-[shape=box]:shadow-[inset_0_0_0_2px_var(--color-primary)]'
 
 export function DropIndicator({ surface }: { surface: IndicatorSurface }) {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -13,7 +27,7 @@ export function DropIndicator({ surface }: { surface: IndicatorSurface }) {
     })
   }, [surface])
 
-  return <div ref={ref} className={styles.indicator} data-shape="none" aria-hidden="true" />
+  return <div ref={ref} className={indicatorClass} data-shape="none" aria-hidden="true" />
 }
 
 function applyShape(element: HTMLDivElement, shape: IndicatorShape) {

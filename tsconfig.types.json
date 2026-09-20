@@ -8,13 +8,14 @@
     "declarationMap": true,
     "allowImportingTsExtensions": false,
     "outDir": "./dist",
-    "rootDir": "./src/lib"
+    "rootDir": "./src"
   },
   "include": [
-    "src/lib"
+    "src/lib",
+    "src/shadcn"
   ],
   "exclude": [
-    "src/lib/**/*.test.ts",
-    "src/lib/**/*.test.tsx"
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
   ]
 }

@@ -3,8 +3,10 @@ import {
   useEffectEvent,
   useRef,
   useState,
+  type ComponentType,
   type KeyboardEvent,
   type ReactNode,
+  type UIEvent,
 } from 'react'
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
@@ -12,37 +14,55 @@ import { combine } from '@atlaskit/pragmatic-drag-and-drop/utils/combine'
 import type { NodeId } from '../../core/ids'
 import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
-import { useEditorSelector, useEditorStoreApi } from '../Editor/context'
+import { useEditorSelector } from '../Editor/context'
+import type { EditorState } from '../../core/store'
 import { useLayersContext } from './context'
 import type { LayerRowInfo } from './flatten'
 import { LayerRow } from './LayerRow'
+import { useLayersSearch } from './useLayersSearch'
 import { useTreeKeyboard } from './useTreeKeyboard'
-import styles from './LayersPanel.module.css'
+import { cn } from 'cn'
+
+const selectSelectedId = (state: EditorState) => state.selectedId
+
+const emptyClass = 'mx-3 my-4 text-2xs text-pretty text-muted-foreground/70'
 
 const ROW_HEIGHT = 30
 const VIRTUALIZE_ABOVE = 300
 const OVERSCAN = 10
 
 export function LayersHeader({ children }: { children?: ReactNode }) {
-  return <div className={styles.header}>{children}</div>
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+      {children}
+    </div>
+  )
 }
 
 export function LayersTitle({ children }: { children?: ReactNode }) {
-  return <span className={styles.title}>{children}</span>
+  return (
+    <span className="text-2xs font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+      {children}
+    </span>
+  )
 }
 
 export function LayersCount() {
   const { state } = useLayersContext()
-  return <span className={styles.count}>{state.matchCount}</span>
+  return (
+    <span className="min-w-5 rounded-sm bg-accent px-1.5 py-px text-center text-2xs text-muted-foreground tabular-nums">
+      {state.matchCount}
+    </span>
+  )
 }
 
 export function LayersEmpty({ children }: { children?: ReactNode }) {
   const { rows, state } = useLayersContext()
   if (rows.length > 0) return null
   if (state.isSearching) {
-    return <p className={styles.empty}>No elements match “{state.query.trim()}”.</p>
+    return <p className={emptyClass}>No elements match “{state.query.trim()}”.</p>
   }
-  return <p className={styles.empty}>{children ?? 'No elements. Drag something from the palette.'}</p>
+  return <p className={emptyClass}>{children ?? 'No elements. Drag something from the palette.'}</p>
 }
 
 export type LayersSearchProps = {
@@ -56,59 +76,76 @@ export function LayersSearch({
   placeholder = 'Search elements…',
   'aria-label': ariaLabel = 'Search elements',
 }: LayersSearchProps) {
-  const { rows, state, actions, meta } = useLayersContext()
-  const store = useEditorStoreApi()
-  const { focusTree } = actions
-
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') {
-      if (!state.query) return
-      event.preventDefault()
-      actions.clearSearch()
-      return
-    }
-    if (event.key !== 'ArrowDown' && event.key !== 'Enter') return
-    if (rows.length === 0) return
-    event.preventDefault()
-    const { selectedId } = store.state
-    if (!selectedId || !rows.some((row) => row.id === selectedId)) {
-      const target = rows.find((row) => row.isMatch) ?? rows[0]
-      store.actions.select(target.id)
-    }
-    focusTree()
-  }
+  const search = useLayersSearch()
 
   return (
-    <div className={className ? `${styles.search} ${className}` : styles.search}>
+    <div className={cn('border-b border-border px-3 py-1.5', className)}>
       <input
-        ref={(element) => meta.registerSearch(element)}
+        ref={(element) => search.registerInput(element)}
         type="search"
-        className={styles.searchInput}
+        className={cn(
+          'box-border min-h-[26px] w-full rounded-sm border-0 bg-card px-1.5 py-1 font-mono text-2xs text-foreground',
+          'ring-1 ring-border transition-shadow duration-100 ease-out ring-inset hover:ring-foreground/25',
+          'placeholder:text-muted-foreground/70',
+        )}
         aria-label={ariaLabel}
         placeholder={placeholder}
         autoComplete="off"
         spellCheck={false}
-        value={state.query}
-        onChange={(event) => actions.setQuery(event.target.value)}
-        onKeyDown={onKeyDown}
+        value={search.value}
+        onChange={(event) => search.setValue(event.target.value)}
+        onKeyDown={search.onKeyDown}
       />
     </div>
   )
 }
 
+export type LayersScrollerProps = {
+  ref: (element: HTMLDivElement | null) => void
+  role: 'tree'
+  'aria-label': string
+  'aria-multiselectable': true
+  tabIndex: -1
+  className: string | undefined
+  onKeyDown: (event: KeyboardEvent<HTMLElement>) => void
+  onScroll: ((event: UIEvent<HTMLDivElement>) => void) | undefined
+  children: ReactNode
+}
+
 export type LayersTreeProps = {
   className?: string
   renderRow?: (row: LayerRowInfo, isFocusable: boolean) => ReactNode
+  scroller?: ComponentType<LayersScrollerProps>
+  empty?: ReactNode
 }
 
-export function LayersTree({ className, renderRow }: LayersTreeProps) {
+function DefaultScroller({ className, ...props }: LayersScrollerProps) {
+  return (
+    <div
+      {...props}
+      className={cn(
+        'min-h-0 flex-1 overflow-auto overscroll-contain pt-1 pb-4 [scrollbar-width:thin]',
+        '[scrollbar-color:var(--scrollbar-thumb)_transparent]',
+        'focus-visible:-outline-offset-2!',
+        className,
+      )}
+    />
+  )
+}
+
+export function LayersTree({
+  className,
+  renderRow,
+  scroller: Scroller = DefaultScroller,
+  empty,
+}: LayersTreeProps) {
   const { rows, meta } = useLayersContext()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const attachScroll = (element: HTMLDivElement | null) => {
     scrollRef.current = element
     meta.registerTree(element)
   }
-  const selectedId = useEditorSelector((state) => state.selectedId)
+  const selectedId = useEditorSelector(selectSelectedId)
   const [viewport, setViewport] = useState({ scrollTop: 0, height: 0 })
 
   const onKeyDown = useTreeKeyboard(rows)
@@ -169,12 +206,13 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
   const visible = isVirtual ? rows.slice(first, last) : rows
 
   return (
-    <div
+    <Scroller
       ref={attachScroll}
       role="tree"
       aria-label="Element tree"
+      aria-multiselectable
       tabIndex={-1}
-      className={className ? `${styles.scroll} ${className}` : styles.scroll}
+      className={className}
       onKeyDown={onKeyDown}
       onScroll={
         isVirtual
@@ -190,11 +228,11 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
       }
     >
       <div
-        className={isVirtual ? styles.virtualSizer : undefined}
+        className={isVirtual ? 'relative w-full' : undefined}
         style={isVirtual ? { height: `${rows.length * ROW_HEIGHT}px` } : undefined}
       >
         <div
-          className={isVirtual ? styles.virtualWindow : undefined}
+          className={isVirtual ? 'absolute top-0 left-0 w-full will-change-transform' : undefined}
           style={isVirtual ? { transform: `translateY(${first * ROW_HEIGHT}px)` } : undefined}
         >
           {visible.map((row) =>
@@ -214,8 +252,8 @@ export function LayersTree({ className, renderRow }: LayersTreeProps) {
           )}
         </div>
       </div>
-      <LayersEmpty />
+      {empty === undefined ? <LayersEmpty /> : empty}
       <DropIndicator surface="tree" />
-    </div>
+    </Scroller>
   )
 }

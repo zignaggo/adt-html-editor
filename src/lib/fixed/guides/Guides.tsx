@@ -3,7 +3,6 @@ import { useFixedLayout } from '../../components/Editor/context'
 import { subscribeFixedDrag } from '../fixedDragStore'
 import { subscribeTransformGesture } from '../transform/transformGestureStore'
 import type { Guide } from './computeGuides'
-import styles from './Guides.module.css'
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -47,7 +46,7 @@ export function Guides() {
   return (
     <svg
       ref={ref}
-      className={styles.guides}
+      className="pointer-events-none absolute top-0 left-0 z-[31] overflow-visible [&_line]:stroke-[#ff2d8a] [&_line]:stroke-1"
       width={page.width}
       height={page.height}
       viewBox={`0 0 ${page.width} ${page.height}`}

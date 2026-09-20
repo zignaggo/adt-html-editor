@@ -109,8 +109,9 @@ export { ClassChips } from './components/Inspector/ClassChips'
 export type { ClassChipsProps } from './components/Inspector/ClassChips'
 export { ClassCombobox } from './components/Inspector/ClassCombobox'
 export type { ClassComboboxProps } from './components/Inspector/ClassCombobox'
-export { CATEGORIES, COLOR_SWATCHES, PALETTE_COLORS, VARIANTS } from './tailwind/categories'
-export type { CategorySpec, ControlSpec, VariantId } from './tailwind/categories'
+export { CATEGORIES, COLOR_SWATCHES, PALETTE_COLORS } from './tailwind/categories'
+export type { CategorySpec, ControlSpec } from './tailwind/categories'
+export * from './tailwind/variants'
 
 export { Palette, PaletteGrid, PaletteHeader, PaletteItem } from './components/Palette/Palette'
 export type { PaletteProps } from './components/Palette/Palette'
@@ -134,19 +135,35 @@ export {
   useDocument,
   useRootId,
   useIsSelected,
+  useIsAnchor,
+  useSelectedId,
+  useSelectedIds,
+  useSelectionCount,
+  selectSelectedId,
+  selectSelectedIds,
   useIsCollapsed,
   useIsLocked,
   useLayoutMode,
   useFixedLayout,
   useCanUndo,
   useCanRedo,
+  useBreakpoint,
 } from './components/Editor/context'
 export type {
   EditorApi,
+  EditorSelectorOptions,
   FixedLayoutConfig,
   LayoutMode,
   StyleMode,
 } from './components/Editor/context'
+
+export {
+  EMPTY_SELECTION,
+  commonParentOf,
+  normalizeSelection,
+  sameSelection,
+  sortByDocumentOrder,
+} from './core/selection'
 
 export { parseHtml, looksLikeFullDocument } from './core/html/parse'
 export { serializeHtml } from './core/html/serialize'
@@ -159,7 +176,11 @@ export type {
   EditorState,
   EditorStore,
   NodeTemplate,
+  PlaceManyOptions,
   PlaceOptions,
+  PlaceUpdate,
+  SelectOptions,
+  TransactionOptions,
 } from './core/store'
 
 export type { NodeId } from './core/ids'
@@ -182,3 +203,38 @@ export { resizeBox, snapResizeEdges } from './fixed/transform/resize'
 export type { HandleId } from './fixed/transform/handleSpecs'
 export { subscribeTransformGesture, transformGesture } from './fixed/transform/transformGestureStore'
 export type { TransformGesture } from './fixed/transform/transformGestureStore'
+export { useLayersSearch } from './components/Layers/useLayersSearch'
+export type { LayersSearch as LayersSearchApi } from './components/Layers/useLayersSearch'
+export type { LayersScrollerProps } from './components/Layers/LayersParts'
+export { useDarkToggle, useWidthPresets } from './components/Canvas/useCanvasControls'
+export type { DarkToggle, WidthPresets } from './components/Canvas/useCanvasControls'
+export { useZoom } from './fixed/useZoom'
+export type { ZoomControl } from './fixed/useZoom'
+export { useVariantBar } from './components/Inspector/useVariantBar'
+export type { VariantBar } from './components/Inspector/useVariantBar'
+export { useClassSuggestions, suggestFor } from './components/Inspector/useClassSuggestions'
+export { useAttributeFields } from './components/Inspector/useAttributeFields'
+export type { AttributeField, AttributeFields as AttributeFieldsApi } from './components/Inspector/useAttributeFields'
+export { usePositionFields } from './fixed/usePositionFields'
+export type { PositionFields, StackingOrder } from './fixed/usePositionFields'
+export { useTransformFields } from './fixed/useTransformFields'
+export type { TransformFields } from './fixed/useTransformFields'
+export { LayersProvider } from './components/Layers/LayersPanel'
+export { InspectorProvider } from './components/Inspector/InspectorPanel'
+export { CanvasProvider } from './components/Canvas/Canvas'
+export { useClassMapControl } from './components/Inspector/controls/useClassMapControl'
+export type { ClassMapControl, ClassMapOverride } from './components/Inspector/controls/useClassMapControl'
+export { useOptionalFields } from './components/Inspector/controls/useOptionalFields'
+export type { OptionalField, OptionalFields } from './components/Inspector/controls/useOptionalFields'
+export { useComputedStyles } from './components/Inspector/controls/useComputedStyles'
+export type { ComputedStyles } from './components/Inspector/controls/useComputedStyles'
+export * from './tailwind/classMaps'
+export { PALETTE_FAMILIES, KEYWORD_COLORS, hexFromToken, tokenFromHex } from './tailwind/palette'
+export type { PaletteFamily, PaletteShade, KeywordColor } from './tailwind/palette'
+export { alignName, lineHeightRatio, parsePx, rgbToHex, weightName } from './style/computed'
+export { useNodeSummary } from './components/Inspector/useNodeSummary'
+export type { NodeCrumb, NodeSummary } from './components/Inspector/useNodeSummary'
+export { useSelectionSummary } from './components/Inspector/useSelectionSummary'
+export type { SelectionSummary, SelectionTag } from './components/Inspector/useSelectionSummary'
+export { rowsBetween } from './components/Layers/flatten'
+export { copySubtree, copySubtrees, readClipboard } from './core/clipboard'

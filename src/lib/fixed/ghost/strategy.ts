@@ -1,6 +1,6 @@
 import type { Input } from '@atlaskit/pragmatic-drag-and-drop/types'
 import type { Box, Point, Size } from '../geometry'
-import styles from './ghost.module.css'
+import { ghostBoxClass, ghostTargetClass } from './ghostStyles'
 
 export type NativeSetDragImage = DataTransfer['setDragImage'] | null
 
@@ -11,11 +11,17 @@ export type GhostPreviewArgs = {
   scale: number
 }
 
-export type GhostStartArgs = {
+export type GhostMember = {
   element: HTMLElement | null
+  offset: Point
+  size: Size
+}
+
+export type GhostStartArgs = {
   layer: HTMLElement
   origin: Box
   size: Size
+  members: GhostMember[]
 }
 
 export type GhostStrategy = {
@@ -29,7 +35,7 @@ export type GhostStrategy = {
 
 export function createGhostBox(layer: HTMLElement, size: Size, className: string): HTMLDivElement {
   const box = document.createElement('div')
-  box.className = `${styles.box} ${className}`
+  box.className = `${ghostBoxClass} ${className}`
   box.style.width = `${size.width}px`
   box.style.height = `${size.height}px`
   layer.appendChild(box)
@@ -47,7 +53,7 @@ export function createOutlineStrategy(): GhostStrategy {
     hidesNativePreview: false,
     generatePreview() {},
     start({ layer, origin, size }) {
-      target = createGhostBox(layer, size, styles.target)
+      target = createGhostBox(layer, size, ghostTargetClass)
       moveGhostBox(target, origin)
     },
     move(position) {
