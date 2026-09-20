@@ -3,6 +3,8 @@ type Listener = (active: boolean) => void
 const listeners = new Set<Listener>()
 
 let active = false
+let keyHeld = false
+let pointerHeld = false
 let trackers = 0
 
 export function isPanModifier(event: { ctrlKey: boolean; metaKey: boolean }): boolean {
@@ -21,18 +23,26 @@ export function subscribePanMode(listener: Listener): () => void {
   }
 }
 
-function setActive(next: boolean) {
+function sync() {
+  const next = keyHeld || pointerHeld
   if (active === next) return
   active = next
   for (const listener of listeners) listener(active)
 }
 
+export function setPointerPan(held: boolean): void {
+  pointerHeld = held
+  sync()
+}
+
 function onKey(event: KeyboardEvent) {
-  setActive(isPanModifier(event))
+  keyHeld = isPanModifier(event)
+  sync()
 }
 
 function onRelease() {
-  setActive(false)
+  keyHeld = false
+  sync()
 }
 
 export function trackPanMode(): () => void {
@@ -51,6 +61,8 @@ export function trackPanMode(): () => void {
     window.removeEventListener('keyup', onKey)
     window.removeEventListener('blur', onRelease)
     document.removeEventListener('visibilitychange', onRelease)
-    setActive(false)
+    keyHeld = false
+    pointerHeld = false
+    sync()
   }
 }

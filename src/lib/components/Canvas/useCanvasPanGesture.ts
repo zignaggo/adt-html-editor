@@ -1,8 +1,10 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { useControls } from 'react-zoom-pan-pinch'
-import { panModeActive, subscribePanMode, trackPanMode } from '../../core/panMode'
+import { panModeActive, setPointerPan, subscribePanMode, trackPanMode } from '../../core/panMode'
 
 const PAN_ATTRIBUTE = 'data-adt-pan'
+const MIDDLE_BUTTON = 1
+const LEFT_BUTTON = 0
 
 export function useCanvasPanGesture(stageRef: RefObject<HTMLElement | null>) {
   const controls = useControls()
@@ -27,14 +29,25 @@ export function useCanvasPanGesture(stageRef: RefObject<HTMLElement | null>) {
     const release = () => {
       if (pointerId === null) return
       pointerId = null
+      setPointerPan(false)
       mark(panModeActive() ? 'active' : null)
     }
 
     const onPointerDown = (event: PointerEvent) => {
-      if (pointerId !== null || event.button !== 0 || !panModeActive()) return
+      if (pointerId !== null) return
+      const middle = event.button === MIDDLE_BUTTON
+      if (!middle && !(event.button === LEFT_BUTTON && panModeActive())) return
+
+      if (middle) setPointerPan(true)
       pointerId = event.pointerId
       last = { x: event.clientX, y: event.clientY }
       mark('panning')
+      event.preventDefault()
+      event.stopPropagation()
+    }
+
+    const onMiddleButton = (event: MouseEvent) => {
+      if (event.button !== MIDDLE_BUTTON) return
       event.preventDefault()
       event.stopPropagation()
     }
@@ -52,6 +65,8 @@ export function useCanvasPanGesture(stageRef: RefObject<HTMLElement | null>) {
     })
 
     element.addEventListener('pointerdown', onPointerDown, { capture: true })
+    element.addEventListener('mousedown', onMiddleButton, { capture: true })
+    element.addEventListener('auxclick', onMiddleButton, { capture: true })
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', release)
     window.addEventListener('pointercancel', release)
@@ -62,6 +77,8 @@ export function useCanvasPanGesture(stageRef: RefObject<HTMLElement | null>) {
       stopTracking()
       mark(null)
       element.removeEventListener('pointerdown', onPointerDown, { capture: true })
+      element.removeEventListener('mousedown', onMiddleButton, { capture: true })
+      element.removeEventListener('auxclick', onMiddleButton, { capture: true })
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', release)
       window.removeEventListener('pointercancel', release)
