@@ -1,8 +1,8 @@
 import type { DropTargetRecord, Input } from '@atlaskit/pragmatic-drag-and-drop/types'
 import { extractInstruction } from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item'
 import { isCanvasTarget, isTreeTarget, type DragSurface } from './data'
-import { computeInsideSpot, extractCanvasZone } from './canvasHitbox'
-import type { IndicatorShape } from './dragStore'
+import { computeEdgeLine, computeInsideSpot, extractCanvasZone, type SpotLine } from './canvasHitbox'
+import { INDICATOR_THICKNESS, type IndicatorShape } from './dragStore'
 import { shapeForInstruction } from './useTreeDropTarget'
 
 export type SurfaceIndicator = { surface: DragSurface; shape: IndicatorShape }
@@ -31,53 +31,40 @@ export function indicatorFor(
 }
 
 function canvasShape(target: DropTargetRecord, input: Input): IndicatorShape {
+  if (!isCanvasTarget(target.data)) return { kind: 'none' }
   const zone = extractCanvasZone(target.data)
   if (!zone) return { kind: 'none' }
-  const rect = target.element.getBoundingClientRect()
 
   if (zone.type === 'edge') {
-    if (zone.edge === 'top' || zone.edge === 'bottom') {
-      return {
-        kind: 'line',
-        axis: 'horizontal',
-        top: zone.edge === 'top' ? rect.top : rect.bottom,
-        left: rect.left,
-        length: rect.width,
-        indent: 0,
-      }
-    }
-    return {
-      kind: 'line',
-      axis: 'vertical',
-      top: rect.top,
-      left: zone.edge === 'left' ? rect.left : rect.right,
-      length: rect.height,
-      indent: 0,
-    }
+    return shapeForLine(computeEdgeLine(target.element, zone.edge))
   }
 
-  if (!isCanvasTarget(target.data)) return { kind: 'none' }
   const spot = computeInsideSpot(target.element, input, target.data.nestAxis)
+  if (spot.line) return shapeForLine(spot.line)
 
-  if (!spot.line) {
-    return { kind: 'box', top: rect.top, left: rect.left, width: rect.width, height: rect.height }
-  }
+  const rect = target.element.getBoundingClientRect()
+  return { kind: 'box', top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+}
 
-  return spot.line.axis === 'horizontal'
+function shapeForLine(line: SpotLine | null): IndicatorShape {
+  if (!line) return { kind: 'none' }
+  const centered = line.cross - INDICATOR_THICKNESS / 2
+
+  return line.axis === 'horizontal'
     ? {
         kind: 'line',
         axis: 'horizontal',
-        top: spot.line.cross,
-        left: spot.line.start,
-        length: spot.line.length,
+        top: centered,
+        left: line.start,
+        length: line.length,
         indent: 0,
       }
     : {
         kind: 'line',
         axis: 'vertical',
-        top: spot.line.start,
-        left: spot.line.cross,
-        length: spot.line.length,
+        top: line.start,
+        left: centered,
+        length: line.length,
         indent: 0,
       }
 }

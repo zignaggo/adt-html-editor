@@ -1,5 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { subscribeIndicator, type IndicatorShape, type IndicatorSurface } from './dragStore'
+import {
+  INDICATOR_THICKNESS,
+  subscribeIndicator,
+  type IndicatorShape,
+  type IndicatorSurface,
+} from './dragStore'
 
 const indicatorClass =
   'pointer-events-none fixed top-0 left-0 z-40 rounded-full bg-primary will-change-transform ' +
@@ -48,9 +53,9 @@ function applyShape(element: HTMLDivElement, shape: IndicatorShape) {
   element.style.transform = `translate3d(${shape.left}px, ${shape.top}px, 0)`
   if (shape.axis === 'horizontal') {
     element.style.width = `${shape.length}px`
-    element.style.height = '2px'
+    element.style.height = `${INDICATOR_THICKNESS}px`
   } else {
-    element.style.width = '2px'
+    element.style.width = `${INDICATOR_THICKNESS}px`
     element.style.height = `${shape.length}px`
   }
 }

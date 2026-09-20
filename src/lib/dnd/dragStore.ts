@@ -12,6 +12,8 @@ export type IndicatorShape =
 
 export type IndicatorSurface = 'tree' | 'canvas'
 
+export const INDICATOR_THICKNESS = 2
+
 type Listener = (shape: IndicatorShape) => void
 
 const listeners = new Map<IndicatorSurface, Set<Listener>>()
