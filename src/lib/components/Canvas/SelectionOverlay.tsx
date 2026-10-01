@@ -3,9 +3,12 @@ import type { NodeId } from '../../core/ids'
 import { subscribeHovered } from '../../core/hover'
 import { labelOf } from '../../core/model'
 import { useEditorContext, useEditorStoreApi } from '../Editor/context'
+import { subscribeCanvasViewport } from './viewport'
+
+const clipClass = 'pointer-events-none fixed top-0 left-0 z-30 overflow-hidden'
 
 const overlayClass =
-  'pointer-events-none fixed top-0 left-0 z-30 rounded-sm will-change-transform ' +
+  'pointer-events-none absolute top-0 left-0 rounded-sm will-change-transform ' +
   'transition-opacity duration-100 ease-out data-[visible=false]:opacity-0 data-[visible=true]:opacity-100'
 
 const selectionClass = `${overlayClass} ring-[1.5px] ring-primary`
@@ -24,6 +27,7 @@ export function SelectionOverlay() {
   const hoverRef = useRef<HTMLDivElement | null>(null)
   const labelRef = useRef<HTMLSpanElement | null>(null)
   const poolRef = useRef<HTMLDivElement | null>(null)
+  const clipRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const root = canvasRootRef.current
@@ -33,11 +37,12 @@ export function SelectionOverlay() {
     let selectedIds = store.state.selectedIds
     let hoveredId: NodeId | null = null
     let frame = 0
+    let origin = { x: 0, y: 0 }
     const pool = new Map<NodeId, HTMLDivElement>()
 
     const placeRect = (box: HTMLDivElement, rect: DOMRect) => {
       box.dataset.visible = 'true'
-      box.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`
+      box.style.transform = `translate3d(${rect.left - origin.x}px, ${rect.top - origin.y}px, 0)`
       box.style.width = `${rect.width}px`
       box.style.height = `${rect.height}px`
     }
@@ -54,7 +59,7 @@ export function SelectionOverlay() {
       if (withLabel && labelRef.current && id) {
         const node = store.state.doc.nodes[id]
         labelRef.current.textContent = node ? labelOf(node) : ''
-        labelRef.current.dataset.flip = rect.top < 24 ? 'below' : 'above'
+        labelRef.current.dataset.flip = rect.top - origin.y < 24 ? 'below' : 'above'
       }
     }
 
@@ -84,8 +89,21 @@ export function SelectionOverlay() {
       }
     }
 
+    const viewport = root.closest('[data-adt-canvas-scroll]') ?? root
+
+    const placeClip = () => {
+      const clip = clipRef.current
+      if (!clip) return
+      const rect = viewport.getBoundingClientRect()
+      origin = { x: rect.left, y: rect.top }
+      clip.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`
+      clip.style.width = `${rect.width}px`
+      clip.style.height = `${rect.height}px`
+    }
+
     const sync = () => {
       frame = 0
+      placeClip()
       const delegated = root.hasAttribute('data-adt-handles')
       const many = selectedIds.length > 1
       place(selectionRef.current, delegated || many ? null : (selectedIds[0] ?? null), true)
@@ -112,9 +130,10 @@ export function SelectionOverlay() {
     const observer = new ResizeObserver(schedule)
     observer.observe(root)
 
-    const scrollParent = root.closest('[data-adt-canvas-scroll]') ?? root
+    const scrollParent = viewport
     scrollParent.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule)
+    const unsubscribeViewport = subscribeCanvasViewport(schedule)
 
     const mutation = new MutationObserver(schedule)
     mutation.observe(root, { childList: true, subtree: true, attributes: true })
@@ -125,6 +144,7 @@ export function SelectionOverlay() {
       cancelAnimationFrame(frame)
       storeSubscription.unsubscribe()
       unsubscribeHover()
+      unsubscribeViewport()
       observer.disconnect()
       mutation.disconnect()
       scrollParent.removeEventListener('scroll', schedule)
@@ -135,13 +155,13 @@ export function SelectionOverlay() {
   }, [canvasRootRef, store])
 
   return (
-    <>
-      <div ref={hoverRef} className={hoverClass} data-visible="false" aria-hidden="true" />
-      <div ref={selectionRef} className={selectionClass} data-visible="false" aria-hidden="true">
+    <div ref={clipRef} className={clipClass} aria-hidden="true">
+      <div ref={hoverRef} className={hoverClass} data-visible="false" />
+      <div ref={selectionRef} className={selectionClass} data-visible="false">
         <span ref={labelRef} className={labelClass} />
       </div>
-      <div ref={poolRef} aria-hidden="true" />
-    </>
+      <div ref={poolRef} />
+    </div>
   )
 }
 

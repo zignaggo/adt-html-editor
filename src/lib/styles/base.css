@@ -10,6 +10,10 @@
 
 @custom-variant dark (&:is(.dark *, .adt-dark, .adt-dark *));
 
+.react-transform-component .adt-canvas img {
+  pointer-events: auto;
+}
+
 @layer base {
   .adt-chrome,
   .adt-chrome *,

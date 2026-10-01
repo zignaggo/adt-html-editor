@@ -1,8 +1,11 @@
 {
   "name": "adt-html-editor",
-  "private": true,
   "version": "0.1.0",
   "type": "module",
+  "repository": "https://github.com/zignaggo/adt-html-editor.git",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build --config vite.lib.config.ts && tsc -p tsconfig.types.json",
@@ -21,6 +24,7 @@
     "@tanstack/react-store": "^0.11.1",
     "@tanstack/store": "^0.11.1",
     "cn": "^0.3.0",
+    "react-zoom-pan-pinch": "^4.2.0",
     "tailwindcss": "^4.3.3",
     "tiny-invariant": "^1.3.3",
     "use-sync-external-store": "^1.6.0"

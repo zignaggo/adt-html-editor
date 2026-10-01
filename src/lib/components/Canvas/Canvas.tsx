@@ -116,6 +116,7 @@ function DefaultCanvas() {
       <CanvasToolbar>
         <HistoryGroup />
         <CanvasWidthPresets />
+        <Zoom />
         <CanvasDarkToggle />
       </CanvasToolbar>
       <CanvasViewport />

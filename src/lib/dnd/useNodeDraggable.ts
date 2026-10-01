@@ -4,6 +4,7 @@ import { draggable } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-ada
 import type { NodeId } from '../core/ids'
 import { labelOf } from '../core/model'
 import { useEditorStoreApi } from '../components/Editor/context'
+import { panModeActive } from '../core/panMode'
 import { nodeDrag, type DragSurface } from './data'
 import { renderDragPreview, renderElementPreview } from './preview'
 
@@ -25,6 +26,7 @@ export function useNodeDraggable(
 
     return draggable({
       element,
+      canDrag: () => surface !== 'canvas' || !panModeActive(),
       getInitialData: () => {
         const node = store.state.doc.nodes[nodeId]
         return nodeDrag({ nodeId, surface, label: node ? labelOf(node) : nodeId })

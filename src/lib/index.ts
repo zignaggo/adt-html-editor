@@ -79,6 +79,10 @@ export {
   CanvasWidthPresets,
 } from './components/Canvas/CanvasParts'
 export { CanvasNode } from './components/Canvas/CanvasNode'
+export { CanvasStage, CanvasStageContent } from './components/Canvas/CanvasStage'
+export type { CanvasStageProps } from './components/Canvas/CanvasStage'
+export { useCanvasStage } from './components/Canvas/stage'
+export type { CanvasStageSize } from './components/Canvas/stage'
 export { SelectionOverlay } from './components/Canvas/SelectionOverlay'
 export { DEFAULT_WIDTH_PRESETS, useCanvasContext } from './components/Canvas/context'
 export type { CanvasWidthPreset, CanvasZoom as CanvasZoomValue } from './components/Canvas/context'
