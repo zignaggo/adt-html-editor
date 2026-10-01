@@ -1,8 +1,11 @@
 {
-  "name": "@ziggnago/adt-html-editor",
+  "name": "@zignaggo/adt-html-editor",
   "version": "0.1.0",
   "type": "module",
-  "repository": "https://github.com/zignaggo/adt-html-editor.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziggnago/adt-html-editor.git"
+  },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
