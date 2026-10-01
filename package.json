@@ -1,8 +1,11 @@
 {
   "name": "adt-html-editor",
-  "private": true,
   "version": "0.1.0",
   "type": "module",
+  "repository": "https://github.com/zignaggo/adt-html-editor.git",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build --config vite.lib.config.ts && tsc -p tsconfig.types.json",
