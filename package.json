@@ -1,5 +1,5 @@
 {
-  "name": "adt-html-editor",
+  "name": "@ziggnago/adt-html-editor",
   "version": "0.1.0",
   "type": "module",
   "repository": "https://github.com/zignaggo/adt-html-editor.git",
