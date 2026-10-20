@@ -287,6 +287,53 @@ describe('editor store', () => {
     })
   })
 
+  describe('setTag', () => {
+    it('keeps the id, the classes, the attributes and the children', () => {
+      const [p1] = idsByTag(store, 'p')
+      store.actions.setClasses(p1, ['text-lg'])
+      const before = store.state.doc.nodes[p1]
+
+      expect(store.actions.setTag(p1, 'h2')).toBe(true)
+
+      const after = store.state.doc.nodes[p1]
+      if (after.kind !== 'element' || before.kind !== 'element') throw new Error('not an element')
+      expect(after.tag).toBe('h2')
+      expect(after.id).toBe(p1)
+      expect(after.classes).toEqual(['text-lg'])
+      expect(after.attrs).toEqual(before.attrs)
+      expect(after.children).toEqual(before.children)
+    })
+
+    it('keeps the selection and serializes the new tag', () => {
+      const [p1] = idsByTag(store, 'p')
+      store.actions.select(p1)
+      store.actions.setTag(p1, 'h2')
+
+      expect(store.state.selectedId).toBe(p1)
+      expect(store.actions.getHtml()).toContain('<h2 id="p1">one</h2>')
+    })
+
+    it('is one undo away from the previous tag', () => {
+      const [p1] = idsByTag(store, 'p')
+      store.actions.setTag(p1, 'h2')
+      expect(store.state.history.past).toHaveLength(1)
+
+      store.actions.undo()
+      const node = store.state.doc.nodes[p1]
+      expect(node.kind === 'element' && node.tag).toBe('p')
+    })
+
+    it('refuses the root, the same tag, a void tag with children and an opaque tag', () => {
+      const [p1] = idsByTag(store, 'p')
+      expect(store.actions.setTag(store.state.doc.rootId, 'div')).toBe(false)
+      expect(store.actions.setTag(p1, 'p')).toBe(false)
+      expect(store.actions.setTag(p1, 'img')).toBe(false)
+      expect(store.actions.setTag(p1, 'script')).toBe(false)
+      expect(store.actions.setTag(p1, 'not a tag')).toBe(false)
+      expect(store.state.history.past).toHaveLength(0)
+    })
+  })
+
   it('setLocked toggles without touching history', () => {
     const [p1] = idsByTag(store, 'p')
     store.actions.setLocked(p1, true)

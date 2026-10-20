@@ -26,7 +26,7 @@ import {
 import { readGroupBox } from './groupBox'
 import { HANDLE_SPECS, cursorFor, type HandleId } from './handleSpecs'
 import { hasTransformedAncestor } from './layoutBox'
-import { runPointerGesture } from './pointerGesture'
+import { runPointerGesture } from '../../core/pointerGesture'
 import {
   BADGE_CLASS,
   FRAME_CLASS,

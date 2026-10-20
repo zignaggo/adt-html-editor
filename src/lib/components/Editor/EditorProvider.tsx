@@ -33,6 +33,10 @@ export type FixedLayoutOptions = {
   resolveAsset?: (url: string) => string
 }
 
+export type FlowLayoutOptions = {
+  directControls?: boolean
+}
+
 const DEFAULT_PAGE: PageSize = { width: 1200, height: 1600 }
 const DEFAULT_PRECISION = 1
 const DEFAULT_SNAP_THRESHOLD = 4
@@ -86,11 +90,13 @@ export type EditorProviderProps = {
   styleMode?: StyleMode
   layout?: LayoutMode | 'auto'
   fixedLayout?: FixedLayoutOptions
+  flowLayout?: FlowLayoutOptions
   handleRef?: Ref<HtmlEditorHandle>
   children: ReactNode
 }
 
 const NO_FIXED_OPTIONS: FixedLayoutOptions = {}
+const NO_FLOW_OPTIONS: FlowLayoutOptions = {}
 
 export function EditorProvider({
   defaultValue = '',
@@ -100,6 +106,7 @@ export function EditorProvider({
   styleMode = 'tailwind',
   layout = 'auto',
   fixedLayout = NO_FIXED_OPTIONS,
+  flowLayout = NO_FLOW_OPTIONS,
   handleRef,
   children,
 }: EditorProviderProps) {
@@ -140,6 +147,7 @@ export function EditorProvider({
     styleMode,
     layout: resolved.layout,
     fixedLayout: fixedConfig,
+    flowLayout: { directControls: flowLayout.directControls ?? false },
     aspectLock,
     breakpoint,
     canvasRootRef,

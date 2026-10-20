@@ -3,6 +3,7 @@ import { useSelector } from '@tanstack/react-store'
 import type { Store } from '@tanstack/store'
 import invariant from 'tiny-invariant'
 import type { NodeId } from '../../core/ids'
+import { isLockedAnywhere, isLockedDeep } from '../../core/lock'
 import type { AnyNode, EditorDocument } from '../../core/model'
 import type { EditorActions, EditorState, EditorStore } from '../../core/store'
 import type { BreakpointId } from '../../tailwind/variants'
@@ -20,11 +21,16 @@ export type FixedLayoutConfig = {
   resolveAsset?: (url: string) => string
 }
 
+export type FlowLayoutConfig = {
+  directControls: boolean
+}
+
 export type EditorContextValue = {
   store: EditorStore
   styleMode: StyleMode
   layout: LayoutMode
   fixedLayout: FixedLayoutConfig
+  flowLayout: FlowLayoutConfig
   aspectLock: Store<boolean>
   breakpoint: Store<BreakpointId>
   canvasRootRef: { current: HTMLElement | null }
@@ -95,12 +101,29 @@ export function useIsLocked(id: NodeId): boolean {
   return useEditorSelector((state) => Boolean(state.locked[id]))
 }
 
+export function useEffectiveLock(id: NodeId): boolean {
+  return useEditorSelector((state) => isLockedDeep(state.doc, state.locked, id))
+}
+
+export function useSubtreeLock(id: NodeId): boolean {
+  return useEditorSelector((state) => isLockedAnywhere(state.doc, state.locked, id))
+}
+
 export function useLayoutMode(): LayoutMode {
   return useEditorContext().layout
 }
 
 export function useFixedLayout(): FixedLayoutConfig {
   return useEditorContext().fixedLayout
+}
+
+export function useFlowLayout(): FlowLayoutConfig {
+  return useEditorContext().flowLayout
+}
+
+export function useDirectControls(): boolean {
+  const { layout, flowLayout } = useEditorContext()
+  return layout === 'flow' && flowLayout.directControls
 }
 
 export function useAspectLocked(): boolean {

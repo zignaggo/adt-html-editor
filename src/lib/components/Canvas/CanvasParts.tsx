@@ -58,7 +58,7 @@ export function CanvasDarkToggle({ children }: { children?: ReactNode }) {
   )
 }
 
-export function CanvasViewport({ className }: { className?: string }) {
+export function CanvasViewport({ className, children }: { className?: string; children?: ReactNode }) {
   const stageRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -79,6 +79,7 @@ export function CanvasViewport({ className }: { className?: string }) {
 
       <SelectionOverlay />
       <DropIndicator surface="canvas" />
+      {children}
     </CanvasStage>
   )
 }

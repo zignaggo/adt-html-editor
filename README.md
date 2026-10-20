@@ -234,6 +234,34 @@ For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensio
 - **Resize and rotate.** `Canvas.Handles` draws the selected element's layout box (not its bounding box, so rotated elements get a rotated frame) with eight resize handles and a rotate handle; `Canvas.Handles.Resize` and `Canvas.Handles.Rotate` can be composed separately. Gestures use pointer events, preview directly on the element so text reflows live, and commit once on release (`width`/`height`/`left`/`top` in px, or `transform: rotate()` appended to the existing `transform` list). `Shift` keeps the aspect ratio or snaps the angle to 15°, `Alt` resizes from the center or disables snapping, `Esc` cancels. Edges snap to sibling and page guides when the element is not rotated; angles within 1° of a right angle stick. Resizing an inline element writes `display: inline-block`. Handles are hidden for locked elements and disabled inside transformed ancestors (drag the element to the page first). `Inspector.Transform` shows the angle, a reset button, an aspect-ratio lock shared with the handles and the W/H fields, and an "Auto height" toggle that removes `height`.
 - **Output.** Only `style` attributes and node parents change, so all fidelity guarantees above hold. Palette drops and tree-to-page drops use the same placement.
 
+## Flow layout controls
+
+In flow mode the selected element can be edited straight on the canvas, without going to the inspector:
+
+```tsx
+<HtmlEditor layout="flow" flowLayout={{ directControls: true }}>
+  <HtmlEditor.Canvas>
+    <HtmlEditor.Canvas.Toolbar>
+      <HtmlEditor.History />
+      <HtmlEditor.Canvas.WidthPresets />
+    </HtmlEditor.Canvas.Toolbar>
+    <HtmlEditor.Canvas.Viewport>
+      <HtmlEditor.Canvas.FlowControls />
+    </HtmlEditor.Canvas.Viewport>
+    <HtmlEditor.Canvas.FlowStatusBar />
+  </HtmlEditor.Canvas>
+  <HtmlEditor.Inspector />
+</HtmlEditor>
+```
+
+- **Activation.** `flowLayout.directControls` is off by default, because it takes the pointer: while it is on, the node's native drag is routed to the gestures instead of to the tree-and-palette drag. `Canvas.Viewport` takes children, rendered as an overlay above the page in host coordinates, so `Canvas.FlowControls` is one of several possible overlays.
+- **When it engages.** Exactly one element selected, no text being edited, not the root, and nothing locked at it or above it.
+- **Gestures.** Dragging the element locks to an axis after 5 px: sideways splits the parent into thirds and aligns left, centre or right; up and down reorders, with a guide line and consecutive text and inlines treated as one target. The four corners resize between 10% and 100% of the parent's content width. The amber handle under the bottom edge sets the space below, from 0 to 96 px in steps of 4.
+- **Everything is a class.** A gesture previews on the element's inline style and commits Tailwind classes — `w-[60%]`, `mb-6`, `mx-auto`, `text-right` — so the inspector reads the same value the canvas shows, and an inline declaration that would beat the new class is cleared in the same step. The preview is held until the canvas stylesheet covers the new classes, then removed, so nothing flashes unstyled. A whole drag is one history entry.
+- **Breakpoint.** A gesture writes at the breakpoint the variant bar is on (`Desktop`, `max-lg`, `max-sm`) and touches no other, so a mobile override never erases the desktop value. The status bar shows which one is live.
+- **Capabilities, with a reason.** `inspectFlow(element)` returns what may be done and why not: a flex-row or grid child is sized by its parent, an inline element follows the text, a floated or positioned element is out of flow, siblings reordered by CSS cannot be dragged, and an element whose descendant is positioned by hand refuses to resize rather than pulling the descendant out of place. Blocked controls are not rendered, and `Canvas.FlowStatusBar` says why.
+- **Output.** Only classes and node parents change, so every fidelity guarantee above holds.
+
 ## shadcn skin
 
 The same editor with [shadcn/ui](https://ui.shadcn.com) chrome ships as a second entry point, `adt-html-editor/shadcn`. The main entry pulls in none of the skin's UI libraries: they are optional peers that your bundler only reaches when you import the subpath.

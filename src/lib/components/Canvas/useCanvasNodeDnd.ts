@@ -4,7 +4,7 @@ import type { AnyNode } from '../../core/model'
 import { useCanvasDropTarget } from '../../dnd/useCanvasDropTarget'
 import { useNodeDraggable } from '../../dnd/useNodeDraggable'
 import { useFixedDraggable } from '../../fixed/useFixedDraggable'
-import { useIsLocked, useLayoutMode } from '../Editor/context'
+import { useDirectControls, useIsLocked, useLayoutMode } from '../Editor/context'
 
 export function useCanvasNodeDnd(
   elementRef: RefObject<HTMLElement | null>,
@@ -12,10 +12,11 @@ export function useCanvasNodeDnd(
   node: AnyNode | undefined,
 ) {
   const isFixed = useLayoutMode() === 'fixed'
+  const direct = useDirectControls()
   const locked = useIsLocked(id)
   const canDrag = Boolean(node) && node?.kind !== 'text' && node?.kind !== 'comment'
 
-  useNodeDraggable(elementRef, id, 'canvas', canDrag && !isFixed)
+  useNodeDraggable(elementRef, id, 'canvas', canDrag && !isFixed && !direct)
   useCanvasDropTarget(elementRef, id, !isFixed)
   useFixedDraggable(elementRef, id, canDrag && isFixed && !locked)
 }

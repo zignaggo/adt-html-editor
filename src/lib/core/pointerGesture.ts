@@ -1,6 +1,21 @@
-import type { GestureController, GestureInput } from './gesture'
+export type GestureInput = {
+  clientX: number
+  clientY: number
+  shiftKey: boolean
+  altKey: boolean
+}
+
+export type GestureController = {
+  move: (input: GestureInput) => void
+  finish: () => void
+  cancel: () => void
+}
 
 const MODIFIERS = new Set(['Shift', 'Alt'])
+
+export function gestureInputOf(event: PointerEvent | GestureInput): GestureInput {
+  return inputOf(event)
+}
 
 function inputOf(event: PointerEvent | GestureInput, modifiers?: KeyboardEvent): GestureInput {
   return {
@@ -11,7 +26,32 @@ function inputOf(event: PointerEvent | GestureInput, modifiers?: KeyboardEvent):
   }
 }
 
-export function runPointerGesture(event: PointerEvent, controller: GestureController) {
+function isHistoryKey(event: KeyboardEvent): boolean {
+  if (!event.ctrlKey && !event.metaKey) return false
+  const key = event.key.toLowerCase()
+  return key === 'z' || key === 'y'
+}
+
+/** Keeps the click that follows a drag from re-selecting or activating what was dragged. */
+export function swallowNextClick(): void {
+  const onClick = (click: MouseEvent) => {
+    click.preventDefault()
+    click.stopPropagation()
+  }
+  window.addEventListener('click', onClick, { capture: true, once: true })
+  requestAnimationFrame(() => {
+    window.removeEventListener('click', onClick, { capture: true })
+  })
+}
+
+/**
+ * Runs a pointer gesture to completion. Returns an abort handle for the cases the window
+ * cannot see — unmount, a lock change, a new document.
+ */
+export function runPointerGesture(
+  event: PointerEvent,
+  controller: GestureController,
+): () => void {
   const { pointerId } = event
   let last = inputOf(event)
   let active = true
@@ -51,6 +91,10 @@ export function runPointerGesture(event: PointerEvent, controller: GestureContro
       onCancel()
       return
     }
+    if (isHistoryKey(key)) {
+      onCancel()
+      return
+    }
     if (!MODIFIERS.has(key.key)) return
     last = inputOf(last, key)
     controller.move(last)
@@ -62,4 +106,6 @@ export function runPointerGesture(event: PointerEvent, controller: GestureContro
   window.addEventListener('keydown', onKey, true)
   window.addEventListener('keyup', onKey, true)
   window.addEventListener('blur', onCancel)
+
+  return onCancel
 }
