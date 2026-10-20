@@ -8,13 +8,20 @@ import {
   FRAME_CLASS,
   GUIDE_CLASS,
   HEIGHT_HANDLE_CLASS,
+  MARGIN_BAND_CLASS,
   OVERLAY_CLASS,
+  PADDING_BAND_CLASS,
   PARENT_CLASS,
   SPACE_HANDLE_CLASS,
 } from './flowStyles'
 import { subscribeFlowGesture } from './gesture/flowGestureStore'
 import { useFlowGestures, type FlowGestures, type ResizeCorner } from './gestures/useFlowGestures'
-import { useFlowSelection, type FlowBox, type FlowTarget } from './useFlowSelection'
+import {
+  useFlowSelection,
+  type FlowBox,
+  type FlowEdges,
+  type FlowTarget,
+} from './useFlowSelection'
 
 const CORNERS: readonly ResizeCorner[] = ['nw', 'ne', 'sw', 'se']
 
@@ -32,6 +39,44 @@ function place(box: HTMLElement, rect: FlowBox) {
   box.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`
   box.style.width = `${rect.width}px`
   box.style.height = `${rect.height}px`
+}
+
+function positiveEdges(edges: FlowEdges): FlowEdges {
+  return {
+    top: Math.max(0, edges.top),
+    right: Math.max(0, edges.right),
+    bottom: Math.max(0, edges.bottom),
+    left: Math.max(0, edges.left),
+  }
+}
+
+/**
+ * A band is its own border: the space it stands for is drawn by the border, and the page shows
+ * through the middle. `inset` moves its outer edge off the border box — inwards for the padding,
+ * outwards (negative) for the margin.
+ */
+function placeBand(band: HTMLElement, rect: FlowBox, edges: FlowEdges, inset: FlowEdges) {
+  const width = positiveEdges(edges)
+  if (width.top + width.right + width.bottom + width.left === 0) {
+    band.dataset.visible = 'false'
+    return
+  }
+
+  place(band, {
+    left: rect.left + inset.left,
+    top: rect.top + inset.top,
+    width: Math.max(0, rect.width - inset.left - inset.right),
+    height: Math.max(0, rect.height - inset.top - inset.bottom),
+  })
+  band.style.borderTopWidth = `${width.top}px`
+  band.style.borderRightWidth = `${width.right}px`
+  band.style.borderBottomWidth = `${width.bottom}px`
+  band.style.borderLeftWidth = `${width.left}px`
+}
+
+function outwards(edges: FlowEdges): FlowEdges {
+  const width = positiveEdges(edges)
+  return { top: -width.top, right: -width.right, bottom: -width.bottom, left: -width.left }
 }
 
 export function FlowControls() {
@@ -67,6 +112,8 @@ function FlowControlsFrame({
   const frameRef = useRef<HTMLDivElement | null>(null)
   const parentRef = useRef<HTMLDivElement | null>(null)
   const guideRef = useRef<HTMLDivElement | null>(null)
+  const marginRef = useRef<HTMLDivElement | null>(null)
+  const paddingRef = useRef<HTMLDivElement | null>(null)
   const gesturesRef = useRef(gestures)
 
   useEffect(() => {
@@ -80,14 +127,20 @@ function FlowControlsFrame({
       frame = 0
       const box = frameRef.current
       const parent = parentRef.current
-      if (!box || !parent) return
+      const margin = marginRef.current
+      const padding = paddingRef.current
+      if (!box || !parent || !margin || !padding) return
       const geometry = target.measure()
       if (!geometry) {
         box.dataset.visible = 'false'
         parent.dataset.visible = 'false'
+        margin.dataset.visible = 'false'
+        padding.dataset.visible = 'false'
         return
       }
       place(box, geometry.box)
+      placeBand(margin, geometry.box, geometry.margin, outwards(geometry.margin))
+      placeBand(padding, geometry.box, geometry.padding, positiveEdges(geometry.border))
       if (geometry.parentBox) place(parent, geometry.parentBox)
       else parent.dataset.visible = 'false'
     }
@@ -146,6 +199,20 @@ function FlowControlsFrame({
 
   return (
     <div className={OVERLAY_CLASS}>
+      <div
+        ref={marginRef}
+        className={MARGIN_BAND_CLASS}
+        data-band="margin"
+        data-visible="false"
+        aria-hidden="true"
+      />
+      <div
+        ref={paddingRef}
+        className={PADDING_BAND_CLASS}
+        data-band="padding"
+        data-visible="false"
+        aria-hidden="true"
+      />
       <div ref={parentRef} className={PARENT_CLASS} data-visible="false" aria-hidden="true" />
       <div ref={guideRef} className={GUIDE_CLASS} data-visible="false" aria-hidden="true" />
       <div ref={frameRef} className={FRAME_CLASS} data-visible="false">

@@ -15,6 +15,12 @@ export const PARENT_CLASS = cn(
   'rounded-[3px] border border-dashed border-teal-500/70',
 )
 
+const BAND_CLASS = cn(PLACED_CLASS, 'box-border border-solid')
+
+export const MARGIN_BAND_CLASS = cn(BAND_CLASS, 'border-amber-400/35')
+
+export const PADDING_BAND_CLASS = cn(BAND_CLASS, 'border-emerald-400/35')
+
 export const GUIDE_CLASS = cn(
   PLACED_CLASS,
   'h-0 w-full border-t-2 border-primary',

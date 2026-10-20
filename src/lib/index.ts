@@ -285,7 +285,7 @@ export type {
   StyleReader,
 } from './flow/capabilities'
 export { contentWidthOf, useFlowSelection } from './flow/useFlowSelection'
-export type { FlowBox, FlowGeometry, FlowTarget } from './flow/useFlowSelection'
+export type { FlowBox, FlowEdges, FlowGeometry, FlowTarget } from './flow/useFlowSelection'
 export { GESTURE_ATTRIBUTE, beginCanvasGesture } from './flow/gesture/canvasGesture'
 export type {
   CanvasGestureCommit,

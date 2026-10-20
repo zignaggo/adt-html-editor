@@ -20,10 +20,20 @@ export type FlowBox = {
   height: number
 }
 
+export type FlowEdges = {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
+
 export type FlowGeometry = {
   box: FlowBox
   parentBox: FlowBox | null
   contentWidth: number
+  margin: FlowEdges
+  padding: FlowEdges
+  border: FlowEdges
   hostLeft: number
   hostTop: number
   hostWidth: number
@@ -60,6 +70,40 @@ function boxOf(element: Element, hostRect: DOMRect): FlowBox {
     top: rect.top - hostRect.top,
     width: rect.width,
     height: rect.height,
+  }
+}
+
+function pxOf(value: string, scale: number): number {
+  const parsed = Number.parseFloat(value)
+  return Number.isFinite(parsed) ? parsed * scale : 0
+}
+
+/** A border only takes room once a style asks for it to be drawn. */
+function borderPxOf(style: string, width: string, scale: number): number {
+  if (!style || style === 'none' || style === 'hidden') return 0
+  return pxOf(width, scale)
+}
+
+function edgesOf(style: CSSStyleDeclaration, scale: number) {
+  return {
+    margin: {
+      top: pxOf(style.marginTop, scale),
+      right: pxOf(style.marginRight, scale),
+      bottom: pxOf(style.marginBottom, scale),
+      left: pxOf(style.marginLeft, scale),
+    },
+    padding: {
+      top: pxOf(style.paddingTop, scale),
+      right: pxOf(style.paddingRight, scale),
+      bottom: pxOf(style.paddingBottom, scale),
+      left: pxOf(style.paddingLeft, scale),
+    },
+    border: {
+      top: borderPxOf(style.borderTopStyle, style.borderTopWidth, scale),
+      right: borderPxOf(style.borderRightStyle, style.borderRightWidth, scale),
+      bottom: borderPxOf(style.borderBottomStyle, style.borderBottomWidth, scale),
+      left: borderPxOf(style.borderLeftStyle, style.borderLeftWidth, scale),
+    },
   }
 }
 
@@ -111,15 +155,17 @@ export function useFlowSelection(): FlowTarget | null {
       if (!hostElement || !element.isConnected) return null
       const hostRect = hostElement.getBoundingClientRect()
       const parent = element.parentElement
+      const scale = host.scale()
       return {
         box: boxOf(element, hostRect),
         parentBox: parent ? boxOf(parent, hostRect) : null,
         contentWidth: parent ? contentWidthOf(parent) : 0,
+        ...edgesOf(getComputedStyle(element), scale),
         hostLeft: hostRect.left,
         hostTop: hostRect.top,
         hostWidth: hostRect.width,
         hostHeight: hostRect.height,
-        scale: host.scale(),
+        scale,
       }
     },
   }
