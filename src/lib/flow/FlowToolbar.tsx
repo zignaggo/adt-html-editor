@@ -10,6 +10,7 @@ import {
   TOOLBAR_SEPARATOR_CLASS,
 } from './flowStyles'
 import type { FlowAlign } from './gestures/flowWrite'
+import { TagControls } from './tags/TagControls'
 import { useFlowSelection, type FlowTarget } from './useFlowSelection'
 import { useFlowToolbar, type FlowToolbar as FlowToolbarApi } from './useFlowToolbar'
 
@@ -106,6 +107,8 @@ function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: Flow
             <FlowIcon name="parent" />
           </button>
         ) : null}
+
+        <TagControls target={target} />
 
         {toolbar.align ? (
           <div className={TOOLBAR_GROUP_CLASS}>

@@ -38,10 +38,10 @@ function stubRect(
   element.getBoundingClientRect = () => ({ ...rect, toJSON: () => rect }) as DOMRect
 }
 
-async function setup() {
+async function setup(html: string = HTML, selector = 'p') {
   let store: EditorStore | undefined
   render(
-    <EditorProvider defaultValue={HTML} layout="flow" flowLayout={{ directControls: true }}>
+    <EditorProvider defaultValue={html} layout="flow" flowLayout={{ directControls: true }}>
       <CaptureStore onStore={(s) => (store = s)} />
       <Canvas>
         <CanvasViewport>
@@ -58,16 +58,20 @@ async function setup() {
   const paragraph = root?.querySelector<HTMLElement>('p')
   if (!root || !host || !section || !paragraph) throw new Error('canvas not rendered')
 
+  const selected = root.querySelector<HTMLElement>(selector)
+  if (!selected) throw new Error(`no ${selector}`)
+
   stubRect(host, { left: 0, top: 0, width: 600, height: 800 })
   stubRect(section, { left: 0, top: 0, width: 300, height: 80 })
   stubRect(paragraph, { left: 0, top: 40, width: 200, height: 40 })
+  stubRect(selected, { left: 0, top: 40, width: 200, height: 40 })
   Object.defineProperty(section, 'clientWidth', { value: 300, configurable: true })
   Object.defineProperty(root, 'clientWidth', { value: 600, configurable: true })
 
-  act(() => store?.actions.select(paragraph.getAttribute('data-adt-id')))
+  act(() => store?.actions.select(selected.getAttribute('data-adt-id')))
   await nextFrames()
 
-  return { store, section, paragraph }
+  return { store, section, paragraph, selected }
 }
 
 function classesOf(store: EditorStore, element: HTMLElement): string[] {
@@ -172,6 +176,43 @@ describe('the flow toolbar', () => {
     click('Select parent')
 
     expect(store.state.selectedIds).toEqual([section.getAttribute('data-adt-id')])
+  })
+
+  it('retags the selection from the toolbar, keeping its classes and the selection', async () => {
+    const { store, paragraph } = await setup()
+    const id = paragraph.getAttribute('data-adt-id')
+    const before = store.state.history.past.length
+
+    click('Tag: p')
+    click('h2')
+
+    const node = store.state.doc.nodes[id ?? '']
+    expect(node.kind === 'element' && node.tag).toBe('h2')
+    expect(classesOf(store, paragraph)).toEqual(['lead'])
+    expect(store.state.selectedIds).toEqual([id])
+    expect(store.state.history.past.length - before).toBe(1)
+    expect(screen.getByRole('button', { name: 'Tag: h2' })).toBeTruthy()
+  })
+
+  it('keeps a tag the content model refuses on screen, disabled, with its reason', async () => {
+    const { store, section } = await setup()
+    act(() => store.actions.select(section.getAttribute('data-adt-id')))
+    await nextFrames()
+
+    click('Tag: section')
+
+    expect(isDisabled('p, not valid here')).toBe(true)
+    expect(isDisabled('article')).toBe(false)
+  })
+
+  it('hides the tag control when no other tag is open', async () => {
+    await setup(
+      '<section id="hero"><p class="lead">Intro</p><ul><li class="row">one</li></ul></section>',
+      'li',
+    )
+
+    expect(screen.queryByRole('button', { name: /^Tag: / })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Select parent' })).toBeTruthy()
   })
 
   it('opens the size popover on a box', async () => {

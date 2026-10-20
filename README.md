@@ -262,7 +262,8 @@ In flow mode the selected element can be edited straight on the canvas, without 
 - **Everything is a class.** A gesture previews on the element's inline style and commits Tailwind classes — `w-[60%]`, `mb-6`, `mx-auto`, `text-right` — so the inspector reads the same value the canvas shows, and an inline declaration that would beat the new class is cleared in the same step. The preview is held until the canvas stylesheet covers the new classes, then removed, so nothing flashes unstyled. A whole drag is one history entry.
 - **Breakpoint.** A gesture writes at the breakpoint the variant bar is on (`Desktop`, `max-lg`, `max-sm`) and touches no other, so a mobile override never erases the desktop value. The status bar shows which one is live.
 - **Capabilities, with a reason.** `inspectFlow(element)` returns what may be done and why not: a flex-row or grid child is sized by its parent, an inline element follows the text, a floated or positioned element is out of flow, siblings reordered by CSS cannot be dragged, and an element whose descendant is positioned by hand refuses to resize rather than pulling the descendant out of place. Blocked controls are not rendered, and `Canvas.FlowStatusBar` says why.
-- **Toolbar.** `Canvas.FlowToolbar` floats above the selection, clamped to the canvas width and flipped below it when there is no room. It carries, in order: select parent, align left / centre / right, text size ∓2 px (written in `rem`, so the page keeps scaling with the reader's own font size), width ∓10% on anything that is not text, move earlier / later, and space below ∓4 px. A control is only rendered when `inspectFlow` allows it, so the toolbar never offers what the row, the grid or the flow would undo. A click previews inline and commits classes exactly like a drag does, and clicks on the same control within the coalescing window stay one history entry.
+- **Toolbar.** `Canvas.FlowToolbar` floats above the selection, clamped to the canvas width and flipped below it when there is no room. It carries, in order: select parent, the tag, align left / centre / right, text size ∓2 px (written in `rem`, so the page keeps scaling with the reader's own font size), width ∓10% on anything that is not text, move earlier / later, and space below ∓4 px. A control is only rendered when `inspectFlow` allows it, so the toolbar never offers what the row, the grid or the flow would undo. A click previews inline and commits classes exactly like a drag does, and clicks on the same control within the coalescing window stay one history entry.
+- **Tag.** `Canvas.TagControls` sits in the toolbar as the current tag, and opens the same picker as the inspector's: the sixteen editable tags, the ones the HTML content model refuses still on screen but disabled with their reason. It is rendered only when at least one *other* tag is open (`hasRetagOptions`), so a `<li>` in a list, a `<tr>` in a table or an already-cornered element simply has no tag control instead of one that can do nothing. Picking a tag calls `setTag`, which swaps it in place in one history entry — see [Tag picker](#tag-picker).
 - **Height and inner space.** The blue handle under the bottom edge, and the toolbar's `Size` popover, set the height of a plain box — `div`, `header`, `section`, `aside`, `article` — as `h-auto min-h-[Npx] max-h-none box-border`, never a fixed height that could cut the content off. A box wrapped in single-child `div`s is treated as a chain of frames: the outer one takes the height and centres the content (`flex flex-col justify-center`), and shrinking spends the padding of every frame proportionally before anything else, down to `pt-[0px] pb-[0px]`. Below that the content wins: the height stops at what the content needs and the status bar says so. The popover's two other fields set the inner space, vertical (`pt-`/`pb-`) and horizontal (`pl-`/`pr-`), from 0 to 160 px; a `p-6` shorthand is rewritten as the sides it still means. A box with a locked or hand-positioned descendant has no handle at all.
 - **Output.** Only classes and node parents change, so every fidelity guarantee above holds.
 
@@ -326,6 +327,25 @@ import { HtmlEditor } from 'adt-html-editor/shadcn'
       <HtmlEditor.Inspector.ClassInput />
       <HtmlEditor.Inspector.ClassList />
     </HtmlEditor.Inspector.Section>
+  </HtmlEditor.Inspector.Body>
+</HtmlEditor.Inspector>
+```
+
+### Tag picker
+
+`HtmlEditor.Inspector.TagHeader` is a richer header for a single selection: the element icon, the tag as a picker, `#id`, the lock toggle, "select parent", the ancestor breadcrumb and a preview of the text. Picking a tag calls the core's `setTag`, which swaps the tag in place — the id, the attributes, the classes, the children, the selection and the collapsed state all survive, and the change is one undo away. `HtmlEditor.Inspector.TagPicker` is the picker on its own, for a header of your own.
+
+Which tags it offers comes from `inspectRetag(doc, id, { locked, editingTextId })` in the main entry, a pure read of the HTML content model over `p`, `h1`–`h6`, `span`, `div`, `section`, `article`, `aside`, `blockquote`, `header`, `footer` and `nav`. A phrase tag is not offered for a box that holds a block; inside a phrasing or inline ancestor only `span` is left; a list, a table, a `picture` or an `svg` parent blocks the swap entirely; `hgroup` leaves only `p` and the headings; `header` and `footer` refuse to nest in each other; `article`, `aside` and `nav` refuse to wrap a `main`; and `address` and `dt` drop the headings and the sectioning tags. Each candidate answers `true` or the reason it cannot — `unsupported`, `locked` or `editing` — the same "capability with a reason" shape as `inspectFlow`, so a blocked tag stays on screen, disabled, with its reason beside it instead of silently going missing. `useRetag(id)` is the headless version: the current tag, the candidates with their reasons, and a `setTag` that refuses a blocked one.
+
+```tsx
+import { HtmlEditor } from 'adt-html-editor/shadcn'
+
+<HtmlEditor.Inspector>
+  <HtmlEditor.Inspector.Header>
+    <HtmlEditor.Inspector.TagHeader />
+  </HtmlEditor.Inspector.Header>
+  <HtmlEditor.Inspector.Body>
+    <HtmlEditor.Inspector.Styles />
   </HtmlEditor.Inspector.Body>
 </HtmlEditor.Inspector>
 ```

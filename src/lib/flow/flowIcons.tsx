@@ -9,6 +9,7 @@ export type FlowIconName =
   | 'moveUp'
   | 'moveDown'
   | 'size'
+  | 'tag'
 
 const FLOW_ICON_PATHS: Record<FlowIconName, string> = {
   parent: 'M2 2.5H10 M6 10V5 M3.5 7.5 6 5l2.5 2.5',
@@ -21,6 +22,7 @@ const FLOW_ICON_PATHS: Record<FlowIconName, string> = {
   moveUp: 'M6 10V3 M3.5 5.5 6 3l2.5 2.5',
   moveDown: 'M6 2v7 M3.5 6.5 6 9l2.5-2.5',
   size: 'M2.5 2.5h7v7h-7z M5.5 7.5 7.5 5.5',
+  tag: 'M6.2 1.8H10v3.8L5.4 10.2 1.8 6.6z M7.9 3.9h.01',
 }
 
 export function FlowIcon({ name }: { name: FlowIconName }) {

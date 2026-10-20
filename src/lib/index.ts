@@ -360,3 +360,21 @@ export type {
 export { useBoxHeight } from './flow/box/useBoxHeight'
 export type { BoxHeight } from './flow/box/useBoxHeight'
 export { BoxSizeControls as CanvasBoxSize } from './flow/box/BoxSizeControls'
+
+export {
+  EDITABLE_TAGS,
+  allowsTag,
+  hasRetagOptions,
+  inspectRetag,
+  isEditableTag,
+  retagReasonOf,
+} from './flow/tags/retag'
+export type {
+  EditableTag,
+  RetagBlock,
+  RetagContext,
+  RetagInspection,
+} from './flow/tags/retag'
+export { useRetag } from './flow/tags/useRetag'
+export type { Retag, RetagOption } from './flow/tags/useRetag'
+export { TagControls as CanvasTagControls } from './flow/tags/TagControls'
