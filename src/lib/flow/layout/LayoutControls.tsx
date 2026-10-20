@@ -1,14 +1,31 @@
 import { useEffect, useRef, useState } from 'react'
-import { FlowIcon } from '../flowIcons'
+import { FlowIcon, type FlowIconName } from '../flowIcons'
 import {
   LAYOUT_ITEM_CLASS,
+  LAYOUT_ITEM_ICON_CLASS,
+  LAYOUT_ITEM_TEXT_CLASS,
   LAYOUT_LIST_CLASS,
   LAYOUT_POPOVER_CLASS,
   LAYOUT_REASON_CLASS,
   TOOLBAR_BUTTON_CLASS,
 } from '../flowStyles'
 import type { FlowTarget } from '../useFlowSelection'
-import { useLayoutMenu, type LayoutAction } from './useLayoutMenu'
+import { useLayoutMenu, type LayoutAction, type LayoutActionId } from './useLayoutMenu'
+
+const ACTION_ICONS: Record<LayoutActionId, FlowIconName> = {
+  'select-component': 'component',
+  'row-centres': 'rowCentres',
+  'row-tops': 'rowTops',
+  'row-bottoms': 'rowBottoms',
+  'centre-contents': 'centreContents',
+  'wrap-left': 'wrapLeft',
+  'wrap-right': 'wrapRight',
+  'beside-previous': 'besidePrevious',
+  'beside-next': 'besideNext',
+  'equal-columns': 'columns',
+  stack: 'stack',
+  'switch-order': 'switchOrder',
+}
 
 export function LayoutControls({ target }: { target: FlowTarget }) {
   const menu = useLayoutMenu(target)
@@ -82,10 +99,15 @@ function LayoutPanel({
               title={action.blocked ? `${action.label} — ${action.blocked}` : action.label}
               onClick={() => onPick(action)}
             >
-              <span>{action.label}</span>
-              {action.blocked ? (
-                <span className={LAYOUT_REASON_CLASS}>{action.blocked}</span>
-              ) : null}
+              <span className={LAYOUT_ITEM_ICON_CLASS}>
+                <FlowIcon name={ACTION_ICONS[action.id]} />
+              </span>
+              <span className={LAYOUT_ITEM_TEXT_CLASS}>
+                <span>{action.label}</span>
+                {action.blocked ? (
+                  <span className={LAYOUT_REASON_CLASS}>{action.blocked}</span>
+                ) : null}
+              </span>
             </button>
           </li>
         ))}

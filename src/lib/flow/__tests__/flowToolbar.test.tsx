@@ -225,7 +225,7 @@ describe('the flow toolbar', () => {
     expect(screen.getByRole('button', { name: 'Select parent' })).toBeTruthy()
   })
 
-  it('lays the controls out in the order the bar declares', async () => {
+  it('lays every control out in one bar, reordering last', async () => {
     await setup()
 
     expect(labelsIn('Layout controls')).toEqual([
@@ -240,33 +240,22 @@ describe('the flow toolbar', () => {
       'Bigger text',
       'Less space below',
       'More space below',
+      'Move earlier',
+      'Move later',
     ])
   })
 
-  it('keeps reordering in its own bar, before the controls', async () => {
-    await setup()
-
-    expect(labelsIn('Reorder')).toEqual(['Move earlier', 'Move later'])
-
-    const dock = toolbarNamed('Reorder').parentElement
-    expect(dock).toBe(toolbarNamed('Layout controls').parentElement)
-    expect(dock?.firstElementChild).toBe(toolbarNamed('Reorder'))
-  })
-
-  it('has no reordering bar when the selection cannot be reordered', async () => {
+  it('leaves the reordering pair out when the selection cannot be reordered', async () => {
     await setup('<section id="hero"><p class="lead">a <span>word</span></p></section>', 'span')
 
-    expect(screen.queryByRole('toolbar', { name: 'Reorder' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Move earlier' })).toBeNull()
     expect(screen.getByRole('toolbar', { name: 'Layout controls' })).toBeTruthy()
   })
 
   it('gives every control a tooltip', async () => {
     await setup()
 
-    const buttons = [
-      ...toolbarNamed('Reorder').querySelectorAll('button'),
-      ...toolbarNamed('Layout controls').querySelectorAll('button'),
-    ]
+    const buttons = [...toolbarNamed('Layout controls').querySelectorAll('button')]
 
     expect(buttons.length).toBeGreaterThan(0)
     expect(buttons.filter((button) => !button.title)).toEqual([])

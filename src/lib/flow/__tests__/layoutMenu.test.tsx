@@ -122,6 +122,18 @@ describe('layout menu', () => {
     vi.unstubAllGlobals()
   })
 
+  it('shows every preset with an icon of its own', async () => {
+    const { store, find } = await setup()
+    await openMenu(store, find('#row'))
+
+    const items = [...screen.getByLabelText('Layout presets').querySelectorAll('button')]
+    const shapes = items.map((item) => item.querySelector('svg path')?.getAttribute('d') ?? '')
+
+    expect(items).toHaveLength(12)
+    expect(shapes.filter((shape) => shape === '')).toEqual([])
+    expect(new Set(shapes).size).toBe(items.length)
+  })
+
   it('a row aligns the children and stacks them on a phone, in one history entry', async () => {
     const { store, find } = await setup()
     const entries = await pick(store, find('#row'), 'Row · align centres')

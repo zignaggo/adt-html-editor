@@ -4,10 +4,8 @@ import { BoxSizeControls } from './box/BoxSizeControls'
 import { RepositionControl } from './component/RepositionControl'
 import { FlowIcon, type FlowIconName } from './flowIcons'
 import {
-  TOOLBAR_APPENDIX_CLASS,
   TOOLBAR_BUTTON_CLASS,
   TOOLBAR_CLASS,
-  TOOLBAR_DOCK_CLASS,
   TOOLBAR_GROUP_CLASS,
   TOOLBAR_OVERLAY_CLASS,
   TOOLBAR_SEPARATOR_CLASS,
@@ -41,24 +39,24 @@ function FlowToolbarLayer() {
 }
 
 function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: FlowToolbarApi }) {
-  const dockRef = useRef<HTMLDivElement | null>(null)
+  const barRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     let frame = 0
 
     const sync = () => {
       frame = 0
-      const dock = dockRef.current
-      if (!dock) return
+      const bar = barRef.current
+      if (!bar) return
       const geometry = target.measure()
       if (!geometry) {
-        dock.dataset.visible = 'false'
+        bar.dataset.visible = 'false'
         return
       }
 
-      dock.dataset.visible = 'true'
-      dock.style.maxWidth = `${Math.max(0, geometry.hostWidth - GAP * 2)}px`
-      const { offsetWidth: width, offsetHeight: height } = dock
+      bar.dataset.visible = 'true'
+      bar.style.maxWidth = `${Math.max(0, geometry.hostWidth - GAP * 2)}px`
+      const { offsetWidth: width, offsetHeight: height } = bar
       const room = Math.max(GAP, geometry.hostWidth - width - GAP)
       const left = Math.min(Math.max(GAP, geometry.box.left + geometry.box.width / 2 - width / 2), room)
       const above = geometry.box.top - height - GAP
@@ -67,7 +65,7 @@ function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: Flow
         Math.max(GAP, geometry.hostHeight - height - GAP),
       )
       const top = above >= GAP ? above : below
-      dock.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`
+      bar.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`
     }
 
     const schedule = () => {
@@ -81,7 +79,7 @@ function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: Flow
       mutations.observe(root, { attributes: true, childList: true, subtree: true, characterData: true })
     }
     const resize = new ResizeObserver(schedule)
-    if (dockRef.current) resize.observe(dockRef.current)
+    if (barRef.current) resize.observe(barRef.current)
     sync()
 
     return () => {
@@ -94,9 +92,79 @@ function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: Flow
 
   return (
     <div className={TOOLBAR_OVERLAY_CLASS}>
-      <div ref={dockRef} className={TOOLBAR_DOCK_CLASS} data-visible="false">
+      <div
+        ref={barRef}
+        className={TOOLBAR_CLASS}
+        data-visible="false"
+        role="toolbar"
+        aria-label="Layout controls"
+      >
+        <RepositionControl target={target} />
+        <TagControls target={target} />
+
+        {toolbar.selectParent ? (
+          <button
+            type="button"
+            className={TOOLBAR_BUTTON_CLASS}
+            aria-label="Select parent"
+            title="Select parent"
+            onClick={toolbar.selectParent}
+          >
+            <FlowIcon name="parent" />
+          </button>
+        ) : null}
+
+        <LayoutControls target={target} />
+
+        <span className={TOOLBAR_SEPARATOR_CLASS} />
+
+        {toolbar.align ? (
+          <div className={TOOLBAR_GROUP_CLASS}>
+            {ALIGNMENTS.map((entry) => (
+              <button
+                key={entry.value}
+                type="button"
+                className={TOOLBAR_BUTTON_CLASS}
+                aria-label={entry.label}
+                title={entry.label}
+                onClick={() => toolbar.align?.(entry.value)}
+              >
+                <FlowIcon name={entry.icon} />
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {toolbar.textSize ? (
+          <Stepper
+            icon="textSize"
+            less="Smaller text"
+            more="Bigger text"
+            onStep={toolbar.textSize}
+          />
+        ) : null}
+
+        <span className={TOOLBAR_SEPARATOR_CLASS} />
+
+        {toolbar.width ? (
+          <Stepper icon="width" less="Narrower" more="Wider" onStep={toolbar.width} />
+        ) : null}
+
+        {toolbar.space ? (
+          <Stepper
+            icon="spaceBelow"
+            less="Less space below"
+            more="More space below"
+            onStep={toolbar.space}
+          />
+        ) : null}
+
+        <BoxSizeControls target={target} />
+
+        <span className={TOOLBAR_SEPARATOR_CLASS} />
+
         {toolbar.move ? (
-          <div className={TOOLBAR_APPENDIX_CLASS} role="toolbar" aria-label="Reorder">
+          <div className={TOOLBAR_GROUP_CLASS}>
             <button
               type="button"
               className={TOOLBAR_BUTTON_CLASS}
@@ -119,70 +187,6 @@ function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: Flow
             </button>
           </div>
         ) : null}
-
-        <div className={TOOLBAR_CLASS} role="toolbar" aria-label="Layout controls">
-          <RepositionControl target={target} />
-          <TagControls target={target} />
-
-          {toolbar.selectParent ? (
-            <button
-              type="button"
-              className={TOOLBAR_BUTTON_CLASS}
-              aria-label="Select parent"
-              title="Select parent"
-              onClick={toolbar.selectParent}
-            >
-              <FlowIcon name="parent" />
-            </button>
-          ) : null}
-
-          <LayoutControls target={target} />
-
-          <span className={TOOLBAR_SEPARATOR_CLASS} />
-
-          {toolbar.align ? (
-            <div className={TOOLBAR_GROUP_CLASS}>
-              {ALIGNMENTS.map((entry) => (
-                <button
-                  key={entry.value}
-                  type="button"
-                  className={TOOLBAR_BUTTON_CLASS}
-                  aria-label={entry.label}
-                  title={entry.label}
-                  onClick={() => toolbar.align?.(entry.value)}
-                >
-                  <FlowIcon name={entry.icon} />
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          {toolbar.textSize ? (
-            <Stepper
-              icon="textSize"
-              less="Smaller text"
-              more="Bigger text"
-              onStep={toolbar.textSize}
-            />
-          ) : null}
-
-          <span className={TOOLBAR_SEPARATOR_CLASS} />
-
-          {toolbar.width ? (
-            <Stepper icon="width" less="Narrower" more="Wider" onStep={toolbar.width} />
-          ) : null}
-
-          {toolbar.space ? (
-            <Stepper
-              icon="spaceBelow"
-              less="Less space below"
-              more="More space below"
-              onStep={toolbar.space}
-            />
-          ) : null}
-
-          <BoxSizeControls target={target} />
-        </div>
       </div>
     </div>
   )

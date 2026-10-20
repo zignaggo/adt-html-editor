@@ -69,17 +69,10 @@ export const HEIGHT_HANDLE_CLASS = cn(
 
 export const TOOLBAR_OVERLAY_CLASS = 'pointer-events-none absolute inset-0 z-[32]'
 
-export const TOOLBAR_DOCK_CLASS =
-  'pointer-events-none absolute top-0 left-0 flex max-w-full items-start gap-1.5 ' +
-  'will-change-transform data-[visible=false]:hidden'
-
-const TOOLBAR_CHROME_CLASS =
-  'pointer-events-auto flex items-center gap-0.5 rounded-md border border-border bg-background ' +
-  'p-1 font-sans text-xs text-foreground shadow-[0_4px_12px_rgba(15,23,42,0.18)]'
-
-export const TOOLBAR_APPENDIX_CLASS = cn(TOOLBAR_CHROME_CLASS, 'shrink-0')
-
-export const TOOLBAR_CLASS = cn(TOOLBAR_CHROME_CLASS, 'min-w-0 flex-wrap')
+export const TOOLBAR_CLASS =
+  'pointer-events-auto absolute top-0 left-0 flex max-w-full flex-wrap items-center gap-0.5 ' +
+  'rounded-md border border-border bg-background p-1 font-sans text-xs text-foreground ' +
+  'shadow-[0_4px_12px_rgba(15,23,42,0.18)] will-change-transform data-[visible=false]:hidden'
 
 export const TOOLBAR_GROUP_CLASS = 'flex items-center gap-0.5'
 
@@ -114,9 +107,13 @@ export const LAYOUT_LIST_CLASS =
   'm-0 flex max-h-72 list-none flex-col gap-px overflow-auto overscroll-contain p-0 [scrollbar-width:thin]'
 
 export const LAYOUT_ITEM_CLASS =
-  'flex w-full cursor-default appearance-none flex-col items-start gap-0 rounded-sm border-0 ' +
+  'flex w-full cursor-default appearance-none items-start gap-2 rounded-sm border-0 ' +
   'bg-transparent px-1.5 py-1 text-left font-[inherit] text-[11px] leading-5 text-foreground ' +
   'hover:not-disabled:bg-muted disabled:opacity-40 focus-visible:outline focus-visible:outline-ring'
+
+export const LAYOUT_ITEM_ICON_CLASS = 'mt-1 flex shrink-0 text-muted-foreground'
+
+export const LAYOUT_ITEM_TEXT_CLASS = 'flex min-w-0 flex-1 flex-col items-start'
 
 export const LAYOUT_REASON_CLASS = 'text-[10px] leading-4 text-muted-foreground'
 
