@@ -55,6 +55,7 @@ export function BoxSizeControls({ target }: { target: FlowTarget }) {
         type="button"
         className={TOOLBAR_BUTTON_CLASS}
         aria-label="Size"
+        title="Height and inner space"
         aria-expanded={isOpen}
         onClick={() => setOpen(!isOpen)}
       >

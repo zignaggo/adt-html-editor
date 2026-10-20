@@ -42,6 +42,7 @@ export function LayoutControls({ target }: { target: FlowTarget }) {
         type="button"
         className={TOOLBAR_BUTTON_CLASS}
         aria-label="Layout"
+        title="Layout presets"
         aria-expanded={isOpen}
         onClick={() => setOpen(!isOpen)}
       >
@@ -78,6 +79,7 @@ function LayoutPanel({
               className={LAYOUT_ITEM_CLASS}
               disabled={action.blocked !== null}
               aria-label={action.blocked ? `${action.label}, ${action.blocked}` : action.label}
+              title={action.blocked ? `${action.label} — ${action.blocked}` : action.label}
               onClick={() => onPick(action)}
             >
               <span>{action.label}</span>

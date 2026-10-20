@@ -98,6 +98,16 @@ function click(name: string) {
   fireEvent.click(screen.getByRole('button', { name }))
 }
 
+function toolbarNamed(name: string): HTMLElement {
+  return screen.getByRole('toolbar', { name })
+}
+
+function labelsIn(name: string): string[] {
+  return [...toolbarNamed(name).querySelectorAll('button')].map(
+    (button) => button.getAttribute('aria-label') ?? '',
+  )
+}
+
 describe('the flow toolbar', () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -213,6 +223,53 @@ describe('the flow toolbar', () => {
 
     expect(screen.queryByRole('button', { name: /^Tag: / })).toBeNull()
     expect(screen.getByRole('button', { name: 'Select parent' })).toBeTruthy()
+  })
+
+  it('lays the controls out in the order the bar declares', async () => {
+    await setup()
+
+    expect(labelsIn('Layout controls')).toEqual([
+      'Reposition',
+      'Tag: p',
+      'Select parent',
+      'Layout',
+      'Align left',
+      'Align centre',
+      'Align right',
+      'Smaller text',
+      'Bigger text',
+      'Less space below',
+      'More space below',
+    ])
+  })
+
+  it('keeps reordering in its own bar, before the controls', async () => {
+    await setup()
+
+    expect(labelsIn('Reorder')).toEqual(['Move earlier', 'Move later'])
+
+    const dock = toolbarNamed('Reorder').parentElement
+    expect(dock).toBe(toolbarNamed('Layout controls').parentElement)
+    expect(dock?.firstElementChild).toBe(toolbarNamed('Reorder'))
+  })
+
+  it('has no reordering bar when the selection cannot be reordered', async () => {
+    await setup('<section id="hero"><p class="lead">a <span>word</span></p></section>', 'span')
+
+    expect(screen.queryByRole('toolbar', { name: 'Reorder' })).toBeNull()
+    expect(screen.getByRole('toolbar', { name: 'Layout controls' })).toBeTruthy()
+  })
+
+  it('gives every control a tooltip', async () => {
+    await setup()
+
+    const buttons = [
+      ...toolbarNamed('Reorder').querySelectorAll('button'),
+      ...toolbarNamed('Layout controls').querySelectorAll('button'),
+    ]
+
+    expect(buttons.length).toBeGreaterThan(0)
+    expect(buttons.filter((button) => !button.title)).toEqual([])
   })
 
   it('opens the size popover on a box', async () => {

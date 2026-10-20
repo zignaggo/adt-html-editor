@@ -69,14 +69,24 @@ export const HEIGHT_HANDLE_CLASS = cn(
 
 export const TOOLBAR_OVERLAY_CLASS = 'pointer-events-none absolute inset-0 z-[32]'
 
-export const TOOLBAR_CLASS =
-  'pointer-events-auto absolute top-0 left-0 flex max-w-full flex-wrap items-center gap-0.5 ' +
-  'rounded-md border border-border bg-background p-1 font-sans text-xs text-foreground ' +
-  'shadow-[0_4px_12px_rgba(15,23,42,0.18)] will-change-transform data-[visible=false]:hidden'
+export const TOOLBAR_DOCK_CLASS =
+  'pointer-events-none absolute top-0 left-0 flex max-w-full items-start gap-1.5 ' +
+  'will-change-transform data-[visible=false]:hidden'
+
+const TOOLBAR_CHROME_CLASS =
+  'pointer-events-auto flex items-center gap-0.5 rounded-md border border-border bg-background ' +
+  'p-1 font-sans text-xs text-foreground shadow-[0_4px_12px_rgba(15,23,42,0.18)]'
+
+export const TOOLBAR_APPENDIX_CLASS = cn(TOOLBAR_CHROME_CLASS, 'shrink-0')
+
+export const TOOLBAR_CLASS = cn(TOOLBAR_CHROME_CLASS, 'min-w-0 flex-wrap')
 
 export const TOOLBAR_GROUP_CLASS = 'flex items-center gap-0.5'
 
-export const TOOLBAR_SEPARATOR_CLASS = 'mx-0.5 h-4 w-px shrink-0 bg-border'
+export const TOOLBAR_SEPARATOR_CLASS = cn(
+  'mx-0.5 h-4 w-px shrink-0 bg-border',
+  'first:hidden last:hidden [&:has(+span)]:hidden',
+)
 
 export const TOOLBAR_BUTTON_CLASS =
   'inline-flex h-6 min-w-6 appearance-none items-center justify-center gap-px rounded-sm border-0 ' +

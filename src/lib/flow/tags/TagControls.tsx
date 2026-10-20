@@ -50,6 +50,7 @@ export function TagControls({ target }: { target: FlowTarget }) {
         type="button"
         className={TOOLBAR_BUTTON_CLASS}
         aria-label={`Tag: ${retag.tag}`}
+        title={`Tag: ${retag.tag}`}
         aria-expanded={isOpen}
         onClick={() => setOpen(!isOpen)}
       >
@@ -82,6 +83,7 @@ function TagPanel({ retag, onPick }: { retag: Retag; onPick: (tag: string) => vo
               disabled={option.blocked !== null}
               aria-current={option.current}
               aria-label={option.blocked ? `${option.tag}, ${REASONS[option.blocked]}` : option.tag}
+              title={option.blocked ? `${option.tag} — ${REASONS[option.blocked]}` : option.tag}
               onClick={() => onPick(option.tag)}
             >
               <span className={TAG_NAME_CLASS}>{option.tag}</span>
