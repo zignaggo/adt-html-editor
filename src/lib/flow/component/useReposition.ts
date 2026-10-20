@@ -3,19 +3,13 @@ import { useBreakpoint, useEditor, useEditorStoreApi } from '../../components/Ed
 import type { NodeId } from '../../core/ids'
 import { childrenOf, isStyled } from '../../core/model'
 import { setIndicator } from '../../dnd/dragStore'
-import { inheritedDeclarations } from '../../fixed/inheritance'
-import { withDeclarations } from '../../fixed/position'
 import type { StyleTarget } from '../../tailwind/variants'
 import { flowGesture } from '../gesture/flowGestureStore'
 import { useCanvasGesture } from '../gesture/useCanvasGesture'
+import { placeBeside } from '../layout/besideColumns'
+import { applyTextFlow, planTextFlow } from '../layout/textFlow'
 import type { FlowTarget } from '../useFlowSelection'
-import {
-  COLUMNS_CLASSES,
-  fitClasses,
-  floatObjectClasses,
-  flowRootClasses,
-  textSpacingClasses,
-} from './componentCommit'
+import { fitClasses, type FloatSide } from './componentCommit'
 import { dropIndicator, dropLabel, resolveComponentDrop, type ComponentDrop } from './componentDrop'
 import {
   componentBlock,
@@ -116,69 +110,35 @@ export function useReposition(target: FlowTarget | null): Reposition | null {
   const beside = (drop: ComponentDrop, id: NodeId): RepositionOutcome => {
     const targetId = idOf(drop.target)
     if (!targetId) return 'no-target'
-    const { doc } = store.state
-    const parentId = doc.nodes[targetId]?.parentId ?? null
-    if (!parentId) return 'no-target'
-    const at = childrenOf(doc, parentId).indexOf(targetId)
-    if (at < 0) return 'no-target'
 
     return actions.transaction(() => {
-      const wrapperId = actions.insertNode(
-        { tag: 'div', classes: [...COLUMNS_CLASSES] },
-        { parentId, index: at },
-      )
-      if (!wrapperId) return 'no-target'
-
-      const moved =
-        actions.moveNode(targetId, { parentId: wrapperId, index: 0 }) &&
-        actions.moveNode(id, { parentId: wrapperId, index: drop.kind === 'left' ? 0 : 1 })
-      if (!moved) {
-        actions.removeNode(wrapperId)
-        return 'no-target'
-      }
-
-      fitInto(targetId, drop.target)
-      fitInto(id, null)
-      actions.select(id)
-      return 'moved'
+      const placed = placeBeside({
+        actions,
+        doc: store.state.doc,
+        id,
+        anchorId: targetId,
+        side: drop.kind === 'left' ? 'left' : 'right',
+        anchorElement: drop.target,
+        fit: fitInto,
+      })
+      return placed ? 'moved' : 'no-target'
     }, { coalesceKey: `reposition:${id}` })
   }
 
   const wrapText = (drop: ComponentDrop, id: NodeId): RepositionOutcome => {
-    const anchorId = idOf(drop.target)
-    if (!anchorId) return 'no-target'
-    const { doc } = store.state
-    const containerId = doc.nodes[anchorId]?.parentId ?? null
-    if (!containerId) return 'no-target'
-
-    const container = drop.target.parentElement
-    const side = drop.kind === 'float-left' ? 'left' : 'right'
-    const index = childrenOf(doc, containerId).indexOf(anchorId)
-    if (index < 0) return 'no-target'
-
-    // The object changes parent, so the typography it inherited from its old wrapper is
-    // written down before the move instead of being lost.
-    const inherited = container
-      ? inheritedDeclarations(component, container, styleOf(id))
-      : new Map<string, string>()
-    const spacedAnchor =
-      Number.parseFloat(getComputedStyle(drop.target).marginBottom || '0') === 0
-
-    // Already sitting right before the anchor is not a failure: the float still has to be written.
-    const currentParent = doc.nodes[id]?.parentId ?? null
-    const oldIndex = currentParent ? childrenOf(doc, currentParent).indexOf(id) : -1
-    const settled = currentParent === containerId && oldIndex < index ? index - 1 : index
-    const needsMove = !(currentParent === containerId && settled === oldIndex)
+    const side: FloatSide = drop.kind === 'float-left' ? 'left' : 'right'
+    const plan = planTextFlow(component, side, undefined, drop.target)
+    if (!plan) return 'no-target'
 
     return actions.transaction(() => {
-      if (inherited.size > 0) {
-        actions.setAttr(id, 'style', withDeclarations(styleOf(id), inherited) || null)
-      }
-      actions.setClasses(containerId, flowRootClasses(classesOf(containerId)))
-      if (needsMove && !actions.moveNode(id, { parentId: containerId, index })) return 'no-target'
-      actions.setClasses(id, floatObjectClasses(classesOf(id), side))
-      if (spacedAnchor) actions.setClasses(anchorId, textSpacingClasses(classesOf(anchorId)))
-      return 'moved'
+      const applied = applyTextFlow(plan, {
+        actions,
+        doc: () => store.state.doc,
+        idOf,
+        classesOf,
+        styleOf,
+      })
+      return applied ? 'moved' : 'no-target'
     }, { coalesceKey: `reposition:${id}` })
   }
 

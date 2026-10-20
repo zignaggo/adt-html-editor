@@ -1,5 +1,5 @@
 import { applyClassEdit } from '../../style/classEdit'
-import { BASE_TARGET, type StyleTarget } from '../../tailwind/variants'
+import { BASE_TARGET, MOBILE_TARGET, type StyleTarget } from '../../tailwind/variants'
 
 export type FloatSide = 'left' | 'right'
 
@@ -14,8 +14,6 @@ export const COLUMNS_CLASSES: readonly string[] = [
 ]
 
 export const FLOW_ROOT_CLASSES: readonly string[] = ['flow-root', 'w-full', 'min-w-0']
-
-const MOBILE_TARGET: StyleTarget = { breakpoint: 'mobile', state: null }
 
 const BOX_FAMILIES = [
   /^-?m[xytrbl]?-/,

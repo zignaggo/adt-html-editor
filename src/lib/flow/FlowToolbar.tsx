@@ -11,6 +11,7 @@ import {
   TOOLBAR_SEPARATOR_CLASS,
 } from './flowStyles'
 import type { FlowAlign } from './gestures/flowWrite'
+import { LayoutControls } from './layout/LayoutControls'
 import { TagControls } from './tags/TagControls'
 import { useFlowSelection, type FlowTarget } from './useFlowSelection'
 import { useFlowToolbar, type FlowToolbar as FlowToolbarApi } from './useFlowToolbar'
@@ -113,6 +114,7 @@ function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: Flow
 
         <span className={TOOLBAR_SEPARATOR_CLASS} />
         <RepositionControl target={target} />
+        <LayoutControls target={target} />
 
         {toolbar.align ? (
           <div className={TOOLBAR_GROUP_CLASS}>

@@ -96,6 +96,20 @@ export const POPOVER_CLASS =
   'absolute top-full left-0 z-10 mt-1 flex w-56 flex-col gap-2 rounded-md border border-border ' +
   'bg-background p-2 font-sans text-xs text-foreground shadow-[0_8px_20px_rgba(15,23,42,0.22)]'
 
+export const LAYOUT_POPOVER_CLASS =
+  'absolute top-full left-0 z-10 mt-1 flex w-64 flex-col gap-2 rounded-md border border-border ' +
+  'bg-background p-2 font-sans text-xs text-foreground shadow-[0_8px_20px_rgba(15,23,42,0.22)]'
+
+export const LAYOUT_LIST_CLASS =
+  'm-0 flex max-h-72 list-none flex-col gap-px overflow-auto overscroll-contain p-0 [scrollbar-width:thin]'
+
+export const LAYOUT_ITEM_CLASS =
+  'flex w-full cursor-default appearance-none flex-col items-start gap-0 rounded-sm border-0 ' +
+  'bg-transparent px-1.5 py-1 text-left font-[inherit] text-[11px] leading-5 text-foreground ' +
+  'hover:not-disabled:bg-muted disabled:opacity-40 focus-visible:outline focus-visible:outline-ring'
+
+export const LAYOUT_REASON_CLASS = 'text-[10px] leading-4 text-muted-foreground'
+
 export const TAG_LIST_CLASS =
   'm-0 flex max-h-50 list-none flex-col gap-px overflow-auto overscroll-contain p-0 [scrollbar-width:thin]'
 
