@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter'
 import { isEditorDrag, surfaceTarget } from '../../dnd/data'
 import { DropIndicator } from '../../dnd/DropIndicator'
-import { useChildren, useEditorContext, useRootId } from '../Editor/context'
+import { useChildren, useDirectControls, useEditorContext, useRootId } from '../Editor/context'
 import { CanvasNode } from './CanvasNode'
 import { CanvasStage, CanvasStageContent } from './CanvasStage'
 import { STAGE_PADDING, useCanvasStage } from './stage'
@@ -58,7 +58,7 @@ export function CanvasDarkToggle({ children }: { children?: ReactNode }) {
   )
 }
 
-export function CanvasViewport({ className }: { className?: string }) {
+export function CanvasViewport({ className, children }: { className?: string; children?: ReactNode }) {
   const stageRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -79,6 +79,7 @@ export function CanvasViewport({ className }: { className?: string }) {
 
       <SelectionOverlay />
       <DropIndicator surface="canvas" />
+      {children}
     </CanvasStage>
   )
 }
@@ -90,6 +91,7 @@ function CanvasPage() {
   const rootId = useRootId()
   const children = useChildren(rootId)
   const interactions = useCanvasInteractions()
+  const direct = useDirectControls()
 
   return (
     <div className="box-border flex w-full justify-center p-4">
@@ -107,6 +109,7 @@ function CanvasPage() {
           tabIndex={0}
           className={cn(CANVAS_CLASS, isDark && 'adt-dark')}
           data-adt-canvas=""
+          data-adt-direct={direct ? '' : undefined}
           data-adt-styles={stylesReady ? 'ready' : 'pending'}
           aria-busy={!stylesReady || undefined}
           onPointerMove={interactions.onPointerMove}

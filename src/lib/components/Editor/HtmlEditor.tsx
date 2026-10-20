@@ -37,6 +37,11 @@ import {
   LayersTree,
 } from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
+import { BoxSizeControls } from '../../flow/box/BoxSizeControls'
+import { TagControls } from '../../flow/tags/TagControls'
+import { FlowControls } from '../../flow/FlowControls'
+import { FlowStatusBar } from '../../flow/FlowStatusBar'
+import { FlowToolbar } from '../../flow/FlowToolbar'
 import { EditorProvider, type EditorProviderProps } from './EditorProvider'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
 import { useEditorShortcuts } from './useEditorShortcuts'
@@ -131,6 +136,11 @@ const CanvasNamespace = Object.assign(Canvas, {
   LiveGhost,
   ImageGhost,
   Handles: HandlesNamespace,
+  FlowControls,
+  FlowStatusBar,
+  FlowToolbar,
+  BoxSize: BoxSizeControls,
+  TagControls,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {

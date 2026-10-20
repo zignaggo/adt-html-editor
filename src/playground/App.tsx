@@ -2,13 +2,14 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { HtmlEditor, parseHtml, serializeHtml, type HtmlEditorHandle } from '../lib'
 import { CustomLayout } from './CustomLayout'
 import { FixedImageLayout } from './FixedImageLayout'
+import { FlowControlsLayout } from './FlowControlsLayout'
 import { FIXTURES } from './fixtures'
 import { DefaultLayout as ShadcnDefaultLayout } from '../shadcn/parts/Editor/HtmlEditor'
 import { BUTTON_CLASS, PICKER_CLASS, SELECT_CLASS } from './playgroundStyles'
 
 type RoundTrip = { ok: boolean; message: string } | null
 
-type LayoutMode = 'default' | 'custom' | 'fixed-image' | 'shadcn'
+type LayoutMode = 'default' | 'custom' | 'fixed-image' | 'flow-controls' | 'shadcn'
 
 type State = {
   layoutMode: LayoutMode
@@ -114,6 +115,7 @@ export function App() {
             <option value="default">Default (3 panels)</option>
             <option value="custom">Custom composition</option>
             <option value="fixed-image">Fixed layout · image ghost</option>
+            <option value="flow-controls">Flow · direct controls</option>
             <option value="shadcn">shadcn skin</option>
           </select>
         </label>
@@ -173,6 +175,17 @@ export function App() {
             onChange={(html) => dispatch({ type: 'setOutput', value: html })}
           >
             <FixedImageLayout />
+          </HtmlEditor>
+        ) : state.layoutMode === 'flow-controls' ? (
+          <HtmlEditor
+            key={`flow-${state.documentHtml}`}
+            defaultValue={state.documentHtml}
+            layout="flow"
+            flowLayout={{ directControls: true }}
+            handleRef={handleRef}
+            onChange={(html) => dispatch({ type: 'setOutput', value: html })}
+          >
+            <FlowControlsLayout />
           </HtmlEditor>
         ) : (
           <HtmlEditor

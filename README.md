@@ -234,6 +234,44 @@ For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensio
 - **Resize and rotate.** `Canvas.Handles` draws the selected element's layout box (not its bounding box, so rotated elements get a rotated frame) with eight resize handles and a rotate handle; `Canvas.Handles.Resize` and `Canvas.Handles.Rotate` can be composed separately. Gestures use pointer events, preview directly on the element so text reflows live, and commit once on release (`width`/`height`/`left`/`top` in px, or `transform: rotate()` appended to the existing `transform` list). `Shift` keeps the aspect ratio or snaps the angle to 15°, `Alt` resizes from the center or disables snapping, `Esc` cancels. Edges snap to sibling and page guides when the element is not rotated; angles within 1° of a right angle stick. Resizing an inline element writes `display: inline-block`. Handles are hidden for locked elements and disabled inside transformed ancestors (drag the element to the page first). `Inspector.Transform` shows the angle, a reset button, an aspect-ratio lock shared with the handles and the W/H fields, and an "Auto height" toggle that removes `height`.
 - **Output.** Only `style` attributes and node parents change, so all fidelity guarantees above hold. Palette drops and tree-to-page drops use the same placement.
 
+## Flow layout controls
+
+In flow mode the selected element can be edited straight on the canvas, without going to the inspector:
+
+```tsx
+<HtmlEditor layout="flow" flowLayout={{ directControls: true }}>
+  <HtmlEditor.Canvas>
+    <HtmlEditor.Canvas.Toolbar>
+      <HtmlEditor.History />
+      <HtmlEditor.Canvas.WidthPresets />
+    </HtmlEditor.Canvas.Toolbar>
+    <HtmlEditor.Canvas.Viewport>
+      <HtmlEditor.Canvas.FlowControls />
+      <HtmlEditor.Canvas.FlowToolbar />
+    </HtmlEditor.Canvas.Viewport>
+    <HtmlEditor.Canvas.FlowStatusBar />
+  </HtmlEditor.Canvas>
+  <HtmlEditor.Inspector />
+</HtmlEditor>
+```
+
+- **Activation.** `flowLayout.directControls` is off by default, because it takes the pointer: while it is on, the node's native drag is routed to the gestures instead of to the tree-and-palette drag. `Canvas.Viewport` takes children, rendered as an overlay above the page in host coordinates, so `Canvas.FlowControls` is one of several possible overlays.
+- **When it engages.** Exactly one element selected, no text being edited, not the root, and nothing locked at it or above it.
+- **Gestures.** Dragging the element locks to an axis after 5 px: sideways splits the parent into thirds and aligns left, centre or right; up and down reorders, with a guide line and consecutive text and inlines treated as one target. The four corners resize between 10% and 100% of the parent's content width. The amber handle under the bottom edge sets the space below, from 0 to 96 px in steps of 4.
+- **Box model on the selection.** The overlay shades the selected element's own space: an amber band outside the border box for the margin and an emerald one inside it for the padding, each drawn only on the sides that have room. Both follow a gesture live, so dragging the amber handle shows the margin growing before it is committed.
+- **Everything is a class.** A gesture previews on the element's inline style and commits Tailwind classes — `w-[60%]`, `mb-6`, `mx-auto`, `text-right` — so the inspector reads the same value the canvas shows, and an inline declaration that would beat the new class is cleared in the same step. The preview is held until the canvas stylesheet covers the new classes, then removed, so nothing flashes unstyled. A whole drag is one history entry.
+- **Breakpoint.** A gesture writes at the breakpoint the variant bar is on (`Desktop`, `max-lg`, `max-sm`) and touches no other, so a mobile override never erases the desktop value. The status bar shows which one is live.
+- **Capabilities, with a reason.** `inspectFlow(element)` returns what may be done and why not: a flex-row or grid child is sized by its parent, an inline element follows the text, a floated or positioned element is out of flow, siblings reordered by CSS cannot be dragged, and an element whose descendant is positioned by hand refuses to resize rather than pulling the descendant out of place. Blocked controls are not rendered, and `Canvas.FlowStatusBar` says why.
+- **Toolbar.** `Canvas.FlowToolbar` floats above the selection, clamped to the canvas width and flipped below it when there is no room. It carries, in order: drag to reposition, the tag, select parent, the layout menu, then a separator, align left / centre / right and text size ∓2 px (written in `rem`, so the page keeps scaling with the reader's own font size), then a separator, width ∓10% on anything that is not text, space below ∓4 px and the height-and-inner-space popover, then a last separator and move earlier / later. Every control carries a tooltip with the same words as its label, and a separator that would end up leading, trailing or doubled hides itself, so a group that `inspectFlow` refuses leaves no mark. A control is only rendered when `inspectFlow` allows it, so the toolbar never offers what the row, the grid or the flow would undo. A click previews inline and commits classes exactly like a drag does, and clicks on the same control within the coalescing window stay one history entry.
+- **Tag.** `Canvas.TagControls` sits in the toolbar as the current tag, and opens the same picker as the inspector's: the sixteen editable tags, the ones the HTML content model refuses still on screen but disabled with their reason. It is rendered only when at least one *other* tag is open (`hasRetagOptions`), so a `<li>` in a list, a `<tr>` in a table or an already-cornered element simply has no tag control instead of one that can do nothing. Picking a tag calls `setTag`, which swaps it in place in one history entry — see [Tag picker](#tag-picker).
+- **Height and inner space.** The blue handle under the bottom edge, and the toolbar's `Size` popover, set the height of a plain box — `div`, `header`, `section`, `aside`, `article` — as `h-auto min-h-[Npx] max-h-none box-border`, never a fixed height that could cut the content off. A box wrapped in single-child `div`s is treated as a chain of frames: the outer one takes the height and centres the content (`flex flex-col justify-center`), and shrinking spends the padding of every frame proportionally before anything else, down to `pt-[0px] pb-[0px]`. Below that the content wins: the height stops at what the content needs and the status bar says so. The popover's two other fields set the inner space, vertical (`pt-`/`pb-`) and horizontal (`pl-`/`pr-`), from 0 to 160 px; a `p-6` shorthand is rewritten as the sides it still means. A box with a locked or hand-positioned descendant has no handle at all.
+- **Reposition.** The purple button in the toolbar moves the whole piece rather than the tag that happens to be selected: `componentOf` promotes an inline to its paragraph, a caption to its figure, and an image to the wrapper or media group that holds it, then up to a `data-responsive-container` marker. Dragging the button starts the move; clicking it arms the mode, so a drag on the piece itself repositions instead of aligning — without arming, that routing happens anyway for `aside`, `figure`, `header`, `footer` and for a `div` that reads as a card (marker, media group, float, background, border or shadow). During the drag a dashed ghost follows the pointer with the drop in words, and the editor's own drop indicator marks the destination: a line along the edge for ordering — vertical inside a row, and mirrored in right-to-left — or a box for dropping inside. The pointer decides the gesture at `pointerdown` and never switches mid-drag.
+- **Where it can be dropped.** The top and bottom fifths of the element under the pointer order the piece before or after it. The sides make two columns, in a `grid grid-cols-2 max-sm:grid-cols-1 gap-6 items-start clear-both w-full` wrapper, with both children fitted to their new slot. The side of a *paragraph*, when the piece is an object text can wrap around (an `aside`, a `figure`, an image or a media group), floats it instead: the container becomes a `flow-root` and the object takes `w-1/3 float-left mr-6` plus the `max-sm:` pair that stacks it again on a phone. The empty space of a container drops next to its nearest child, and below the last child drops inside. Changing parent applies `fit`, which drops the width, margin, float and grid placement the piece carried from its old parent. A piece that cannot move at all — inside a sentence or a list, transformed, placed by CSS, in a reversed parent — has the button disabled with the reason.
+- **Layout menu.** The `Layout` popover next to the reposition button lays out a whole container in one click, each preset a single history entry: select the whole component, a row that aligns its children by centre, top or bottom (`flex flex-row justify-between items-* gap-6`, with `max-sm:flex-col max-sm:items-center` so it stacks on a phone, and each child pinned to the share of the row it already occupies — `w-[47%]`, or `w-auto` once it takes 65% or more), centred contents for one to four paragraphs or headings, two equal columns, one below another, switch order, side by side with the previous or next block, and wrap text with the object on the left or right. The container is the selection itself or, if it is a chain of single-child `div`s, the innermost one. Each entry carries an icon that draws what it does — two boxes meeting at a guide line for the three row alignments, a box with text beside it for the wrap, an arrow into a box for the two neighbours — so the list reads without having to be parsed word by word. A preset the selection cannot take is listed disabled with the reason — `needs at least two children`, `needs exactly two children`, `nothing here for text to wrap around` — so the menu is the same shape everywhere. Every preset writes the base and the `max-sm` half explicitly and leaves the other breakpoints alone, and it clears the inline declaration that would beat each utility it writes.
+- **Text flow.** Wrapping text picks the plan from where the text actually is: the paragraphs beside the object, the ones further up once the object sits in a plain wrapper, or the ones outside when the selection is the inner container holding the object. A `div` is only walked through when it carries no background, padding, border or overflow and is not marked `[role]`, `[data-activity-item]` or `[data-section-id]` — a card or an activity is a barrier, so the text inside it never wraps around an object outside it, or the other way round. The chosen container becomes the `flow-root`; when it holds anything else, a `div.flow-root.w-full.min-w-0` is inserted instead and only the object and its text move in. Wrappers along the way go back to `block w-auto min-w-0 max-w-full` and lose their layout classes, paragraphs with no bottom margin get `mb-6`, and the object lands right before the anchor with `w-1/3 float-left mr-6` plus the `max-sm:` pair. The same code runs for the menu and for a float drop, so both write the same thing.
+- **Nothing moves until you let go.** The drag only moves the ghost; the document is touched once, on release, in a single history entry. Escape, a lost pointer, a blurred window or Ctrl+Z abandons it with nothing to undo. Because the piece never leaves its place during the drag, cancelling is exact even inside a flex row. An object that changes parent to be floated keeps the typography it was inheriting, written down before the move.
+- **Output.** Only classes and node parents change, so every fidelity guarantee above holds.
+
 ## shadcn skin
 
 The same editor with [shadcn/ui](https://ui.shadcn.com) chrome ships as a second entry point, `adt-html-editor/shadcn`. The main entry pulls in none of the skin's UI libraries: they are optional peers that your bundler only reaches when you import the subpath.
@@ -294,6 +332,25 @@ import { HtmlEditor } from 'adt-html-editor/shadcn'
       <HtmlEditor.Inspector.ClassInput />
       <HtmlEditor.Inspector.ClassList />
     </HtmlEditor.Inspector.Section>
+  </HtmlEditor.Inspector.Body>
+</HtmlEditor.Inspector>
+```
+
+### Tag picker
+
+`HtmlEditor.Inspector.TagHeader` is a richer header for a single selection: the element icon, the tag as a picker, `#id`, the lock toggle, "select parent", the ancestor breadcrumb and a preview of the text. Picking a tag calls the core's `setTag`, which swaps the tag in place — the id, the attributes, the classes, the children, the selection and the collapsed state all survive, and the change is one undo away. `HtmlEditor.Inspector.TagPicker` is the picker on its own, for a header of your own.
+
+Which tags it offers comes from `inspectRetag(doc, id, { locked, editingTextId })` in the main entry, a pure read of the HTML content model over `p`, `h1`–`h6`, `span`, `div`, `section`, `article`, `aside`, `blockquote`, `header`, `footer` and `nav`. A phrase tag is not offered for a box that holds a block; inside a phrasing or inline ancestor only `span` is left; a list, a table, a `picture` or an `svg` parent blocks the swap entirely; `hgroup` leaves only `p` and the headings; `header` and `footer` refuse to nest in each other; `article`, `aside` and `nav` refuse to wrap a `main`; and `address` and `dt` drop the headings and the sectioning tags. Each candidate answers `true` or the reason it cannot — `unsupported`, `locked` or `editing` — the same "capability with a reason" shape as `inspectFlow`, so a blocked tag stays on screen, disabled, with its reason beside it instead of silently going missing. `useRetag(id)` is the headless version: the current tag, the candidates with their reasons, and a `setTag` that refuses a blocked one.
+
+```tsx
+import { HtmlEditor } from 'adt-html-editor/shadcn'
+
+<HtmlEditor.Inspector>
+  <HtmlEditor.Inspector.Header>
+    <HtmlEditor.Inspector.TagHeader />
+  </HtmlEditor.Inspector.Header>
+  <HtmlEditor.Inspector.Body>
+    <HtmlEditor.Inspector.Styles />
   </HtmlEditor.Inspector.Body>
 </HtmlEditor.Inspector>
 ```

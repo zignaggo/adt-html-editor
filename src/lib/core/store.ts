@@ -18,12 +18,15 @@ import {
   sortByDocumentOrder,
 } from './selection'
 import {
+  OPAQUE_TAGS,
+  VOID_TAGS,
   ancestorIdsOf,
   canHaveChildren,
   childrenOf,
   classSetOf,
   collectSubtree,
   isDescendantOf,
+  isRoot,
   isStyled,
   withAttr,
   withClasses,
@@ -89,6 +92,7 @@ export type EditorActions = {
   duplicateNode: (id: NodeId) => NodeId | null
   duplicateNodes: (ids: readonly NodeId[]) => NodeId[]
   setClasses: (id: NodeId, classes: string[]) => void
+  setTag: (id: NodeId, tag: string) => boolean
   setAttr: (id: NodeId, name: string, value: string | null) => void
   setText: (id: NodeId, value: string) => void
   placeNode: (id: NodeId, options: PlaceOptions) => boolean
@@ -114,6 +118,8 @@ export type EditorActions = {
 export type EditorStore = Store<EditorState, EditorActions>
 
 type Patch = Partial<EditorState>
+
+const TAG_PATTERN = /^[a-z][a-z0-9-]*$/
 
 function snapshotOf(state: EditorState): Snapshot {
   return { doc: state.doc, selectedIds: state.selectedIds }
@@ -608,6 +614,22 @@ export function createEditorStore(initialHtml: string): EditorStore {
           nodes[id] = withClasses(node, classes)
           return { ...doc, nodes }
         }, { coalesceKey: `classes:${id}`, classes })
+      },
+
+      setTag(id, tag) {
+        const next = tag.trim().toLowerCase()
+        if (!TAG_PATTERN.test(next)) return false
+        if (VOID_TAGS.has(next) || OPAQUE_TAGS.has(next)) return false
+        const node = get().doc.nodes[id]
+        if (!node || node.kind !== 'element' || isRoot(node) || node.tag === next) return false
+        commit((doc) => {
+          const current = doc.nodes[id]
+          if (!current || current.kind !== 'element') return null
+          const nodes = draftNodes(doc)
+          nodes[id] = { ...current, tag: next }
+          return { ...doc, nodes }
+        }, { coalesceKey: `tag:${id}` })
+        return true
       },
 
       setAttr(id, name, value) {

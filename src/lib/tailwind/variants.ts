@@ -23,6 +23,8 @@ export type StyleTarget = {
 
 export const BASE_TARGET: StyleTarget = { breakpoint: 'desktop', state: null }
 
+export const MOBILE_TARGET: StyleTarget = { breakpoint: 'mobile', state: null }
+
 const BREAKPOINT_BY_ID = new Map<BreakpointId, Breakpoint>(BREAKPOINTS.map((entry) => [entry.id, entry]))
 const BREAKPOINT_BY_PREFIX = new Map<string, BreakpointId>()
 for (const entry of BREAKPOINTS) if (entry.prefix) BREAKPOINT_BY_PREFIX.set(entry.prefix, entry.id)

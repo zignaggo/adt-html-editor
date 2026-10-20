@@ -1,4 +1,5 @@
 import type { NodeId } from '../../core/ids'
+import type { GestureController, GestureInput } from '../../core/pointerGesture'
 import type { PlaceUpdate } from '../../core/store'
 import { isStyled } from '../../core/model'
 import { formatInlineStyle, parseInlineStyle } from '../../style/adapter'
@@ -40,19 +41,6 @@ export type GroupSnapshot = {
   members: MemberSnapshot[]
   box: Box
   siblings: Box[]
-}
-
-export type GestureInput = {
-  clientX: number
-  clientY: number
-  shiftKey: boolean
-  altKey: boolean
-}
-
-export type GestureController = {
-  move: (input: GestureInput) => void
-  finish: () => void
-  cancel: () => void
 }
 
 function snapshotMember(

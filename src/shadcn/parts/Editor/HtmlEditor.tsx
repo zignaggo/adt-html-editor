@@ -32,6 +32,8 @@ import {
 } from '../Inspector/InspectorParts'
 import { InspectorPosition } from '../Inspector/InspectorPosition'
 import { InspectorTransform } from '../Inspector/InspectorTransform'
+import { TagInspectorHeader } from '../Inspector/TagInspectorHeader'
+import { TagPicker } from '../Inspector/TagPicker'
 import { InspectorAppearance } from '../Inspector/sections/InspectorAppearance'
 import { InspectorBorders } from '../Inspector/sections/InspectorBorders'
 import { InspectorLayout } from '../Inspector/sections/InspectorLayout'
@@ -50,6 +52,11 @@ import {
   LayersTree,
 } from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
+import { BoxSizeControls } from '../../../lib/flow/box/BoxSizeControls'
+import { TagControls } from '../../../lib/flow/tags/TagControls'
+import { FlowControls } from '../../../lib/flow/FlowControls'
+import { FlowStatusBar } from '../../../lib/flow/FlowStatusBar'
+import { FlowToolbar } from '../../../lib/flow/FlowToolbar'
 import { Sidebar, SidebarLayers, SidebarPalette, SidebarSearch, SidebarTabs } from '../Sidebar/Sidebar'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
 
@@ -143,10 +150,17 @@ const CanvasNamespace = Object.assign(Canvas, {
   LiveGhost,
   ImageGhost,
   Handles: HandlesNamespace,
+  FlowControls,
+  FlowStatusBar,
+  FlowToolbar,
+  BoxSize: BoxSizeControls,
+  TagControls,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {
   Header: InspectorHeader,
+  TagHeader: TagInspectorHeader,
+  TagPicker,
   Empty: InspectorEmpty,
   Variants: InspectorVariants,
   Body: InspectorBody,

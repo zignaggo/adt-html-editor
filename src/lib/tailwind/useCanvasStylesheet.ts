@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useEditorStoreApi } from '../components/Editor/context'
 import { buildCss } from './client'
 import { scopeCss } from './scopeCss'
+import { markStylesheetPending, markStylesheetSettled } from './stylesheetStore'
 
 const STYLE_ATTRIBUTE = 'data-adt-canvas-style'
 
@@ -62,10 +63,12 @@ export function useCanvasStylesheet(): boolean {
       const used = store.state.usedClasses
       if (used === builtRef.current) {
         setReady(true)
+        markStylesheetSettled()
         return
       }
 
       inFlight = true
+      markStylesheetPending()
       void build(used).finally(() => {
         inFlight = false
         if (disposed) return
@@ -75,6 +78,7 @@ export function useCanvasStylesheet(): boolean {
           return
         }
         setReady(true)
+        markStylesheetSettled()
       })
     }
 

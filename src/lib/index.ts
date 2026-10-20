@@ -242,3 +242,181 @@ export { useSelectionSummary } from './components/Inspector/useSelectionSummary'
 export type { SelectionSummary, SelectionTag } from './components/Inspector/useSelectionSummary'
 export { rowsBetween } from './components/Layers/flatten'
 export { copySubtree, copySubtrees, readClipboard } from './core/clipboard'
+
+export { isLockedDeep, hasLockedDescendant, isLockedAnywhere } from './core/lock'
+export type { LockMap } from './core/lock'
+export { useEffectiveLock, useSubtreeLock, useFlowLayout, useDirectControls } from './components/Editor/context'
+export type { FlowLayoutConfig } from './components/Editor/context'
+export type { FlowLayoutOptions } from './components/Editor/EditorProvider'
+export { gestureInputOf, runPointerGesture, swallowNextClick } from './core/pointerGesture'
+export type { GestureController, GestureInput } from './core/pointerGesture'
+
+export { applyClassEdit, removeClassFamily } from './style/classEdit'
+export type { ClassEdit, ClassMatcher } from './style/classEdit'
+export {
+  classesAt,
+  clearClassMapValue,
+  readClassMapValue,
+  resolveClassMapAt,
+  writeClassMapValue,
+} from './style/classMapWrite'
+export { clearInlineProps, commitStyle, withInlineProps } from './style/commit'
+export type { StyleCommit } from './style/commit'
+export { formatInlineStyle, inlineCssAdapter, parseInlineStyle } from './style/adapter'
+export type { StyleAdapter, StyleWrite } from './style/adapter'
+export { isStylesheetSettled, whenStylesheetSettled } from './tailwind/stylesheetStore'
+export { useCanvasHost } from './components/Canvas/useCanvasHost'
+export type { CanvasHost } from './components/Canvas/useCanvasHost'
+
+export {
+  FLOW_CAPABILITIES,
+  allows,
+  blockReasonOf,
+  hasLooseText,
+  hasPositionedDescendant,
+  inspectFlow,
+  orderElementOf,
+} from './flow/capabilities'
+export type {
+  BlockReason,
+  FlowCapability,
+  FlowFlags,
+  FlowInspection,
+  StyleReader,
+} from './flow/capabilities'
+export { contentWidthOf, useFlowSelection } from './flow/useFlowSelection'
+export type { FlowBox, FlowEdges, FlowGeometry, FlowTarget } from './flow/useFlowSelection'
+export { GESTURE_ATTRIBUTE, MOVE_ATTRIBUTE, beginCanvasGesture } from './flow/gesture/canvasGesture'
+export type {
+  CanvasGestureCommit,
+  CanvasGestureSession,
+  CanvasGestureSpec,
+} from './flow/gesture/canvasGesture'
+export { useCanvasGesture } from './flow/gesture/useCanvasGesture'
+export type { CanvasGestureStarter } from './flow/gesture/useCanvasGesture'
+export { flowGesture, subscribeFlowGesture } from './flow/gesture/flowGestureStore'
+export type { FlowGestureKind, FlowGestureSession } from './flow/gesture/flowGestureStore'
+export { neighbourSlot, pickSlot, reorderSlots } from './flow/gestures/flowOrder'
+export type { ReorderSlot } from './flow/gestures/flowOrder'
+export {
+  MAX_SPACE_PX,
+  MAX_TEXT_SIZE_PX,
+  MAX_WIDTH_PERCENT,
+  MIN_TEXT_SIZE_PX,
+  MIN_WIDTH_PERCENT,
+  SPACE_STEP_PX,
+  TEXT_SIZE_STEP_PX,
+  WIDTH_STEP_PERCENT,
+  alignClasses,
+  alignFromThirds,
+  alignPreview,
+  clampSpacePx,
+  clampTextSizePx,
+  clampWidthPercent,
+  remOf,
+  spaceClasses,
+  spacePreview,
+  textSizeClasses,
+  textSizePreview,
+  widthClasses,
+  widthPreview,
+} from './flow/gestures/flowWrite'
+export type { AlignMode, FlowAlign } from './flow/gestures/flowWrite'
+export { useFlowGestures } from './flow/gestures/useFlowGestures'
+export type { FlowGestures, ResizeCorner } from './flow/gestures/useFlowGestures'
+export { FlowControls as CanvasFlowControls } from './flow/FlowControls'
+export { FlowStatusBar } from './flow/FlowStatusBar'
+export { FlowToolbar as CanvasFlowToolbar } from './flow/FlowToolbar'
+export { useFlowToolbar } from './flow/useFlowToolbar'
+export type { FlowToolbar } from './flow/useFlowToolbar'
+export { FlowIcon } from './flow/flowIcons'
+export type { FlowIconName } from './flow/flowIcons'
+
+export {
+  CONTENT_HINT,
+  HEIGHT_STEP_PX,
+  HEIGHT_TAGS,
+  MAX_INNER_SPACE_PX,
+  MIN_INNER_SPACE_PX,
+  clampInnerSpace,
+  heightClasses,
+  heightFrames,
+  heightPreview,
+  horizontalPaddingClasses,
+  innerSpaceClasses,
+  measureHeight,
+  readBoxMetrics,
+  verticalPaddingClasses,
+} from './flow/box/boxHeight'
+export type {
+  BoxMetrics,
+  FramePadding,
+  HeightBlock,
+  HeightFrames,
+  HeightFramesOptions,
+  HeightMeasure,
+  InnerAxis,
+} from './flow/box/boxHeight'
+export { useBoxHeight } from './flow/box/useBoxHeight'
+export type { BoxHeight } from './flow/box/useBoxHeight'
+export { BoxSizeControls as CanvasBoxSize } from './flow/box/BoxSizeControls'
+
+export {
+  EDITABLE_TAGS,
+  allowsTag,
+  hasRetagOptions,
+  inspectRetag,
+  isEditableTag,
+  retagReasonOf,
+} from './flow/tags/retag'
+export type {
+  EditableTag,
+  RetagBlock,
+  RetagContext,
+  RetagInspection,
+} from './flow/tags/retag'
+export { useRetag } from './flow/tags/useRetag'
+export type { Retag, RetagOption } from './flow/tags/useRetag'
+export { TagControls as CanvasTagControls } from './flow/tags/TagControls'
+
+export {
+  CONTAINER_ATTRIBUTE,
+  componentBlock,
+  componentOf,
+  isFlowContainer,
+  isImage,
+  isMediaGroup,
+  isParagraph,
+  isWrappableObject,
+  layoutChildren,
+  looksLikeComponent,
+  movableComponent,
+  wrapperOfImage,
+} from './flow/component/componentLayout'
+export type { ComponentBlock } from './flow/component/componentLayout'
+export {
+  candidateAt,
+  dropIndicator,
+  dropLabel,
+  resolveComponentDrop,
+} from './flow/component/componentDrop'
+export type { ComponentDrop, DropKind, DropPoint } from './flow/component/componentDrop'
+export {
+  COLUMNS_CLASSES,
+  FLOW_ROOT_CLASSES,
+  fitClasses,
+  floatObjectClasses,
+  flowRootClasses,
+  textSpacingClasses,
+} from './flow/component/componentCommit'
+export type { FloatSide } from './flow/component/componentCommit'
+export { useReposition } from './flow/component/useReposition'
+export type { Reposition, RepositionOutcome } from './flow/component/useReposition'
+export {
+  repositionUi,
+  resetReposition,
+  setRepositionArmed,
+  setRepositionHighlight,
+} from './flow/component/repositionStore'
+export type { RepositionUi } from './flow/component/repositionStore'
+export { RepositionControl as CanvasRepositionControl } from './flow/component/RepositionControl'

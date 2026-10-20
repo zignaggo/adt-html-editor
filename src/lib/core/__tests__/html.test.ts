@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseHtml, looksLikeFullDocument } from '../html/parse'
 import { serializeHtml } from '../html/serialize'
 import { classSetOf } from '../model'
+import { createEditorStore } from '../store'
 
 const fixtures: Record<string, string> = {
   fragmentSimple: '<section class="p-4 flex"><h1 id="t">Hello</h1><p>Text</p></section>',
@@ -148,6 +149,39 @@ describe('fidelity', () => {
     const tags = Object.values(doc.nodes).map((n) => ('tag' in n ? n.tag : n.kind))
     expect(tags).not.toContain('title')
     expect(tags).not.toContain('meta')
+  })
+})
+
+describe('retag fidelity', () => {
+  it('swaps the tag without disturbing the round-trip', () => {
+    const source = '<div class="z-10 flex" data-x="1" id="t">text <span>s</span></div>'
+    const store = createEditorStore(source)
+    const target = Object.values(store.state.doc.nodes).find(
+      (node) => node.kind === 'element' && node.tag === 'div',
+    )
+    if (!target) throw new Error('no <div>')
+
+    expect(store.actions.setTag(target.id, 'section')).toBe(true)
+
+    const out = store.actions.getHtml()
+    expect(out).toBe('<section class="z-10 flex" data-x="1" id="t">text <span>s</span></section>')
+    expect(roundTrip(out)).toBe(out)
+    expect(out).not.toContain('data-adt')
+  })
+
+  it('leaves the rest of the document byte for byte', () => {
+    const source = fixtures.opaqueSvg
+    const store = createEditorStore(source)
+    const target = Object.values(store.state.doc.nodes).find(
+      (node) => node.kind === 'element' && node.tag === 'div',
+    )
+    if (!target) throw new Error('no <div>')
+
+    store.actions.setTag(target.id, 'figure')
+    const out = store.actions.getHtml()
+
+    expect(out).toBe(source.replace('<div>', '<figure>').replace('</div>', '</figure>'))
+    expect(roundTrip(out)).toBe(out)
   })
 })
 
