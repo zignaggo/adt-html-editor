@@ -3,6 +3,14 @@ import type { NodeId } from '../../core/ids'
 import { isStyled } from '../../core/model'
 import { clearInlineProps, commitStyle, withInlineProps } from '../../style/commit'
 import type { StyleTarget } from '../../tailwind/variants'
+import {
+  CONTENT_HINT,
+  heightPreview,
+  measureHeight,
+  type BoxMetrics,
+  type HeightMeasure,
+} from '../box/boxHeight'
+import { useBoxHeight } from '../box/useBoxHeight'
 import { allows } from '../capabilities'
 import { flowGesture } from '../gesture/flowGestureStore'
 import { useCanvasGesture } from '../gesture/useCanvasGesture'
@@ -28,6 +36,7 @@ export type FlowGestures = {
   startMove: (event: PointerEvent) => void
   startResize: (corner: ResizeCorner, event: PointerEvent) => void
   startSpace: (event: PointerEvent) => void
+  startHeight: (event: PointerEvent) => void
 }
 
 const AXIS_LOCK_PX = 5
@@ -36,6 +45,7 @@ const NO_GESTURES: FlowGestures = {
   startMove: () => {},
   startResize: () => {},
   startSpace: () => {},
+  startHeight: () => {},
 }
 
 type MoveState = {
@@ -68,11 +78,20 @@ type SpaceState = {
   px: number
 }
 
+type HeightState = {
+  geometry: FlowGeometry
+  baseStyle: string | null
+  metrics: BoxMetrics
+  startPx: number
+  measured: HeightMeasure
+}
+
 export function useFlowGestures(target: FlowTarget | null): FlowGestures {
   const store = useEditorStoreApi()
   const actions = useEditor()
   const breakpoint = useBreakpoint()
   const startGesture = useCanvasGesture()
+  const box = useBoxHeight(target)
 
   if (!target) return NO_GESTURES
 
@@ -279,5 +298,52 @@ export function useFlowGestures(target: FlowTarget | null): FlowGestures {
     })
   }
 
-  return { startMove, startResize, startSpace }
+  const startHeight = (event: PointerEvent) => {
+    if (!box || box.blocked !== null) return
+
+    startGesture<HeightState>(event, {
+      element,
+      begin: () => {
+        const geometry = target.measure()
+        if (!geometry) return null
+        const metrics = box.read()
+        const startPx = geometry.box.height / geometry.scale
+        flowGesture.begin({ kind: 'height', axis: 'y', guideTop: null, feedback: '' })
+        return {
+          geometry,
+          baseStyle: styleOf(target.id),
+          metrics,
+          startPx,
+          measured: measureHeight(metrics, startPx),
+        }
+      },
+
+      preview: (session, input) => {
+        const state = session.state
+        const dy = (input.clientY - session.origin.clientY) / state.geometry.scale
+        const next = measureHeight(state.metrics, state.startPx + dy)
+        if (next.height === state.measured.height) return
+        state.measured = next
+        element.setAttribute(
+          'style',
+          withInlineProps(state.baseStyle, heightPreview(next.height, next.padding[0])),
+        )
+        flowGesture.update({ feedback: next.blocked ? CONTENT_HINT : `${next.height}px tall` })
+      },
+
+      commit: (session) => {
+        const state = session.state
+        const style = clearInlineProps(
+          state.baseStyle ?? undefined,
+          Object.keys(heightPreview(state.measured.height, state.measured.padding[0])),
+        )
+        box.commitHeight(state.measured, style)
+        return { style }
+      },
+
+      onEnd: endSession,
+    })
+  }
+
+  return { startMove, startResize, startSpace, startHeight }
 }

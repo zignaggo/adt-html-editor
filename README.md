@@ -247,6 +247,7 @@ In flow mode the selected element can be edited straight on the canvas, without 
     </HtmlEditor.Canvas.Toolbar>
     <HtmlEditor.Canvas.Viewport>
       <HtmlEditor.Canvas.FlowControls />
+      <HtmlEditor.Canvas.FlowToolbar />
     </HtmlEditor.Canvas.Viewport>
     <HtmlEditor.Canvas.FlowStatusBar />
   </HtmlEditor.Canvas>
@@ -260,6 +261,8 @@ In flow mode the selected element can be edited straight on the canvas, without 
 - **Everything is a class.** A gesture previews on the element's inline style and commits Tailwind classes — `w-[60%]`, `mb-6`, `mx-auto`, `text-right` — so the inspector reads the same value the canvas shows, and an inline declaration that would beat the new class is cleared in the same step. The preview is held until the canvas stylesheet covers the new classes, then removed, so nothing flashes unstyled. A whole drag is one history entry.
 - **Breakpoint.** A gesture writes at the breakpoint the variant bar is on (`Desktop`, `max-lg`, `max-sm`) and touches no other, so a mobile override never erases the desktop value. The status bar shows which one is live.
 - **Capabilities, with a reason.** `inspectFlow(element)` returns what may be done and why not: a flex-row or grid child is sized by its parent, an inline element follows the text, a floated or positioned element is out of flow, siblings reordered by CSS cannot be dragged, and an element whose descendant is positioned by hand refuses to resize rather than pulling the descendant out of place. Blocked controls are not rendered, and `Canvas.FlowStatusBar` says why.
+- **Toolbar.** `Canvas.FlowToolbar` floats above the selection, clamped to the canvas width and flipped below it when there is no room. It carries, in order: select parent, align left / centre / right, text size ∓2 px (written in `rem`, so the page keeps scaling with the reader's own font size), width ∓10% on anything that is not text, move earlier / later, and space below ∓4 px. A control is only rendered when `inspectFlow` allows it, so the toolbar never offers what the row, the grid or the flow would undo. A click previews inline and commits classes exactly like a drag does, and clicks on the same control within the coalescing window stay one history entry.
+- **Height and inner space.** The blue handle under the bottom edge, and the toolbar's `Size` popover, set the height of a plain box — `div`, `header`, `section`, `aside`, `article` — as `h-auto min-h-[Npx] max-h-none box-border`, never a fixed height that could cut the content off. A box wrapped in single-child `div`s is treated as a chain of frames: the outer one takes the height and centres the content (`flex flex-col justify-center`), and shrinking spends the padding of every frame proportionally before anything else, down to `pt-[0px] pb-[0px]`. Below that the content wins: the height stops at what the content needs and the status bar says so. The popover's two other fields set the inner space, vertical (`pt-`/`pb-`) and horizontal (`pl-`/`pr-`), from 0 to 160 px; a `p-6` shorthand is rewritten as the sides it still means. A box with a locked or hand-positioned descendant has no handle at all.
 - **Output.** Only classes and node parents change, so every fidelity guarantee above holds.
 
 ## shadcn skin

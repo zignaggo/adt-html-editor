@@ -81,6 +81,27 @@ export function reorderSlots(
   return slots
 }
 
+/**
+ * Where a one-step move lands, as a model index: the element sibling before or after this
+ * one, skipping the whitespace between them. `null` when there is no sibling that way.
+ */
+export function neighbourSlot(doc: EditorDocument, id: NodeId, step: number): number | null {
+  const parentId = doc.nodes[id]?.parentId
+  if (!parentId) return null
+
+  const children = childrenOf(doc, parentId)
+  const elements: number[] = []
+  for (let index = 0; index < children.length; index += 1) {
+    if (doc.nodes[children[index]]?.kind === 'element') elements.push(index)
+  }
+
+  const at = elements.indexOf(children.indexOf(id))
+  if (at === -1) return null
+  const to = at + (step < 0 ? -1 : 1)
+  if (to < 0 || to >= elements.length) return null
+  return step < 0 ? elements[to] : elements[to] + 1
+}
+
 export function pickSlot(slots: readonly ReorderSlot[], y: number): ReorderSlot | null {
   let best: ReorderSlot | null = null
   let distance = Number.POSITIVE_INFINITY

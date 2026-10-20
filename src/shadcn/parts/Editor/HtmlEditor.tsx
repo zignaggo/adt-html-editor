@@ -50,8 +50,10 @@ import {
   LayersTree,
 } from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
+import { BoxSizeControls } from '../../../lib/flow/box/BoxSizeControls'
 import { FlowControls } from '../../../lib/flow/FlowControls'
 import { FlowStatusBar } from '../../../lib/flow/FlowStatusBar'
+import { FlowToolbar } from '../../../lib/flow/FlowToolbar'
 import { Sidebar, SidebarLayers, SidebarPalette, SidebarSearch, SidebarTabs } from '../Sidebar/Sidebar'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
 
@@ -147,6 +149,8 @@ const CanvasNamespace = Object.assign(Canvas, {
   Handles: HandlesNamespace,
   FlowControls,
   FlowStatusBar,
+  FlowToolbar,
+  BoxSize: BoxSizeControls,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {

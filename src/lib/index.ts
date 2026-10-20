@@ -272,6 +272,8 @@ export {
   FLOW_CAPABILITIES,
   allows,
   blockReasonOf,
+  hasLooseText,
+  hasPositionedDescendant,
   inspectFlow,
   orderElementOf,
 } from './flow/capabilities'
@@ -294,20 +296,28 @@ export { useCanvasGesture } from './flow/gesture/useCanvasGesture'
 export type { CanvasGestureStarter } from './flow/gesture/useCanvasGesture'
 export { flowGesture, subscribeFlowGesture } from './flow/gesture/flowGestureStore'
 export type { FlowGestureKind, FlowGestureSession } from './flow/gesture/flowGestureStore'
-export { pickSlot, reorderSlots } from './flow/gestures/flowOrder'
+export { neighbourSlot, pickSlot, reorderSlots } from './flow/gestures/flowOrder'
 export type { ReorderSlot } from './flow/gestures/flowOrder'
 export {
   MAX_SPACE_PX,
+  MAX_TEXT_SIZE_PX,
   MAX_WIDTH_PERCENT,
+  MIN_TEXT_SIZE_PX,
   MIN_WIDTH_PERCENT,
   SPACE_STEP_PX,
+  TEXT_SIZE_STEP_PX,
+  WIDTH_STEP_PERCENT,
   alignClasses,
   alignFromThirds,
   alignPreview,
   clampSpacePx,
+  clampTextSizePx,
   clampWidthPercent,
+  remOf,
   spaceClasses,
   spacePreview,
+  textSizeClasses,
+  textSizePreview,
   widthClasses,
   widthPreview,
 } from './flow/gestures/flowWrite'
@@ -316,3 +326,37 @@ export { useFlowGestures } from './flow/gestures/useFlowGestures'
 export type { FlowGestures, ResizeCorner } from './flow/gestures/useFlowGestures'
 export { FlowControls as CanvasFlowControls } from './flow/FlowControls'
 export { FlowStatusBar } from './flow/FlowStatusBar'
+export { FlowToolbar as CanvasFlowToolbar } from './flow/FlowToolbar'
+export { useFlowToolbar } from './flow/useFlowToolbar'
+export type { FlowToolbar } from './flow/useFlowToolbar'
+export { FlowIcon } from './flow/flowIcons'
+export type { FlowIconName } from './flow/flowIcons'
+
+export {
+  CONTENT_HINT,
+  HEIGHT_STEP_PX,
+  HEIGHT_TAGS,
+  MAX_INNER_SPACE_PX,
+  MIN_INNER_SPACE_PX,
+  clampInnerSpace,
+  heightClasses,
+  heightFrames,
+  heightPreview,
+  horizontalPaddingClasses,
+  innerSpaceClasses,
+  measureHeight,
+  readBoxMetrics,
+  verticalPaddingClasses,
+} from './flow/box/boxHeight'
+export type {
+  BoxMetrics,
+  FramePadding,
+  HeightBlock,
+  HeightFrames,
+  HeightFramesOptions,
+  HeightMeasure,
+  InnerAxis,
+} from './flow/box/boxHeight'
+export { useBoxHeight } from './flow/box/useBoxHeight'
+export type { BoxHeight } from './flow/box/useBoxHeight'
+export { BoxSizeControls as CanvasBoxSize } from './flow/box/BoxSizeControls'

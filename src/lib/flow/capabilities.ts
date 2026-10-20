@@ -76,14 +76,17 @@ function isTransformedAbove(element: HTMLElement, read: StyleReader): boolean {
   return false
 }
 
-function hasLooseText(element: Element): boolean {
+export function hasLooseText(element: Element): boolean {
   for (const child of element.childNodes) {
     if (child.nodeType === Node.TEXT_NODE && (child.textContent ?? '').trim() !== '') return true
   }
   return false
 }
 
-function hasPositionedDescendant(element: HTMLElement, read: StyleReader): boolean {
+export function hasPositionedDescendant(
+  element: HTMLElement,
+  read: StyleReader = defaultReader,
+): boolean {
   for (const descendant of element.querySelectorAll<HTMLElement>('*')) {
     if (OUT_OF_FLOW.has(read(descendant).position)) return true
   }

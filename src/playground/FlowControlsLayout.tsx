@@ -12,6 +12,7 @@ export function FlowControlsLayout() {
         </HtmlEditor.Canvas.Toolbar>
         <HtmlEditor.Canvas.Viewport>
           <HtmlEditor.Canvas.FlowControls />
+          <HtmlEditor.Canvas.FlowToolbar />
         </HtmlEditor.Canvas.Viewport>
         <HtmlEditor.Canvas.FlowStatusBar />
       </HtmlEditor.Canvas>

@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { useDirectControls, useLayoutMode } from '../components/Editor/context'
 import { isPanModifier, panModeActive } from '../core/panMode'
+import { useBoxHeight } from './box/useBoxHeight'
 import { allows } from './capabilities'
 import {
   CORNER_CLASS,
   FRAME_CLASS,
   GUIDE_CLASS,
+  HEIGHT_HANDLE_CLASS,
   OVERLAY_CLASS,
   PARENT_CLASS,
   SPACE_HANDLE_CLASS,
@@ -42,16 +44,25 @@ export function FlowControls() {
 function FlowControlsLayer() {
   const target = useFlowSelection()
   const gestures = useFlowGestures(target)
+  const box = useBoxHeight(target)
   if (!target) return null
-  return <FlowControlsFrame target={target} gestures={gestures} />
+  return (
+    <FlowControlsFrame
+      target={target}
+      gestures={gestures}
+      canHeight={box !== null && box.blocked === null}
+    />
+  )
 }
 
 function FlowControlsFrame({
   target,
   gestures,
+  canHeight,
 }: {
   target: FlowTarget
   gestures: FlowGestures
+  canHeight: boolean
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null)
   const parentRef = useRef<HTMLDivElement | null>(null)
@@ -152,6 +163,16 @@ function FlowControlsFrame({
               />
             ))
           : null}
+        {canHeight ? (
+          <button
+            type="button"
+            className={HEIGHT_HANDLE_CLASS}
+            aria-label="Height"
+            tabIndex={-1}
+            draggable={false}
+            onPointerDown={(event) => gestures.startHeight(event.nativeEvent)}
+          />
+        ) : null}
         {canSpace ? (
           <button
             type="button"

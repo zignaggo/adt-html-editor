@@ -1,6 +1,6 @@
 import { createSessionStore, type SessionStore } from '../../fixed/sessionStore'
 
-export type FlowGestureKind = 'move' | 'resize' | 'space'
+export type FlowGestureKind = 'move' | 'resize' | 'space' | 'height'
 
 export type FlowGestureSession = {
   kind: FlowGestureKind

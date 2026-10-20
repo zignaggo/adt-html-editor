@@ -41,6 +41,43 @@ export const SPACE_HANDLE_CLASS = cn(
   'border-amber-500 bg-amber-400',
 )
 
+export const HEIGHT_HANDLE_CLASS = cn(
+  GRIP_CLASS,
+  'top-full left-1/2 h-[6px] w-[22px] -translate-x-1/2 -translate-y-1/2 cursor-ns-resize',
+  'border-sky-500 bg-sky-400',
+)
+
+export const TOOLBAR_OVERLAY_CLASS = 'pointer-events-none absolute inset-0 z-[32]'
+
+export const TOOLBAR_CLASS =
+  'pointer-events-auto absolute top-0 left-0 flex max-w-full flex-wrap items-center gap-0.5 ' +
+  'rounded-md border border-border bg-background p-1 font-sans text-xs text-foreground ' +
+  'shadow-[0_4px_12px_rgba(15,23,42,0.18)] will-change-transform data-[visible=false]:hidden'
+
+export const TOOLBAR_GROUP_CLASS = 'flex items-center gap-0.5'
+
+export const TOOLBAR_SEPARATOR_CLASS = 'mx-0.5 h-4 w-px shrink-0 bg-border'
+
+export const TOOLBAR_BUTTON_CLASS =
+  'inline-flex h-6 min-w-6 appearance-none items-center justify-center gap-px rounded-sm border-0 ' +
+  'bg-transparent px-1 font-sans text-[11px] leading-none text-muted-foreground ' +
+  'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground ' +
+  'disabled:pointer-events-none disabled:opacity-40 focus-visible:outline focus-visible:outline-ring'
+
+export const POPOVER_CLASS =
+  'absolute top-full left-0 z-10 mt-1 flex w-56 flex-col gap-2 rounded-md border border-border ' +
+  'bg-background p-2 font-sans text-xs text-foreground shadow-[0_8px_20px_rgba(15,23,42,0.22)]'
+
+export const FIELD_CLASS = 'flex items-center gap-2'
+
+export const FIELD_LABEL_CLASS = 'min-w-0 flex-1 truncate text-muted-foreground'
+
+export const FIELD_INPUT_CLASS =
+  'h-6 w-16 rounded-sm border border-input bg-background px-1.5 text-right font-mono text-[11px] ' +
+  'text-foreground tabular-nums focus-visible:outline focus-visible:outline-ring'
+
+export const FIELD_HINT_CLASS = 'text-[11px] text-amber-600'
+
 export const STATUS_CLASS =
   'flex items-center gap-2 border-t border-border bg-background px-3 py-1.5 font-sans text-xs ' +
   'text-muted-foreground'
