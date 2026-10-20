@@ -42,6 +42,10 @@ function pointer(clientX: number, clientY: number) {
   return { pointerId: 1, button: 0, clientX, clientY }
 }
 
+function selectionAllowed(element: Element): boolean {
+  return fireEvent(element, new Event('selectstart', { bubbles: true, cancelable: true }))
+}
+
 async function setup() {
   let store: EditorStore | undefined
   render(
@@ -177,6 +181,57 @@ describe('flow gestures', () => {
     expect(classesOf(store, paragraph)).toEqual(['lead'])
     expect(store.state.history.past.length).toBe(before)
     expect(paragraph.getAttribute('style')).toBeNull()
+  })
+
+  it('refuses the native text selection for as long as the drag lasts', async () => {
+    const { store, paragraph } = await setup()
+    act(() => store.actions.select(paragraph.getAttribute('data-adt-id')))
+    await nextFrames()
+
+    const before = selectionAllowed(paragraph)
+    expect(before).toBe(true)
+
+    fireEvent.pointerDown(paragraph, pointer(100, 60))
+    expect(selectionAllowed(paragraph)).toBe(false)
+
+    fireEvent.pointerMove(window, pointer(100, 5))
+    expect(paragraph.hasAttribute('data-adt-flow-gesture')).toBe(true)
+
+    fireEvent.pointerUp(window, pointer(100, 5))
+    expect(paragraph.hasAttribute('data-adt-flow-gesture')).toBe(false)
+    expect(selectionAllowed(paragraph)).toBe(true)
+  })
+
+  it('lets the selection go again when the drag is cancelled', async () => {
+    const { store, paragraph } = await setup()
+    act(() => store.actions.select(paragraph.getAttribute('data-adt-id')))
+    await nextFrames()
+
+    fireEvent.pointerDown(paragraph, pointer(100, 60))
+    fireEvent.pointerMove(window, pointer(500, 60))
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    expect(selectionAllowed(paragraph)).toBe(true)
+  })
+
+  it('marks the canvas as direct so the page text is not selectable by dragging', async () => {
+    const { root } = await setup()
+
+    expect(root.hasAttribute('data-adt-direct')).toBe(true)
+  })
+
+  it('marks a movable selection for the grab cursor, and only while it can move', async () => {
+    const { store, paragraph } = await setup()
+    const id = paragraph.getAttribute('data-adt-id') ?? ''
+    act(() => store.actions.select(id))
+    await nextFrames()
+
+    expect(paragraph.hasAttribute('data-adt-flow-move')).toBe(true)
+
+    act(() => store.actions.select(null))
+    await nextFrames()
+
+    expect(paragraph.hasAttribute('data-adt-flow-move')).toBe(false)
   })
 
   it('stays out of the way when the selection is locked', async () => {

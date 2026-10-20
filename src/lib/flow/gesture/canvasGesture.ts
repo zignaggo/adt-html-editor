@@ -9,6 +9,8 @@ import { whenStylesheetSettled } from '../../tailwind/stylesheetStore'
 
 export const GESTURE_ATTRIBUTE = 'data-adt-flow-gesture'
 
+export const MOVE_ATTRIBUTE = 'data-adt-flow-move'
+
 export type CanvasGestureSession<TState> = {
   state: TState
   element: HTMLElement
@@ -51,8 +53,12 @@ export function beginCanvasGesture<TState>(
   const session: CanvasGestureSession<TState> = { state, element, origin }
   const snapshot = element.getAttribute('style')
   const threshold = spec.threshold ?? DEFAULT_THRESHOLD
+  const page = element.ownerDocument
   let last = origin
   let engaged = false
+
+  const refuseSelection = (selection: Event) => selection.preventDefault()
+  page.addEventListener('selectstart', refuseSelection)
 
   const applyStyle = (style: string | null) => {
     if (style === null) element.removeAttribute('style')
@@ -60,6 +66,7 @@ export function beginCanvasGesture<TState>(
   }
 
   const teardown = (committed: boolean) => {
+    page.removeEventListener('selectstart', refuseSelection)
     element.removeAttribute(GESTURE_ATTRIBUTE)
     spec.onEnd?.(session, committed)
   }
@@ -70,6 +77,7 @@ export function beginCanvasGesture<TState>(
       if (!engaged) {
         if (travelled(origin, input) < threshold) return
         engaged = true
+        page.getSelection()?.removeAllRanges()
         element.setAttribute(GESTURE_ATTRIBUTE, '')
       }
       spec.preview(session, input)
