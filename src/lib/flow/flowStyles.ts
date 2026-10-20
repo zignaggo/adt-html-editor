@@ -26,6 +26,20 @@ export const GUIDE_CLASS = cn(
   'h-0 w-full border-t-2 border-primary',
 )
 
+export const COMPONENT_OUTLINE_CLASS = cn(
+  PLACED_CLASS,
+  'rounded-[3px] border-2 border-solid border-violet-500/80',
+)
+
+export const GHOST_CLASS = cn(
+  PLACED_CLASS,
+  'z-[33] rounded-[3px] border-2 border-dashed border-violet-500/80 bg-violet-500/10',
+)
+
+export const GHOST_LABEL_CLASS =
+  'pointer-events-none absolute top-full left-0 mt-1 rounded-sm bg-violet-600 px-1.5 py-0.5 ' +
+  'font-sans text-[10px] leading-4 whitespace-nowrap text-white'
+
 const GRIP_CLASS =
   'pointer-events-auto absolute m-0 box-border size-[10px] appearance-none touch-none rounded-[2px] ' +
   'border border-solid bg-white p-0 leading-none select-none ' +
@@ -69,6 +83,14 @@ export const TOOLBAR_BUTTON_CLASS =
   'bg-transparent px-1 font-sans text-[11px] leading-none text-muted-foreground ' +
   'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground ' +
   'disabled:pointer-events-none disabled:opacity-40 focus-visible:outline focus-visible:outline-ring'
+
+export const REPOSITION_BUTTON_CLASS = cn(
+  'inline-flex h-6 min-w-6 appearance-none items-center justify-center gap-1 rounded-sm border-0 ',
+  'bg-transparent px-1 font-sans text-[11px] leading-none text-violet-600 ',
+  'hover:bg-violet-500/10 disabled:pointer-events-none disabled:opacity-40 ',
+  'focus-visible:outline focus-visible:outline-ring ',
+  'aria-pressed:bg-violet-600 aria-pressed:text-white',
+)
 
 export const POPOVER_CLASS =
   'absolute top-full left-0 z-10 mt-1 flex w-56 flex-col gap-2 rounded-md border border-border ' +

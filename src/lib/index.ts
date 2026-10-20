@@ -286,7 +286,7 @@ export type {
 } from './flow/capabilities'
 export { contentWidthOf, useFlowSelection } from './flow/useFlowSelection'
 export type { FlowBox, FlowEdges, FlowGeometry, FlowTarget } from './flow/useFlowSelection'
-export { GESTURE_ATTRIBUTE, beginCanvasGesture } from './flow/gesture/canvasGesture'
+export { GESTURE_ATTRIBUTE, MOVE_ATTRIBUTE, beginCanvasGesture } from './flow/gesture/canvasGesture'
 export type {
   CanvasGestureCommit,
   CanvasGestureSession,
@@ -378,3 +378,45 @@ export type {
 export { useRetag } from './flow/tags/useRetag'
 export type { Retag, RetagOption } from './flow/tags/useRetag'
 export { TagControls as CanvasTagControls } from './flow/tags/TagControls'
+
+export {
+  CONTAINER_ATTRIBUTE,
+  componentBlock,
+  componentOf,
+  isFlowContainer,
+  isImage,
+  isMediaGroup,
+  isParagraph,
+  isWrappableObject,
+  layoutChildren,
+  looksLikeComponent,
+  movableComponent,
+  wrapperOfImage,
+} from './flow/component/componentLayout'
+export type { ComponentBlock } from './flow/component/componentLayout'
+export {
+  candidateAt,
+  dropIndicator,
+  dropLabel,
+  resolveComponentDrop,
+} from './flow/component/componentDrop'
+export type { ComponentDrop, DropKind, DropPoint } from './flow/component/componentDrop'
+export {
+  COLUMNS_CLASSES,
+  FLOW_ROOT_CLASSES,
+  fitClasses,
+  floatObjectClasses,
+  flowRootClasses,
+  textSpacingClasses,
+} from './flow/component/componentCommit'
+export type { FloatSide } from './flow/component/componentCommit'
+export { useReposition } from './flow/component/useReposition'
+export type { Reposition, RepositionOutcome } from './flow/component/useReposition'
+export {
+  repositionUi,
+  resetReposition,
+  setRepositionArmed,
+  setRepositionHighlight,
+} from './flow/component/repositionStore'
+export type { RepositionUi } from './flow/component/repositionStore'
+export { RepositionControl as CanvasRepositionControl } from './flow/component/RepositionControl'

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useDirectControls, useLayoutMode } from '../components/Editor/context'
 import { BoxSizeControls } from './box/BoxSizeControls'
+import { RepositionControl } from './component/RepositionControl'
 import { FlowIcon, type FlowIconName } from './flowIcons'
 import {
   TOOLBAR_BUTTON_CLASS,
@@ -109,6 +110,9 @@ function FlowToolbarBar({ target, toolbar }: { target: FlowTarget; toolbar: Flow
         ) : null}
 
         <TagControls target={target} />
+
+        <span className={TOOLBAR_SEPARATOR_CLASS} />
+        <RepositionControl target={target} />
 
         {toolbar.align ? (
           <div className={TOOLBAR_GROUP_CLASS}>

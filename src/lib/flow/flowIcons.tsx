@@ -10,6 +10,7 @@ export type FlowIconName =
   | 'moveDown'
   | 'size'
   | 'tag'
+  | 'reposition'
 
 const FLOW_ICON_PATHS: Record<FlowIconName, string> = {
   parent: 'M2 2.5H10 M6 10V5 M3.5 7.5 6 5l2.5 2.5',
@@ -23,6 +24,7 @@ const FLOW_ICON_PATHS: Record<FlowIconName, string> = {
   moveDown: 'M6 2v7 M3.5 6.5 6 9l2.5-2.5',
   size: 'M2.5 2.5h7v7h-7z M5.5 7.5 7.5 5.5',
   tag: 'M6.2 1.8H10v3.8L5.4 10.2 1.8 6.6z M7.9 3.9h.01',
+  reposition: 'M6 1.5v9 M1.5 6h9 M6 1.5 4.5 3 M6 1.5 7.5 3 M6 10.5 4.5 9 M6 10.5 7.5 9 M1.5 6 3 4.5 M1.5 6 3 7.5 M10.5 6 9 4.5 M10.5 6 9 7.5',
 }
 
 export function FlowIcon({ name }: { name: FlowIconName }) {

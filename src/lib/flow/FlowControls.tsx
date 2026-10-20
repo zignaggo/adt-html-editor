@@ -1,11 +1,17 @@
+import { useSelector } from '@tanstack/react-store'
 import { useEffect, useRef } from 'react'
 import { useDirectControls, useLayoutMode } from '../components/Editor/context'
 import { isPanModifier, panModeActive } from '../core/panMode'
 import { useBoxHeight } from './box/useBoxHeight'
 import { allows } from './capabilities'
+import { repositionUi } from './component/repositionStore'
+import { useReposition, type Reposition } from './component/useReposition'
 import {
+  COMPONENT_OUTLINE_CLASS,
   CORNER_CLASS,
   FRAME_CLASS,
+  GHOST_CLASS,
+  GHOST_LABEL_CLASS,
   GUIDE_CLASS,
   HEIGHT_HANDLE_CLASS,
   MARGIN_BAND_CLASS,
@@ -14,6 +20,7 @@ import {
   PARENT_CLASS,
   SPACE_HANDLE_CLASS,
 } from './flowStyles'
+import { MOVE_ATTRIBUTE } from './gesture/canvasGesture'
 import { subscribeFlowGesture } from './gesture/flowGestureStore'
 import { useFlowGestures, type FlowGestures, type ResizeCorner } from './gestures/useFlowGestures'
 import {
@@ -90,11 +97,15 @@ function FlowControlsLayer() {
   const target = useFlowSelection()
   const gestures = useFlowGestures(target)
   const box = useBoxHeight(target)
+  const reposition = useReposition(target)
+  const highlight = useSelector(repositionUi, (ui) => ui.highlight)
   if (!target) return null
   return (
     <FlowControlsFrame
       target={target}
       gestures={gestures}
+      reposition={reposition}
+      highlight={highlight}
       canHeight={box !== null && box.blocked === null}
     />
   )
@@ -103,10 +114,14 @@ function FlowControlsLayer() {
 function FlowControlsFrame({
   target,
   gestures,
+  reposition,
+  highlight,
   canHeight,
 }: {
   target: FlowTarget
   gestures: FlowGestures
+  reposition: Reposition | null
+  highlight: boolean
   canHeight: boolean
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null)
@@ -114,10 +129,15 @@ function FlowControlsFrame({
   const guideRef = useRef<HTMLDivElement | null>(null)
   const marginRef = useRef<HTMLDivElement | null>(null)
   const paddingRef = useRef<HTMLDivElement | null>(null)
+  const outlineRef = useRef<HTMLDivElement | null>(null)
+  const ghostRef = useRef<HTMLDivElement | null>(null)
+  const ghostLabelRef = useRef<HTMLSpanElement | null>(null)
   const gesturesRef = useRef(gestures)
+  const repositionRef = useRef(reposition)
 
   useEffect(() => {
     gesturesRef.current = gestures
+    repositionRef.current = reposition
   })
 
   useEffect(() => {
@@ -143,6 +163,21 @@ function FlowControlsFrame({
       placeBand(padding, geometry.box, geometry.padding, positiveEdges(geometry.border))
       if (geometry.parentBox) place(parent, geometry.parentBox)
       else parent.dataset.visible = 'false'
+
+      const outline = outlineRef.current
+      const piece = repositionRef.current?.component
+      if (!outline) return
+      if (!highlight || !piece?.isConnected) {
+        outline.dataset.visible = 'false'
+        return
+      }
+      const rect = piece.getBoundingClientRect()
+      place(outline, {
+        left: rect.left - geometry.hostLeft,
+        top: rect.top - geometry.hostTop,
+        width: rect.width,
+        height: rect.height,
+      })
     }
 
     const schedule = () => {
@@ -167,29 +202,52 @@ function FlowControlsFrame({
       unsubscribeHost()
       mutations.disconnect()
     }
-  }, [target])
+  }, [target, highlight])
+
+  const canMove =
+    allows(target.inspection, 'align') ||
+    allows(target.inspection, 'reorder') ||
+    (reposition?.routes ?? false)
 
   useEffect(() => {
     const { element } = target
+    if (!canMove) return
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || panModeActive() || isPanModifier(event)) return
       if ((event.target as HTMLElement | null)?.closest(INTERACTIVE)) return
+      const piece = repositionRef.current
+      if (piece?.routes) {
+        piece.start(event)
+        return
+      }
       gesturesRef.current.startMove(event)
     }
 
+    element.setAttribute(MOVE_ATTRIBUTE, '')
     element.addEventListener('pointerdown', onPointerDown)
-    return () => element.removeEventListener('pointerdown', onPointerDown)
-  }, [target])
+    return () => {
+      element.removeAttribute(MOVE_ATTRIBUTE)
+      element.removeEventListener('pointerdown', onPointerDown)
+    }
+  }, [target, canMove])
 
   useEffect(
     () =>
       subscribeFlowGesture((session) => {
         const guide = guideRef.current
-        if (!guide) return
-        const top = session?.axis === 'y' ? session.guideTop : null
-        guide.dataset.visible = top === null ? 'false' : 'true'
-        if (top !== null) guide.style.transform = `translate3d(0, ${top}px, 0)`
+        if (guide) {
+          const top = session?.axis === 'y' ? session.guideTop : null
+          guide.dataset.visible = top === null ? 'false' : 'true'
+          if (top !== null) guide.style.transform = `translate3d(0, ${top}px, 0)`
+        }
+
+        const ghost = ghostRef.current
+        if (!ghost) return
+        const box = session?.ghost ?? null
+        ghost.dataset.visible = box === null ? 'false' : 'true'
+        if (box !== null) place(ghost, box)
+        if (ghostLabelRef.current) ghostLabelRef.current.textContent = session?.feedback ?? ''
       }),
     [],
   )
@@ -215,6 +273,16 @@ function FlowControlsFrame({
       />
       <div ref={parentRef} className={PARENT_CLASS} data-visible="false" aria-hidden="true" />
       <div ref={guideRef} className={GUIDE_CLASS} data-visible="false" aria-hidden="true" />
+      <div
+        ref={outlineRef}
+        className={COMPONENT_OUTLINE_CLASS}
+        data-outline="component"
+        data-visible="false"
+        aria-hidden="true"
+      />
+      <div ref={ghostRef} className={GHOST_CLASS} data-ghost="" data-visible="false" aria-hidden="true">
+        <span ref={ghostLabelRef} className={GHOST_LABEL_CLASS} />
+      </div>
       <div ref={frameRef} className={FRAME_CLASS} data-visible="false">
         {canResize
           ? CORNERS.map((corner) => (
