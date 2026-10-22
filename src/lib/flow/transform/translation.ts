@@ -84,7 +84,9 @@ export function resolveTranslation(
   const parts = splitComponents(value)
   if (parts.length === 0) return NO_TRANSLATION
 
-  const host = probeHost ?? element.parentElement ?? element
+  // The probe goes to the body, never into the canvas: a node appended there would wake the
+  // editor's own MutationObservers and schedule a measure for every value it resolves.
+  const host = probeHost ?? element.ownerDocument.body
   const { fontSize } = view.getComputedStyle(element)
   const x = resolveLength(parts[0], element.offsetWidth, fontSize, host)
   const y = parts[1] ? resolveLength(parts[1], element.offsetHeight, fontSize, host) : 0

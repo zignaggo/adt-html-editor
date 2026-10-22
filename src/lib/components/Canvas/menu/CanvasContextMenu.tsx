@@ -1,11 +1,23 @@
+import { useSelector } from '@tanstack/react-store'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { ITEM_CLASS, MENU_CLASS, SEPARATOR_CLASS } from './contextMenuStyles'
+import { contextMenu } from './contextMenuStore'
 import { MenuIcon } from './menuIcons'
 import { useContextMenu, type ContextMenu } from './useContextMenu'
 
 const EDGE_GAP = 8
 
+/**
+ * Only the open flag is read here. The menu's own state — the document, the selection, the
+ * locks — is subscribed one level down, so a closed menu does not re-render on every edit.
+ */
 export function CanvasContextMenu() {
+  const open = useSelector(contextMenu, (state) => state.open)
+  if (!open) return null
+  return <ContextMenuContent />
+}
+
+function ContextMenuContent() {
   const menu = useContextMenu()
   if (!menu.open) return null
   return <ContextMenuSurface menu={menu} />
@@ -33,12 +45,12 @@ function ContextMenuSurface({ menu }: { menu: ContextMenu }) {
     window.addEventListener('pointerdown', onPointerDown, true)
     window.addEventListener('blur', onBlur)
     window.addEventListener('resize', onBlur)
-    window.addEventListener('scroll', onBlur, true)
+    window.addEventListener('scroll', onBlur, { capture: true, passive: true })
     return () => {
       window.removeEventListener('pointerdown', onPointerDown, true)
       window.removeEventListener('blur', onBlur)
       window.removeEventListener('resize', onBlur)
-      window.removeEventListener('scroll', onBlur, true)
+      window.removeEventListener('scroll', onBlur, { capture: true })
     }
   }, [menu])
 

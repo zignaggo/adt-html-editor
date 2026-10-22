@@ -33,12 +33,12 @@ export function useCanvasHost(): CanvasHost {
       const observer = new ResizeObserver(listener)
       const root = canvasRootRef.current
       if (root) observer.observe(root)
-      window.addEventListener('scroll', listener, true)
+      window.addEventListener('scroll', listener, { capture: true, passive: true })
       window.addEventListener('resize', listener)
       return () => {
         unsubscribeViewport()
         observer.disconnect()
-        window.removeEventListener('scroll', listener, true)
+        window.removeEventListener('scroll', listener, { capture: true })
         window.removeEventListener('resize', listener)
       }
     },
