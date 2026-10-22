@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react'
 import { useCanvasContext } from '../components/Canvas/context'
+import { useCanvasBackdrop } from '../components/Canvas/useCanvasBackdrop'
 import { useCanvasInteractions } from '../components/Canvas/useCanvasInteractions'
 import { CanvasNode } from '../components/Canvas/CanvasNode'
 import { SelectionOverlay } from '../components/Canvas/SelectionOverlay'
@@ -33,6 +34,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
   const nudge = useFixedNudge()
   const transformKeys = useTransformKeys()
 
+  useCanvasBackdrop(scrollRef)
   useDocumentStylesheet()
   useFixedPageDropTarget(scrollRef)
   useFixedDropMonitor()
