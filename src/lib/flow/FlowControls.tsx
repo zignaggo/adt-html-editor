@@ -145,12 +145,10 @@ function FlowControlsFrame({
   const outlineRef = useRef<HTMLDivElement | null>(null)
   const ghostRef = useRef<HTMLDivElement | null>(null)
   const ghostLabelRef = useRef<HTMLSpanElement | null>(null)
-  const gesturesRef = useRef(gestures)
   const repositionRef = useRef(reposition)
   const transformRef = useRef(transform)
 
   useEffect(() => {
-    gesturesRef.current = gestures
     repositionRef.current = reposition
     transformRef.current = transform
   })
@@ -219,15 +217,13 @@ function FlowControlsFrame({
     }
   }, [target, highlight])
 
-  const canMove =
-    allows(target.inspection, 'align') ||
-    allows(target.inspection, 'reorder') ||
-    allows(target.inspection, 'transform') ||
-    (reposition?.routes ?? false)
+  // The element takes the pointer only while a mode is live, so a drag never does something
+  // the user did not ask for — and the grab cursor only appears when there is something to grab.
+  const modeActive = (transform?.active ?? false) || (reposition?.routes ?? false)
 
   useEffect(() => {
     const { element } = target
-    if (!canMove) return
+    if (!modeActive) return
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || panModeActive() || isPanModifier(event)) return
@@ -237,12 +233,7 @@ function FlowControlsFrame({
         freeTransform.start(event)
         return
       }
-      const piece = repositionRef.current
-      if (piece?.routes) {
-        piece.start(event)
-        return
-      }
-      gesturesRef.current.startMove(event)
+      repositionRef.current?.start(event)
     }
 
     element.setAttribute(MOVE_ATTRIBUTE, '')
@@ -251,7 +242,7 @@ function FlowControlsFrame({
       element.removeAttribute(MOVE_ATTRIBUTE)
       element.removeEventListener('pointerdown', onPointerDown)
     }
-  }, [target, canMove])
+  }, [target, modeActive])
 
   useEffect(
     () =>

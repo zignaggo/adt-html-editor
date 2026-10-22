@@ -229,10 +229,11 @@ describe('reposition', () => {
     expect(childrenOf(store, section)).toEqual(['media', 'outro', 'intro'])
   })
 
-  it('without arming, a plain block keeps the alignment gesture', async () => {
+  it('without arming, a drag on a plain block does nothing at all', async () => {
     const { store, section, intro, outro } = await setup()
     act(() => store.actions.select(intro.getAttribute('data-adt-id')))
     await nextFrames()
+    const before = store.state.history.past.length
 
     pointsAt(outro, section)
     fireEvent.pointerDown(intro, pointer(300, 50))
@@ -240,7 +241,8 @@ describe('reposition', () => {
     fireEvent.pointerUp(window, pointer(560, 50))
 
     expect(childrenOf(store, section)).toEqual(['intro', 'media', 'outro'])
-    expect(classesOf(store, idOf(intro))).toContain('text-right')
+    expect(classesOf(store, idOf(intro))).toEqual([])
+    expect(store.state.history.past.length).toBe(before)
   })
 
   it('leaves a figure alone until the mode is armed', async () => {

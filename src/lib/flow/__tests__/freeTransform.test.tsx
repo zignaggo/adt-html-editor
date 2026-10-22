@@ -169,7 +169,7 @@ describe('free transform', () => {
     expect(styleOf(store, idOf(intro))).toBeUndefined()
   })
 
-  it('leaves the alignment gesture alone when the mode is off', async () => {
+  it('leaves the drag alone when the mode is off', async () => {
     const { store, intro } = await setup()
     act(() => store.actions.select(idOf(intro)))
     await nextFrames()
@@ -180,7 +180,7 @@ describe('free transform', () => {
 
     expect(styleOf(store, idOf(intro))).toBeUndefined()
     const node = store.state.doc.nodes[idOf(intro)]
-    expect(node && 'classes' in node ? node.classes : []).toContain('text-right')
+    expect(node && 'classes' in node ? node.classes : []).toEqual([])
   })
 
   it('turning it on disarms reposition, and arming reposition turns it off', async () => {
