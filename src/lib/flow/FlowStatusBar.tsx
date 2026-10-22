@@ -5,6 +5,7 @@ import { blockReasonOf, FLOW_CAPABILITIES, type BlockReason } from './capabiliti
 import { ContainerControls } from './container/ContainerControls'
 import { STATUS_CHIP_CLASS, STATUS_CLASS, STATUS_HINT_CLASS } from './flowStyles'
 import { subscribeFlowGesture } from './gesture/flowGestureStore'
+import { FlowGroupStatus } from './group/FlowGroupStatus'
 import { useFlowSelection, type FlowTarget } from './useFlowSelection'
 
 const HINTS: Record<BlockReason, string> = {
@@ -33,7 +34,12 @@ export function FlowStatusBar() {
   const layout = useLayoutMode()
   const direct = useDirectControls()
   if (layout !== 'flow' || !direct) return null
-  return <FlowStatus />
+  return (
+    <>
+      <FlowStatus />
+      <FlowGroupStatus />
+    </>
+  )
 }
 
 function FlowStatus() {

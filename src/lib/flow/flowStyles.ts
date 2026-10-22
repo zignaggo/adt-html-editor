@@ -177,3 +177,13 @@ export const DIALOG_PRIMARY_CLASS =
   'inline-flex h-7 appearance-none items-center rounded-sm border-0 bg-primary px-2.5 font-sans ' +
   'text-[11px] leading-none text-primary-foreground hover:opacity-90 ' +
   'focus-visible:outline focus-visible:outline-ring'
+
+export const GROUP_FRAME_CLASS = cn(
+  PLACED_CLASS,
+  'rounded-[3px] border border-dashed border-primary/70 bg-primary/5',
+)
+
+export const GROUP_MEMBER_CLASS = cn(PLACED_CLASS, 'rounded-[2px] ring-[1.5px] ring-primary/60')
+
+export const GROUP_COUNT_CLASS =
+  'px-1 font-sans text-[11px] leading-none whitespace-nowrap text-muted-foreground'

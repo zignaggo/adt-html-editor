@@ -23,6 +23,8 @@ const CENTRE_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'])
 
 const CENTRE_LIMIT = 4
 
+export const COLUMN_LIMIT = 12
+
 const defaultReader: StyleReader = (element) => getComputedStyle(element)
 
 const layoutRemove = classFamilies(LAYOUT_FAMILIES)
@@ -89,9 +91,10 @@ export function centreChildEdits(): LayoutEdit[] {
   ]
 }
 
-export function columnsContainerEdits(): LayoutEdit[] {
+export function columnsContainerEdits(count = 2): LayoutEdit[] {
+  const columns = Math.min(Math.max(2, Math.round(count)), COLUMN_LIMIT)
   return [
-    { remove: layoutRemove, add: ['grid', 'grid-cols-2', 'gap-6', 'items-start'] },
+    { remove: layoutRemove, add: ['grid', `grid-cols-${columns}`, 'gap-6', 'items-start'] },
     { remove: layoutRemove, add: ['grid-cols-1'], at: MOBILE_TARGET },
   ]
 }

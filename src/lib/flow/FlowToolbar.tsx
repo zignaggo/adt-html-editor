@@ -11,6 +11,7 @@ import {
   TOOLBAR_SEPARATOR_CLASS,
 } from './flowStyles'
 import type { FlowAlign } from './gestures/flowWrite'
+import { FlowGroupToolbar } from './group/FlowGroupToolbar'
 import { LayoutControls } from './layout/LayoutControls'
 import { TagControls } from './tags/TagControls'
 import { useFlowSelection, type FlowTarget } from './useFlowSelection'
@@ -28,7 +29,12 @@ export function FlowToolbar() {
   const layout = useLayoutMode()
   const direct = useDirectControls()
   if (layout !== 'flow' || !direct) return null
-  return <FlowToolbarLayer />
+  return (
+    <>
+      <FlowToolbarLayer />
+      <FlowGroupToolbar />
+    </>
+  )
 }
 
 function FlowToolbarLayer() {

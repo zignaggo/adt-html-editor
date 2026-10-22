@@ -23,6 +23,7 @@ import {
 import { MOVE_ATTRIBUTE } from './gesture/canvasGesture'
 import { subscribeFlowGesture } from './gesture/flowGestureStore'
 import { useFlowGestures, type FlowGestures, type ResizeCorner } from './gestures/useFlowGestures'
+import { FlowGroupControls } from './group/FlowGroupControls'
 import {
   useFlowSelection,
   type FlowBox,
@@ -90,7 +91,12 @@ export function FlowControls() {
   const layout = useLayoutMode()
   const direct = useDirectControls()
   if (layout !== 'flow' || !direct) return null
-  return <FlowControlsLayer />
+  return (
+    <>
+      <FlowControlsLayer />
+      <FlowGroupControls />
+    </>
+  )
 }
 
 function FlowControlsLayer() {

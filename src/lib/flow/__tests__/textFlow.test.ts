@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import type { StyleReader } from '../capabilities'
-import { isLayoutWrapper, planTextFlow, textWrapperClasses } from '../layout/textFlow'
+import { groupTextFlow, isLayoutWrapper, planTextFlow, textWrapperClasses } from '../layout/textFlow'
 
 type Declaration = Partial<Record<string, string>>
 
@@ -59,11 +59,18 @@ describe('isLayoutWrapper', () => {
     ['background', { backgroundColor: 'rgb(255, 255, 255)' }],
     ['background image', { backgroundImage: 'url(a.png)' }],
     ['padding', { paddingLeft: '24px' }],
-    ['border', { borderStyle: 'solid' }],
+    ['border', { borderStyle: 'solid', borderTopWidth: '1px' }],
+    ['border on one side', { borderStyle: 'solid', borderLeftWidth: '4px' }],
     ['overflow', { overflow: 'hidden' }],
   ])('treats a div with a %s as a barrier', (_name, declaration) => {
     mount('<div id="wrap"></div>')
     expect(isLayoutWrapper(at('wrap'), readerFor({ wrap: declaration }))).toBe(false)
+  })
+
+  it('walks through the border style a reset leaves on every element', () => {
+    mount('<div id="wrap"></div>')
+    const read = readerFor({ wrap: { borderStyle: 'solid', borderTopWidth: '0px' } })
+    expect(isLayoutWrapper(at('wrap'), read)).toBe(true)
   })
 
   it.each(['role="group"', 'data-activity-item', 'data-section-id="s1"'])(
@@ -162,6 +169,96 @@ describe('planTextFlow', () => {
     expect(plan?.kind).toBe('container')
     expect(plan?.anchor.id).toBe('two')
     expect(plan?.side).toBe('right')
+  })
+})
+
+describe('groupTextFlow', () => {
+  const read = readerFor()
+
+  it('wraps the selected paragraphs around the selected object', () => {
+    mount('<div id="box"><figure id="obj"></figure><p id="one">a</p><p id="two">b</p></div>')
+    const plan = groupTextFlow([at('obj'), at('one'), at('two')], 'left', read)
+
+    expect(plan?.kind).toBe('group')
+    expect(plan?.object.id).toBe('obj')
+    expect(plan?.container.id).toBe('box')
+    expect(plan?.anchor.id).toBe('one')
+    expect(plan?.createRoot).toBe(false)
+    expect(plan?.texts.map((text) => text.id)).toEqual(['one', 'two'])
+  })
+
+  it('makes its own flow root when the container holds more than the group', () => {
+    mount(
+      '<div id="box"><figure id="obj"></figure><p id="one">a</p><p id="two">b</p></div>',
+    )
+    const plan = groupTextFlow([at('obj'), at('one')], 'left', read)
+
+    expect(plan?.createRoot).toBe(true)
+    expect(plan?.members.map((member) => member.id)).toEqual(['one'])
+    expect(plan?.texts.map((text) => text.id)).toEqual(['one'])
+  })
+
+  it('leaves a member that is neither text nor wrapper out of the root', () => {
+    mount(
+      '<div id="box"><figure id="obj"></figure><p id="one">a</p><ul id="list"></ul></div>',
+    )
+    const plan = groupTextFlow([at('obj'), at('one'), at('list')], 'left', read)
+
+    expect(plan?.createRoot).toBe(true)
+    expect(plan?.members.map((member) => member.id)).toEqual(['one'])
+  })
+
+  it('takes the text inside a selected wrapper along', () => {
+    mount('<div id="box"><figure id="obj"></figure><div id="col"><p id="one">a</p></div></div>')
+    const plan = groupTextFlow([at('obj'), at('col')], 'left', read)
+
+    expect(plan?.anchor.id).toBe('col')
+    expect(plan?.wrappers.map((wrapper) => wrapper.id)).toEqual(['col'])
+    expect(plan?.texts.map((text) => text.id)).toEqual(['one'])
+  })
+
+  it('finds the object inside the member that holds it', () => {
+    mount('<div id="box"><div id="frame"><figure id="obj"></figure></div><p id="one">a</p></div>')
+    const plan = groupTextFlow([at('frame'), at('one')], 'right', read)
+
+    expect(plan?.object.id).toBe('obj')
+    expect(plan?.side).toBe('right')
+    expect(plan?.members.map((member) => member.id)).toEqual(['one'])
+  })
+
+  it('spaces only the paragraphs that have no bottom margin', () => {
+    mount('<div id="box"><figure id="obj"></figure><p id="one">a</p><p id="two">b</p></div>')
+    const plan = groupTextFlow(
+      [at('obj'), at('one'), at('two')],
+      'left',
+      readerFor({ two: { marginBottom: '24px' } }),
+    )
+
+    expect(plan?.needSpacing.map((text) => text.id)).toEqual(['one'])
+  })
+
+  it('refuses a group with nothing text can wrap around', () => {
+    mount('<div id="box"><p id="one">a</p><p id="two">b</p></div>')
+
+    expect(groupTextFlow([at('one'), at('two')], 'left', read)).toBeNull()
+  })
+
+  it('refuses a group with no text in it', () => {
+    mount('<div id="box"><figure id="obj"></figure><ul id="list"></ul></div>')
+
+    expect(groupTextFlow([at('obj'), at('list')], 'left', read)).toBeNull()
+  })
+
+  it('refuses members that do not share a parent', () => {
+    mount('<div id="box"><div id="col"><figure id="obj"></figure></div><p id="one">a</p></div>')
+
+    expect(groupTextFlow([at('obj'), at('one')], 'left', read)).toBeNull()
+  })
+
+  it('refuses a group of one', () => {
+    mount('<div id="box"><figure id="obj"></figure><p id="one">a</p></div>')
+
+    expect(groupTextFlow([at('obj')], 'left', read)).toBeNull()
   })
 })
 

@@ -1,12 +1,11 @@
 import { useEditor, useEditorStoreApi } from '../../components/Editor/context'
-import type { NodeId } from '../../core/ids'
-import { isStyled } from '../../core/model'
 import { BASE_TARGET } from '../../tailwind/variants'
 import { fitClasses, type FloatSide } from '../component/componentCommit'
-import { componentOf, layoutChildren, wrapperOfImage } from '../component/componentLayout'
+import { componentOf, layoutChildren } from '../component/componentLayout'
 import type { FlowTarget } from '../useFlowSelection'
 import { placeBeside } from './besideColumns'
-import { updateLayout, type LayoutEdit } from './layoutOperations'
+import type { LayoutEdit } from './layoutOperations'
+import { createLayoutWriter } from './layoutWriter'
 import {
   canCentreContents,
   centreChildEdits,
@@ -63,10 +62,6 @@ const NOTHING_TO_WRAP = 'nothing here for text to wrap around'
 
 const WHOLE_PIECE = 'this is already the whole piece'
 
-function idOf(element: HTMLElement): NodeId | null {
-  return (element.getAttribute('data-adt-id') as NodeId | null) ?? null
-}
-
 export function useLayoutMenu(target: FlowTarget | null): LayoutMenu | null {
   const store = useEditorStoreApi()
   const actions = useEditor()
@@ -77,26 +72,7 @@ export function useLayoutMenu(target: FlowTarget | null): LayoutMenu | null {
   const container = layoutContainerOf(component)
   const children = layoutChildren(container)
 
-  const classesOf = (id: NodeId): readonly string[] => {
-    const node = store.state.doc.nodes[id]
-    return node && isStyled(node) ? node.classes : []
-  }
-
-  const styleOf = (id: NodeId): string | undefined => {
-    const node = store.state.doc.nodes[id]
-    return node && isStyled(node) ? node.attrs.style : undefined
-  }
-
-  const write = (id: NodeId, edits: readonly LayoutEdit[]) => {
-    const next = updateLayout({ classes: classesOf(id), style: styleOf(id) }, edits, BASE_TARGET)
-    actions.setClasses(id, next.classes)
-    if (next.style !== undefined) actions.setAttr(id, 'style', next.style)
-  }
-
-  const fit = (id: NodeId, reference: HTMLElement | null) => {
-    const stripPadding = reference !== null && wrapperOfImage(reference) !== null
-    actions.setClasses(id, fitClasses(classesOf(id), BASE_TARGET, { stripPadding }))
-  }
+  const { idOf, classesOf, styleOf, write, fit } = createLayoutWriter(store, actions)
 
   const run = (id: LayoutActionId, body: () => void) => {
     actions.transaction(body, { coalesceKey: `layout:${id}` })

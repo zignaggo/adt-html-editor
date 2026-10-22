@@ -63,7 +63,7 @@ function sameFlags(a: FlowFlags, b: FlowFlags): boolean {
   return true
 }
 
-function boxOf(element: Element, hostRect: DOMRect): FlowBox {
+export function boxOf(element: Element, hostRect: DOMRect): FlowBox {
   const rect = element.getBoundingClientRect()
   return {
     left: rect.left - hostRect.left,
