@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from 'react'
 import { Canvas, CanvasFixedPage } from '../Canvas/Canvas'
+import { CanvasContextMenu } from '../Canvas/menu/CanvasContextMenu'
 import {
   CanvasDarkToggle,
   CanvasToolbar,
@@ -132,6 +133,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   WidthPresets: CanvasWidthPresets,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
+  ContextMenu: CanvasContextMenu,
   FixedPage: CanvasFixedPage,
   Zoom,
   Guides,

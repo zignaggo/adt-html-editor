@@ -201,6 +201,22 @@ When an existing element is dragged, its **current parent takes priority** so re
 
 Palette drags keep the plain zones above. The indicator is drawn by a single monitor from the target chosen this way, so it shows exactly where the element will land.
 
+## Context menu
+
+Right-clicking an element in the canvas selects it and opens `Canvas.ContextMenu`, which both default layouts already render — in flow and in fixed mode alike.
+
+```tsx
+<HtmlEditor.Canvas>
+  <HtmlEditor.Canvas.Viewport />
+  <HtmlEditor.Canvas.ContextMenu />
+</HtmlEditor.Canvas>
+```
+
+- **Selection.** Right-clicking an element that is not selected selects it first. One that is already part of a multi-selection keeps it, so the menu acts on everything selected. Right-clicking the grey area around the page opens nothing and leaves the browser's own menu alone.
+- **Actions.** Duplicate, Delete · Copy, Paste · Copy style, Paste style · Select parent, Lock. Copy and paste carry the element itself, through the same clipboard the editor uses elsewhere; paste drops it in as the next sibling of the selection. Copy style carries the classes and the inline `style` of a single element, and pastes them onto every element selected, in one history entry.
+- **What is offered.** An entry that does not apply is disabled rather than hidden, so the menu keeps its shape: nothing to paste yet, a selection with the root in it, a locked element, or an element already at the top level. `menuActionsFor` is the pure function that decides, and `useContextMenu` is the headless half if you want to render your own menu.
+- **Dismissal.** Escape, a click outside, a scroll, a resize or the window losing focus. Arrow keys move between the entries.
+
 ## Fixed layout mode
 
 For fixed-layout books (EPUB FXL and similar), where the page has fixed dimensions and elements are absolutely positioned, the editor switches to a second behaviour:

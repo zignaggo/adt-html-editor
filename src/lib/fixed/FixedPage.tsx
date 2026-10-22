@@ -97,6 +97,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
             onMouseDown={interactions.onMouseDown}
             onClick={interactions.onClick}
             onDoubleClick={interactions.onDoubleClick}
+            onContextMenu={interactions.onContextMenu}
             onKeyDown={onKeyDown}
           >
             {nodeIds.map((childId) => (

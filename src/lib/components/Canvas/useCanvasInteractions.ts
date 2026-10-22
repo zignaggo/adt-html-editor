@@ -6,6 +6,7 @@ import type {
 import { setHovered } from '../../core/hover'
 import { isPanModifier, panModeActive } from '../../core/panMode'
 import { useEditor, useEditorStoreApi } from '../Editor/context'
+import { openContextMenu } from './menu/contextMenuStore'
 
 export type CanvasInteractions = {
   onPointerMove: (event: ReactPointerEvent<HTMLElement>) => void
@@ -13,6 +14,7 @@ export type CanvasInteractions = {
   onMouseDown: (event: ReactMouseEvent<HTMLElement>) => void
   onClick: (event: ReactMouseEvent<HTMLElement>) => void
   onDoubleClick: (event: ReactMouseEvent<HTMLElement>) => void
+  onContextMenu: (event: ReactMouseEvent<HTMLElement>) => void
   onKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void
 }
 
@@ -44,6 +46,16 @@ export function useCanvasInteractions(): CanvasInteractions {
       toggleSelected(id)
       event.currentTarget.focus({ preventScroll: true })
     },
+    onContextMenu: (event) => {
+      if (isPanModifier(event) || panModeActive()) return
+      const id = nodeIdAt(event)
+      if (!id) return
+      event.preventDefault()
+      // An element already part of the selection keeps it, so the menu can act on all of them.
+      if (!store.state.selectedIds.includes(id)) select(id)
+      openContextMenu(event.clientX, event.clientY)
+    },
+
     onDoubleClick: (event) => {
       if (isPanModifier(event) || panModeActive()) return
       const id = nodeIdAt(event)

@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from 'react'
 import { CanvasFixedPage } from '../../../lib/components/Canvas/Canvas'
+import { CanvasContextMenu } from '../../../lib/components/Canvas/menu/CanvasContextMenu'
 import { CanvasViewport } from '../../../lib/components/Canvas/CanvasParts'
 import { EditorProvider, type EditorProviderProps } from '../../../lib/components/Editor/EditorProvider'
 import { useEditorShortcuts } from '../../../lib/components/Editor/useEditorShortcuts'
@@ -146,6 +147,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   WidthPresets: CanvasWidthPresets,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
+  ContextMenu: CanvasContextMenu,
   FixedPage: CanvasFixedPage,
   Zoom: CanvasZoom,
   Guides,

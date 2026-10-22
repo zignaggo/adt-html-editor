@@ -120,6 +120,7 @@ function CanvasPage() {
           onMouseDown={interactions.onMouseDown}
           onClick={interactions.onClick}
           onDoubleClick={interactions.onDoubleClick}
+          onContextMenu={interactions.onContextMenu}
           onKeyDown={interactions.onKeyDown}
         >
           {children.map((childId) => (

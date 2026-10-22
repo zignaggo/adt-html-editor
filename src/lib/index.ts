@@ -469,3 +469,19 @@ export { resetTransform, setTransformActive, transformUi } from './flow/transfor
 export type { TransformUi } from './flow/transform/transformStore'
 export { TransformControls as CanvasTransformControls } from './flow/transform/TransformControls'
 export { FlowTransformSection } from './flow/transform/FlowTransformSection'
+
+export { CanvasContextMenu } from './components/Canvas/menu/CanvasContextMenu'
+export { useContextMenu } from './components/Canvas/menu/useContextMenu'
+export type { ContextMenu } from './components/Canvas/menu/useContextMenu'
+export { allLocked, menuActionsFor, parentTarget } from './components/Canvas/menu/menuActions'
+export type { MenuAction, MenuActionId, MenuContext } from './components/Canvas/menu/menuActions'
+export { closeContextMenu, contextMenu, openContextMenu } from './components/Canvas/menu/contextMenuStore'
+export type { ContextMenuState } from './components/Canvas/menu/contextMenuStore'
+export {
+  clearStyleClipboard,
+  copyStyle,
+  readStyleClipboard,
+  styleClipboard,
+} from './components/Canvas/menu/styleClipboard'
+export type { CopiedStyle } from './components/Canvas/menu/styleClipboard'
+export { clearClipboard } from './core/clipboard'
