@@ -33,6 +33,7 @@ import {
 import { InspectorPosition } from '../Inspector/InspectorPosition'
 import { InspectorTransform } from '../Inspector/InspectorTransform'
 import { TagInspectorHeader } from '../Inspector/TagInspectorHeader'
+import { WrapInContainer } from '../Canvas/WrapInContainer'
 import { TagPicker } from '../Inspector/TagPicker'
 import { InspectorAppearance } from '../Inspector/sections/InspectorAppearance'
 import { InspectorBorders } from '../Inspector/sections/InspectorBorders'
@@ -155,6 +156,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   FlowToolbar,
   BoxSize: BoxSizeControls,
   TagControls,
+  WrapInContainer,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {

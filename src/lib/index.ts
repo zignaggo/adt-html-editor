@@ -380,6 +380,30 @@ export type { Retag, RetagOption } from './flow/tags/useRetag'
 export { TagControls as CanvasTagControls } from './flow/tags/TagControls'
 
 export {
+  CONTAINER_REASONS,
+  CONTAINER_TAG,
+  CONTAINER_VALUE,
+  alignmentOf,
+  canWrapInContainer,
+  containerAttributes,
+  containerMessageOf,
+  planContainer,
+  slotOf,
+} from './flow/container/elementContainer'
+export type {
+  ContainerBlock,
+  ContainerLock,
+  ContainerMessage,
+  ContainerPlan,
+  ContainerSlot,
+  ContainerState,
+  ContainerWrapper,
+} from './flow/container/elementContainer'
+export { useElementContainer } from './flow/container/useElementContainer'
+export type { ElementContainer } from './flow/container/useElementContainer'
+export { ContainerControls as CanvasContainerControls } from './flow/container/ContainerControls'
+
+export {
   CONTAINER_ATTRIBUTE,
   componentBlock,
   componentOf,

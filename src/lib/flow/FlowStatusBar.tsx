@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useBreakpoint, useDirectControls, useLayoutMode } from '../components/Editor/context'
 import { breakpointOf } from '../tailwind/variants'
 import { blockReasonOf, FLOW_CAPABILITIES, type BlockReason } from './capabilities'
+import { ContainerControls } from './container/ContainerControls'
 import { STATUS_CHIP_CLASS, STATUS_CLASS, STATUS_HINT_CLASS } from './flowStyles'
 import { subscribeFlowGesture } from './gesture/flowGestureStore'
 import { useFlowSelection, type FlowTarget } from './useFlowSelection'
@@ -59,6 +60,7 @@ function FlowStatus() {
       {inside ? <span>Inside &lt;{inside}&gt;</span> : null}
       <span className={STATUS_CHIP_CLASS}>{breakpointOf(breakpoint).label}</span>
       <span className={STATUS_HINT_CLASS}>{hintFor(target)}</span>
+      <ContainerControls target={target} />
       <span ref={feedbackRef} className="font-mono text-foreground" role="status" aria-live="polite" />
     </div>
   )

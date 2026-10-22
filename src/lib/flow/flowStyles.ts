@@ -148,3 +148,32 @@ export const STATUS_CHIP_CLASS =
   'rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] leading-4 text-foreground'
 
 export const STATUS_HINT_CLASS = 'min-w-0 flex-1 truncate'
+
+export const STATUS_BUTTON_CLASS =
+  'inline-flex h-6 shrink-0 appearance-none items-center gap-1 rounded-sm border-0 bg-transparent ' +
+  'px-1.5 font-sans text-[11px] leading-none text-muted-foreground hover:bg-muted ' +
+  'hover:text-foreground disabled:pointer-events-none disabled:opacity-40 ' +
+  'focus-visible:outline focus-visible:outline-ring'
+
+export const DIALOG_BACKDROP_CLASS =
+  'fixed inset-0 z-[60] flex items-center justify-center bg-foreground/20 p-4 font-sans'
+
+export const DIALOG_CLASS =
+  'static m-0 flex w-80 max-w-full flex-col gap-3 rounded-md border border-border bg-background ' +
+  'p-4 text-xs text-foreground shadow-[0_12px_32px_rgba(15,23,42,0.28)]'
+
+export const DIALOG_TITLE_CLASS = 'text-sm font-medium text-foreground'
+
+export const DIALOG_BODY_CLASS = 'text-[11px] leading-5 text-muted-foreground'
+
+export const DIALOG_ACTIONS_CLASS = 'flex items-center justify-end gap-2'
+
+export const DIALOG_BUTTON_CLASS =
+  'inline-flex h-7 appearance-none items-center rounded-sm border border-border bg-transparent ' +
+  'px-2.5 font-sans text-[11px] leading-none text-foreground hover:bg-muted ' +
+  'focus-visible:outline focus-visible:outline-ring'
+
+export const DIALOG_PRIMARY_CLASS =
+  'inline-flex h-7 appearance-none items-center rounded-sm border-0 bg-primary px-2.5 font-sans ' +
+  'text-[11px] leading-none text-primary-foreground hover:opacity-90 ' +
+  'focus-visible:outline focus-visible:outline-ring'

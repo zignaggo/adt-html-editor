@@ -38,6 +38,7 @@ import {
 } from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
 import { BoxSizeControls } from '../../flow/box/BoxSizeControls'
+import { ContainerControls } from '../../flow/container/ContainerControls'
 import { TagControls } from '../../flow/tags/TagControls'
 import { FlowControls } from '../../flow/FlowControls'
 import { FlowStatusBar } from '../../flow/FlowStatusBar'
@@ -141,6 +142,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   FlowToolbar,
   BoxSize: BoxSizeControls,
   TagControls,
+  WrapInContainer: ContainerControls,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {

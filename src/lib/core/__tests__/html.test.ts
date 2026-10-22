@@ -20,6 +20,8 @@ const fixtures: Record<string, string> = {
   preWhitespace: '<pre>  line 1\n  line 2  </pre>',
   entities: '<p>a &amp; b &lt; c &gt; d &quot;e&quot; &nbsp; f</p>',
   customElements: '<my-widget data-x="1"><slot-thing>y</slot-thing></my-widget>',
+  responsiveContainer:
+    '<section class="flex"><div data-responsive-container="true" style="display:flow-root;align-self:center" class="w-full min-w-0 max-w-full flex-1"><img src="a.png" alt="a" class="w-[317px] min-w-0 max-w-full box-border"></div></section>',
   nested: '<ul><li>a</li><li><ul><li>b</li></ul></li></ul>',
   table: '<table><tbody><tr><td>1</td></tr></tbody></table>',
   fullDocument:
@@ -130,6 +132,37 @@ describe('fidelity', () => {
     for (const html of Object.values(fixtures)) {
       expect(roundTrip(html)).not.toContain('data-adt')
     }
+  })
+
+  it('serializes a container the editor wraps around a node', () => {
+    const store = createEditorStore('<section><div id="box" class="w-1/2">x</div></section>')
+    const nodes = Object.values(store.state.doc.nodes)
+    const section = nodes.find((node) => node.kind === 'element' && node.tag === 'section')
+    const box = nodes.find((node) => node.kind === 'element' && node.attrs.id === 'box')
+    if (!section || !box) throw new Error('fixture not parsed')
+
+    store.actions.transaction(() => {
+      const wrapperId = store.actions.insertNode(
+        {
+          tag: 'div',
+          attrs: {
+            'data-responsive-container': 'true',
+            style: 'display:block;width:100%;min-width:0',
+          },
+        },
+        { parentId: section.id, index: 0 },
+      )
+      if (!wrapperId) throw new Error('no wrapper')
+      store.actions.moveNode(box.id, { parentId: wrapperId, index: 0 })
+    })
+
+    const out = store.actions.getHtml()
+    expect(out).toBe(
+      '<section><div data-responsive-container="true" style="display:block;width:100%;min-width:0">' +
+        '<div id="box" class="w-1/2">x</div></div></section>',
+    )
+    expect(roundTrip(out)).toBe(out)
+    expect(out).not.toContain('data-adt')
   })
 
   it('omits class when there are no classes', () => {

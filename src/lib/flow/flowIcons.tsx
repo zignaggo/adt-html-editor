@@ -24,6 +24,7 @@ export type FlowIconName =
   | 'columns'
   | 'stack'
   | 'switchOrder'
+  | 'container'
 
 const FLOW_ICON_PATHS: Record<FlowIconName, string> = {
   parent: 'M2 2.5H10 M6 10V5 M3.5 7.5 6 5l2.5 2.5',
@@ -51,6 +52,7 @@ const FLOW_ICON_PATHS: Record<FlowIconName, string> = {
   columns: 'M1.5 2.5h3.8v7H1.5z M6.7 2.5h3.8v7H6.7z',
   stack: 'M1.5 1.8h9v3.4h-9z M1.5 6.8h9v3.4h-9z',
   switchOrder: 'M1.8 4h8.4 M8.6 2.4 10.2 4 8.6 5.6 M10.2 8H1.8 M3.4 6.4 1.8 8l1.6 1.6',
+  container: 'M1.4 3.6V1.4h2.2 M8.4 1.4h2.2v2.2 M10.6 8.4v2.2H8.4 M3.6 10.6H1.4V8.4 M4.2 4.2h3.6v3.6H4.2z',
 }
 
 export function FlowIcon({ name }: { name: FlowIconName }) {
