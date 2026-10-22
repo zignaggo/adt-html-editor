@@ -14,7 +14,6 @@ import { dropIndicator, dropLabel, resolveComponentDrop, type ComponentDrop } fr
 import {
   componentBlock,
   componentOf,
-  looksLikeComponent,
   wrapperOfImage,
   type ComponentBlock,
 } from './componentLayout'
@@ -29,7 +28,10 @@ export type Reposition = {
   armed: boolean
   toggle: () => void
   start: (event: PointerEvent) => void
-  /** True when a plain drag on this piece should reposition it instead of aligning it. */
+  /**
+   * True when a drag on this piece repositions it instead of aligning it — which is only
+   * while the mode is armed, so a drag never changes meaning without being asked.
+   */
   routes: boolean
 }
 
@@ -222,6 +224,6 @@ export function useReposition(target: FlowTarget | null): Reposition | null {
       setRepositionArmed(!armed)
     },
     start,
-    routes: blocked === null && (armed || looksLikeComponent(component)),
+    routes: blocked === null && armed,
   }
 }
