@@ -203,14 +203,7 @@ Palette drags keep the plain zones above. The indicator is drawn by a single mon
 
 ## Context menu
 
-Right-clicking an element in the canvas selects it and opens `Canvas.ContextMenu`, which both default layouts already render — in flow and in fixed mode alike.
-
-```tsx
-<HtmlEditor.Canvas>
-  <HtmlEditor.Canvas.Viewport />
-  <HtmlEditor.Canvas.ContextMenu />
-</HtmlEditor.Canvas>
-```
+Right-clicking an element in the canvas selects it and opens the menu. **`Canvas.Viewport` and `Canvas.FixedPage` render it themselves**, so any composition built on either gets it with nothing to wire — in flow and in fixed mode alike. `Canvas.ContextMenu` is exported for a canvas that uses neither; mounting it next to a viewport renders the menu twice.
 
 - **Selection.** Right-clicking an element that is not selected selects it first. One that is already part of a multi-selection keeps it, so the menu acts on everything selected. Right-clicking the grey area around the page opens nothing and leaves the browser's own menu alone.
 - **Actions.** Duplicate, Delete · Copy, Paste · Copy style, Paste style · Select parent, Lock. Copy and paste carry the element itself, through the same clipboard the editor uses elsewhere; paste drops it in as the next sibling of the selection. Copy style carries the classes and the inline `style` of a single element, and pastes them onto every element selected, in one history entry.

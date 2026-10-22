@@ -8,6 +8,7 @@ import { CanvasStage, CanvasStageContent } from './CanvasStage'
 import { STAGE_PADDING, useCanvasStage } from './stage'
 import { useCanvasContext, type CanvasWidthPreset } from './context'
 import { SelectionOverlay } from './SelectionOverlay'
+import { CanvasContextMenu } from './menu/CanvasContextMenu'
 import { useCanvasBackdrop } from './useCanvasBackdrop'
 import { useCanvasInteractions } from './useCanvasInteractions'
 import { useDarkToggle, useWidthPresets } from './useCanvasControls'
@@ -82,6 +83,7 @@ export function CanvasViewport({ className, children }: { className?: string; ch
 
       <SelectionOverlay />
       <DropIndicator surface="canvas" />
+      <CanvasContextMenu />
       {children}
     </CanvasStage>
   )

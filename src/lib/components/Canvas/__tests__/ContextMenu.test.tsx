@@ -7,7 +7,6 @@ import { useEditorStoreApi } from '../../Editor/context'
 import { EditorProvider } from '../../Editor/EditorProvider'
 import { Canvas } from '../Canvas'
 import { CanvasViewport } from '../CanvasParts'
-import { CanvasContextMenu } from '../menu/CanvasContextMenu'
 import { closeContextMenu } from '../menu/contextMenuStore'
 import { clearStyleClipboard } from '../menu/styleClipboard'
 
@@ -28,7 +27,6 @@ function setup() {
       <CaptureStore onStore={(s) => (store = s)} />
       <Canvas>
         <CanvasViewport />
-        <CanvasContextMenu />
       </Canvas>
     </EditorProvider>,
   )

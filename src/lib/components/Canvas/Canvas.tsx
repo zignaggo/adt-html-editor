@@ -17,7 +17,6 @@ import {
   type CanvasZoom,
 } from './context'
 import { CanvasDarkToggle, CanvasToolbar, CanvasViewport, CanvasWidthPresets } from './CanvasParts'
-import { CanvasContextMenu } from './menu/CanvasContextMenu'
 import { cn } from 'cn'
 
 const LazyFixedPage = lazy(() =>
@@ -108,7 +107,6 @@ function DefaultCanvas() {
           <LiveGhost />
           <Handles />
         </CanvasFixedPage>
-        <CanvasContextMenu />
       </>
     )
   }
@@ -122,7 +120,6 @@ function DefaultCanvas() {
         <CanvasDarkToggle />
       </CanvasToolbar>
       <CanvasViewport />
-      <CanvasContextMenu />
     </>
   )
 }

@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { MoonIcon } from 'lucide-react'
 import { CanvasFixedPage, CanvasProvider } from '../../../lib/components/Canvas/Canvas'
 import { CanvasViewport } from '../../../lib/components/Canvas/CanvasParts'
-import { CanvasContextMenu } from '../../../lib/components/Canvas/menu/CanvasContextMenu'
 import type { CanvasWidthPreset } from '../../../lib/components/Canvas/context'
 import { useDarkToggle, useWidthPresets } from '../../../lib/components/Canvas/useCanvasControls'
 import { useLayoutMode } from '../../../lib/components/Editor/context'
@@ -47,7 +46,6 @@ function DefaultCanvas() {
           <LiveGhost />
           <Handles />
         </CanvasFixedPage>
-        <CanvasContextMenu />
       </>
     )
   }
@@ -59,7 +57,6 @@ function DefaultCanvas() {
         <CanvasWidthPresets />
       </CanvasToolbar>
       <CanvasViewport />
-      <CanvasContextMenu />
     </>
   )
 }

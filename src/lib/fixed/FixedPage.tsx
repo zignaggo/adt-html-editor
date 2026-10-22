@@ -4,6 +4,7 @@ import { useCanvasBackdrop } from '../components/Canvas/useCanvasBackdrop'
 import { useCanvasInteractions } from '../components/Canvas/useCanvasInteractions'
 import { CanvasNode } from '../components/Canvas/CanvasNode'
 import { SelectionOverlay } from '../components/Canvas/SelectionOverlay'
+import { CanvasContextMenu } from '../components/Canvas/menu/CanvasContextMenu'
 import { useChildren, useEditorContext, useFixedLayout, useRootId } from '../components/Editor/context'
 import { useDocumentStylesheet } from './stylesheet/useDocumentStylesheet'
 import { useFixedDropMonitor } from './useFixedDropMonitor'
@@ -113,6 +114,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
         </div>
       </div>
       <SelectionOverlay />
+      <CanvasContextMenu />
     </div>
   )
 }
