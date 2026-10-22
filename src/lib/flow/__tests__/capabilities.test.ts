@@ -32,7 +32,13 @@ describe('inspectFlow', () => {
     const target = canvas.querySelector<HTMLElement>('#a')!
     const inspection = inspectFlow(target, readerFor(styles))
 
-    expect(inspection.can).toEqual({ align: true, resize: true, space: true, reorder: true })
+    expect(inspection.can).toEqual({
+      align: true,
+      resize: true,
+      space: true,
+      reorder: true,
+      transform: true,
+    })
   })
 
   it('blames the row for a flex child', () => {
@@ -126,5 +132,32 @@ describe('orderElementOf', () => {
   it('promotes to a single-child container marker', () => {
     const { canvas } = build('<div id="box" data-responsive-container="true"><div id="a"></div></div>')
     expect(orderElementOf(canvas.querySelector<HTMLElement>('#a')!).id).toBe('box')
+  })
+})
+
+describe('transformability', () => {
+  it('refuses an element with no box', () => {
+    const { canvas, styles } = build('<div id="a"></div>')
+    styles.set(canvas.querySelector('#a')!, { display: 'none' })
+    const inspection = inspectFlow(canvas.querySelector<HTMLElement>('#a')!, readerFor(styles))
+
+    expect(blockReasonOf(inspection, 'transform')).toBe('no-box')
+  })
+
+  it('refuses an element already taken out of the flow', () => {
+    const { canvas, styles } = build('<div id="a"></div>')
+    styles.set(canvas.querySelector('#a')!, { position: 'absolute' })
+    const inspection = inspectFlow(canvas.querySelector<HTMLElement>('#a')!, readerFor(styles))
+
+    expect(blockReasonOf(inspection, 'transform')).toBe('constrained')
+  })
+
+  it('allows it inside a row, where the other controls are blocked', () => {
+    const { canvas, styles } = build('<div id="row"><div id="a"></div></div>')
+    styles.set(canvas.querySelector('#row')!, { display: 'flex' })
+    const inspection = inspectFlow(canvas.querySelector<HTMLElement>('#a')!, readerFor(styles))
+
+    expect(blockReasonOf(inspection, 'resize')).toBe('row-child')
+    expect(inspection.can.transform).toBe(true)
   })
 })

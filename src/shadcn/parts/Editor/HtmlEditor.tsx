@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from 'react'
 import { CanvasFixedPage } from '../../../lib/components/Canvas/Canvas'
+import { CanvasContextMenu } from '../../../lib/components/Canvas/menu/CanvasContextMenu'
 import { CanvasViewport } from '../../../lib/components/Canvas/CanvasParts'
 import { EditorProvider, type EditorProviderProps } from '../../../lib/components/Editor/EditorProvider'
 import { useEditorShortcuts } from '../../../lib/components/Editor/useEditorShortcuts'
@@ -33,6 +34,7 @@ import {
 import { InspectorPosition } from '../Inspector/InspectorPosition'
 import { InspectorTransform } from '../Inspector/InspectorTransform'
 import { TagInspectorHeader } from '../Inspector/TagInspectorHeader'
+import { WrapInContainer } from '../Canvas/WrapInContainer'
 import { TagPicker } from '../Inspector/TagPicker'
 import { InspectorAppearance } from '../Inspector/sections/InspectorAppearance'
 import { InspectorBorders } from '../Inspector/sections/InspectorBorders'
@@ -56,6 +58,7 @@ import { BoxSizeControls } from '../../../lib/flow/box/BoxSizeControls'
 import { TagControls } from '../../../lib/flow/tags/TagControls'
 import { FlowControls } from '../../../lib/flow/FlowControls'
 import { FlowStatusBar } from '../../../lib/flow/FlowStatusBar'
+import { FlowTransformSection } from '../../../lib/flow/transform/FlowTransformSection'
 import { FlowToolbar } from '../../../lib/flow/FlowToolbar'
 import { Sidebar, SidebarLayers, SidebarPalette, SidebarSearch, SidebarTabs } from '../Sidebar/Sidebar'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
@@ -144,6 +147,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   WidthPresets: CanvasWidthPresets,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
+  ContextMenu: CanvasContextMenu,
   FixedPage: CanvasFixedPage,
   Zoom: CanvasZoom,
   Guides,
@@ -155,6 +159,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   FlowToolbar,
   BoxSize: BoxSizeControls,
   TagControls,
+  WrapInContainer,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {
@@ -172,6 +177,7 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Attributes: InspectorAttributes,
   Position: InspectorPosition,
   Transform: InspectorTransform,
+  FlowPosition: FlowTransformSection,
   Styles: InspectorStyles,
   Layout: InspectorLayout,
   Spacing: InspectorSpacing,

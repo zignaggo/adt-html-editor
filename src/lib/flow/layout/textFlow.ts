@@ -16,7 +16,7 @@ import {
 import { isWrappableObject, layoutChildren } from '../component/componentLayout'
 import { classFamilies, LAYOUT_FAMILIES, WIDTH_FAMILIES } from './layoutOperations'
 
-export type TextFlowKind = 'container' | 'surrounding' | 'selected'
+export type TextFlowKind = 'container' | 'surrounding' | 'selected' | 'group'
 
 export type TextFlowPlan = {
   kind: TextFlowKind
@@ -47,6 +47,13 @@ const TEXT_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'])
 
 const PADDING_SIDES = ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'] as const
 
+const BORDER_SIDES = [
+  'borderTopWidth',
+  'borderRightWidth',
+  'borderBottomWidth',
+  'borderLeftWidth',
+] as const
+
 const defaultReader: StyleReader = (element) => getComputedStyle(element)
 
 function isSpaced(value: string | undefined): boolean {
@@ -57,6 +64,12 @@ export function isFlowText(element: Element): boolean {
   return TEXT_TAGS.has(element.tagName)
 }
 
+function isDrawnBorder(style: CSSStyleDeclaration): boolean {
+  const drawn = style.borderStyle
+  if (!drawn || drawn === 'none' || drawn === 'hidden') return false
+  return BORDER_SIDES.some((side) => isSpaced(style[side]))
+}
+
 export function isLayoutWrapper(element: HTMLElement, read: StyleReader = defaultReader): boolean {
   if (element.tagName !== 'DIV') return false
   if (element.matches(BARRIER_SELECTOR)) return false
@@ -65,7 +78,7 @@ export function isLayoutWrapper(element: HTMLElement, read: StyleReader = defaul
   const background = style.backgroundColor
   if (background && background !== 'transparent' && background !== 'rgba(0, 0, 0, 0)') return false
   if (style.backgroundImage && style.backgroundImage !== 'none') return false
-  if (style.borderStyle && style.borderStyle !== 'none') return false
+  if (isDrawnBorder(style)) return false
   if (style.overflow && style.overflow !== 'visible') return false
 
   for (const side of PADDING_SIDES) {
@@ -160,6 +173,71 @@ function buildPlan(
     texts: level.texts,
     needSpacing: level.texts.filter((text) => !isSpaced(read(text).marginBottom)),
   }
+}
+
+function groupLevel(
+  container: HTMLElement,
+  members: readonly HTMLElement[],
+  branch: HTMLElement,
+  read: StyleReader,
+): Level | null {
+  const kept: HTMLElement[] = []
+  const wrappers: HTMLElement[] = []
+  const texts: HTMLElement[] = []
+  let outsiders = layoutChildren(container, read).length > members.length
+
+  for (const member of members) {
+    if (member === branch) continue
+
+    if (isFlowText(member)) {
+      kept.push(member)
+      texts.push(member)
+      continue
+    }
+
+    if (isLayoutWrapper(member, read)) {
+      const inside = textsInside(member, read)
+      if (inside.length > 0) {
+        kept.push(member)
+        wrappers.push(member)
+        texts.push(...inside)
+        continue
+      }
+    }
+
+    outsiders = true
+  }
+
+  const anchor = kept[0]
+  if (!anchor || texts.length === 0) return null
+  return { anchor, members: kept, wrappers, texts, outsiders }
+}
+
+export function groupTextFlow(
+  members: readonly HTMLElement[],
+  side: FloatSide,
+  read: StyleReader = defaultReader,
+): TextFlowPlan | null {
+  if (members.length < 2) return null
+
+  const container = members[0].parentElement
+  if (!container) return null
+  if (members.some((member) => member.parentElement !== container)) return null
+
+  let branch: HTMLElement | null = null
+  let object: HTMLElement | null = null
+  for (const member of members) {
+    const found = wrappableObjectOf(member, read)
+    if (!found) continue
+    branch = member
+    object = found
+    break
+  }
+  if (!branch || !object) return null
+
+  const level = groupLevel(container, members, branch, read)
+  if (!level) return null
+  return buildPlan('group', side, object, container, level, read)
 }
 
 export function planTextFlow(

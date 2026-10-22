@@ -2,14 +2,17 @@ import { useEffect, useRef } from 'react'
 import { useBreakpoint, useDirectControls, useLayoutMode } from '../components/Editor/context'
 import { breakpointOf } from '../tailwind/variants'
 import { blockReasonOf, FLOW_CAPABILITIES, type BlockReason } from './capabilities'
+import { ContainerControls } from './container/ContainerControls'
 import { STATUS_CHIP_CLASS, STATUS_CLASS, STATUS_HINT_CLASS } from './flowStyles'
 import { subscribeFlowGesture } from './gesture/flowGestureStore'
+import { FlowGroupStatus } from './group/FlowGroupStatus'
 import { useFlowSelection, type FlowTarget } from './useFlowSelection'
 
 const HINTS: Record<BlockReason, string> = {
   constrained: 'This element sits outside the normal flow, so dragging it here would not stick.',
   'grid-child': 'The grid places this cell — edit the grid to change where it sits.',
   inline: 'Inline elements follow the text around them.',
+  'no-box': 'This element draws no box of its own.',
   'positioned-descendant':
     'Something inside is positioned by hand, and resizing would pull it out of place.',
   'row-child': 'The row sizes this item — edit the row to change it.',
@@ -32,7 +35,12 @@ export function FlowStatusBar() {
   const layout = useLayoutMode()
   const direct = useDirectControls()
   if (layout !== 'flow' || !direct) return null
-  return <FlowStatus />
+  return (
+    <>
+      <FlowStatus />
+      <FlowGroupStatus />
+    </>
+  )
 }
 
 function FlowStatus() {
@@ -59,6 +67,7 @@ function FlowStatus() {
       {inside ? <span>Inside &lt;{inside}&gt;</span> : null}
       <span className={STATUS_CHIP_CLASS}>{breakpointOf(breakpoint).label}</span>
       <span className={STATUS_HINT_CLASS}>{hintFor(target)}</span>
+      <ContainerControls target={target} />
       <span ref={feedbackRef} className="font-mono text-foreground" role="status" aria-live="polite" />
     </div>
   )

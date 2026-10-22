@@ -7,6 +7,7 @@ import { useEditorStoreApi } from '../../components/Editor/context'
 import { EditorProvider } from '../../components/Editor/EditorProvider'
 import type { EditorStore } from '../../core/store'
 import { FlowControls } from '../FlowControls'
+import { resetTransform, setTransformActive } from '../transform/transformStore'
 
 const HTML = '<section id="hero"><h1>Title</h1><p class="lead">Intro</p></section>'
 
@@ -106,10 +107,11 @@ describe('flow gestures', () => {
 
   afterEach(() => {
     cleanup()
+    resetTransform()
     vi.unstubAllGlobals()
   })
 
-  it('a sideways drag writes the alignment as a class, in one history entry', async () => {
+  it('a sideways drag does nothing while no mode is live', async () => {
     const { store, paragraph } = await setup()
     act(() => store.actions.select(paragraph.getAttribute('data-adt-id')))
     await nextFrames()
@@ -119,11 +121,11 @@ describe('flow gestures', () => {
     fireEvent.pointerMove(window, pointer(500, 60))
     fireEvent.pointerUp(window, pointer(500, 60))
 
-    expect(classesOf(store, paragraph)).toContain('text-right')
-    expect(store.state.history.past.length - before).toBe(1)
+    expect(classesOf(store, paragraph)).toEqual(['lead'])
+    expect(store.state.history.past.length).toBe(before)
   })
 
-  it('a vertical drag reorders the node without writing a class', async () => {
+  it('a vertical drag does not reorder while no mode is live', async () => {
     const { store, section, paragraph } = await setup()
     act(() => store.actions.select(paragraph.getAttribute('data-adt-id')))
     await nextFrames()
@@ -134,8 +136,7 @@ describe('flow gestures', () => {
     fireEvent.pointerMove(window, pointer(100, 5))
     fireEvent.pointerUp(window, pointer(100, 5))
 
-    expect(tagsIn(store, section)).toEqual(['p', 'h1'])
-    expect(classesOf(store, paragraph)).toEqual(['lead'])
+    expect(tagsIn(store, section)).toEqual(['h1', 'p'])
   })
 
   it('a corner drag writes the width as a percentage of the row', async () => {
@@ -188,16 +189,16 @@ describe('flow gestures', () => {
     act(() => store.actions.select(paragraph.getAttribute('data-adt-id')))
     await nextFrames()
 
-    const before = selectionAllowed(paragraph)
-    expect(before).toBe(true)
+    expect(selectionAllowed(paragraph)).toBe(true)
 
-    fireEvent.pointerDown(paragraph, pointer(100, 60))
+    const handle = screen.getByRole('button', { name: 'Space below' })
+    fireEvent.pointerDown(handle, pointer(150, 80))
     expect(selectionAllowed(paragraph)).toBe(false)
 
-    fireEvent.pointerMove(window, pointer(100, 5))
+    fireEvent.pointerMove(window, pointer(150, 102))
     expect(paragraph.hasAttribute('data-adt-flow-gesture')).toBe(true)
 
-    fireEvent.pointerUp(window, pointer(100, 5))
+    fireEvent.pointerUp(window, pointer(150, 102))
     expect(paragraph.hasAttribute('data-adt-flow-gesture')).toBe(false)
     expect(selectionAllowed(paragraph)).toBe(true)
   })
@@ -220,17 +221,19 @@ describe('flow gestures', () => {
     expect(root.hasAttribute('data-adt-direct')).toBe(true)
   })
 
-  it('marks a movable selection for the grab cursor, and only while it can move', async () => {
+  it('offers the grab cursor only while a mode is live', async () => {
     const { store, paragraph } = await setup()
-    const id = paragraph.getAttribute('data-adt-id') ?? ''
-    act(() => store.actions.select(id))
+    act(() => store.actions.select(paragraph.getAttribute('data-adt-id')))
     await nextFrames()
 
+    expect(paragraph.hasAttribute('data-adt-flow-move')).toBe(false)
+
+    act(() => setTransformActive(true))
+    await nextFrames()
     expect(paragraph.hasAttribute('data-adt-flow-move')).toBe(true)
 
-    act(() => store.actions.select(null))
+    act(() => setTransformActive(false))
     await nextFrames()
-
     expect(paragraph.hasAttribute('data-adt-flow-move')).toBe(false)
   })
 

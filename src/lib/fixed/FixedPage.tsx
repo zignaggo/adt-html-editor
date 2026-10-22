@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react'
 import { useCanvasContext } from '../components/Canvas/context'
+import { useCanvasBackdrop } from '../components/Canvas/useCanvasBackdrop'
 import { useCanvasInteractions } from '../components/Canvas/useCanvasInteractions'
 import { CanvasNode } from '../components/Canvas/CanvasNode'
 import { SelectionOverlay } from '../components/Canvas/SelectionOverlay'
+import { CanvasContextMenu } from '../components/Canvas/menu/CanvasContextMenu'
 import { useChildren, useEditorContext, useFixedLayout, useRootId } from '../components/Editor/context'
 import { useDocumentStylesheet } from './stylesheet/useDocumentStylesheet'
 import { useFixedDropMonitor } from './useFixedDropMonitor'
@@ -33,6 +35,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
   const nudge = useFixedNudge()
   const transformKeys = useTransformKeys()
 
+  useCanvasBackdrop(scrollRef)
   useDocumentStylesheet()
   useFixedPageDropTarget(scrollRef)
   useFixedDropMonitor()
@@ -95,6 +98,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
             onMouseDown={interactions.onMouseDown}
             onClick={interactions.onClick}
             onDoubleClick={interactions.onDoubleClick}
+            onContextMenu={interactions.onContextMenu}
             onKeyDown={onKeyDown}
           >
             {nodeIds.map((childId) => (
@@ -110,6 +114,7 @@ export function FixedPage({ className, children }: FixedPageProps) {
         </div>
       </div>
       <SelectionOverlay />
+      <CanvasContextMenu />
     </div>
   )
 }

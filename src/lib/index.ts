@@ -380,6 +380,30 @@ export type { Retag, RetagOption } from './flow/tags/useRetag'
 export { TagControls as CanvasTagControls } from './flow/tags/TagControls'
 
 export {
+  CONTAINER_REASONS,
+  CONTAINER_TAG,
+  CONTAINER_VALUE,
+  alignmentOf,
+  canWrapInContainer,
+  containerAttributes,
+  containerMessageOf,
+  planContainer,
+  slotOf,
+} from './flow/container/elementContainer'
+export type {
+  ContainerBlock,
+  ContainerLock,
+  ContainerMessage,
+  ContainerPlan,
+  ContainerSlot,
+  ContainerState,
+  ContainerWrapper,
+} from './flow/container/elementContainer'
+export { useElementContainer } from './flow/container/useElementContainer'
+export type { ElementContainer } from './flow/container/useElementContainer'
+export { ContainerControls as CanvasContainerControls } from './flow/container/ContainerControls'
+
+export {
   CONTAINER_ATTRIBUTE,
   componentBlock,
   componentOf,
@@ -420,3 +444,46 @@ export {
 } from './flow/component/repositionStore'
 export type { RepositionUi } from './flow/component/repositionStore'
 export { RepositionControl as CanvasRepositionControl } from './flow/component/RepositionControl'
+
+export {
+  NO_TRANSLATION,
+  addToComponent,
+  ancestorScale,
+  formatTranslation,
+  isNoTranslation,
+  offsetTranslation,
+  parsePx as parseTranslationPx,
+  readTranslation,
+  splitComponents,
+  translationMatches,
+} from './flow/transform/translation'
+export type { Translation } from './flow/transform/translation'
+export {
+  NUDGE_COARSE_PX,
+  NUDGE_PX,
+  TRANSFORM_ATTRIBUTE,
+  useFreeTransform,
+} from './flow/transform/useFreeTransform'
+export type { FreeTransform } from './flow/transform/useFreeTransform'
+export { resetTransform, setTransformActive, transformUi } from './flow/transform/transformStore'
+export type { TransformUi } from './flow/transform/transformStore'
+export { TransformControls as CanvasTransformControls } from './flow/transform/TransformControls'
+export { FlowTransformSection } from './flow/transform/FlowTransformSection'
+
+export { CanvasContextMenu } from './components/Canvas/menu/CanvasContextMenu'
+export { useContextMenu } from './components/Canvas/menu/useContextMenu'
+export type { ContextMenu } from './components/Canvas/menu/useContextMenu'
+export { allLocked, menuActionsFor, parentTarget } from './components/Canvas/menu/menuActions'
+export type { MenuAction, MenuActionId, MenuContext } from './components/Canvas/menu/menuActions'
+export { closeContextMenu, contextMenu, openContextMenu } from './components/Canvas/menu/contextMenuStore'
+export type { ContextMenuState } from './components/Canvas/menu/contextMenuStore'
+export {
+  clearStyleClipboard,
+  copyStyle,
+  readStyleClipboard,
+  styleClipboard,
+} from './components/Canvas/menu/styleClipboard'
+export type { CopiedStyle } from './components/Canvas/menu/styleClipboard'
+export { clearClipboard } from './core/clipboard'
+export { MenuIcon } from './components/Canvas/menu/menuIcons'
+export type { MenuIconName } from './components/Canvas/menu/menuIcons'

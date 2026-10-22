@@ -6,6 +6,8 @@ import { useBoxHeight } from './box/useBoxHeight'
 import { allows } from './capabilities'
 import { repositionUi } from './component/repositionStore'
 import { useReposition, type Reposition } from './component/useReposition'
+import { useFreeTransform, type FreeTransform } from './transform/useFreeTransform'
+import { useFreeTransformKeys } from './transform/useFreeTransformKeys'
 import {
   COMPONENT_OUTLINE_CLASS,
   CORNER_CLASS,
@@ -23,6 +25,7 @@ import {
 import { MOVE_ATTRIBUTE } from './gesture/canvasGesture'
 import { subscribeFlowGesture } from './gesture/flowGestureStore'
 import { useFlowGestures, type FlowGestures, type ResizeCorner } from './gestures/useFlowGestures'
+import { FlowGroupControls } from './group/FlowGroupControls'
 import {
   useFlowSelection,
   type FlowBox,
@@ -90,7 +93,12 @@ export function FlowControls() {
   const layout = useLayoutMode()
   const direct = useDirectControls()
   if (layout !== 'flow' || !direct) return null
-  return <FlowControlsLayer />
+  return (
+    <>
+      <FlowControlsLayer />
+      <FlowGroupControls />
+    </>
+  )
 }
 
 function FlowControlsLayer() {
@@ -98,6 +106,8 @@ function FlowControlsLayer() {
   const gestures = useFlowGestures(target)
   const box = useBoxHeight(target)
   const reposition = useReposition(target)
+  const transform = useFreeTransform(target)
+  useFreeTransformKeys(transform)
   const highlight = useSelector(repositionUi, (ui) => ui.highlight)
   if (!target) return null
   return (
@@ -105,6 +115,7 @@ function FlowControlsLayer() {
       target={target}
       gestures={gestures}
       reposition={reposition}
+      transform={transform}
       highlight={highlight}
       canHeight={box !== null && box.blocked === null}
     />
@@ -115,12 +126,14 @@ function FlowControlsFrame({
   target,
   gestures,
   reposition,
+  transform,
   highlight,
   canHeight,
 }: {
   target: FlowTarget
   gestures: FlowGestures
   reposition: Reposition | null
+  transform: FreeTransform | null
   highlight: boolean
   canHeight: boolean
 }) {
@@ -132,12 +145,12 @@ function FlowControlsFrame({
   const outlineRef = useRef<HTMLDivElement | null>(null)
   const ghostRef = useRef<HTMLDivElement | null>(null)
   const ghostLabelRef = useRef<HTMLSpanElement | null>(null)
-  const gesturesRef = useRef(gestures)
   const repositionRef = useRef(reposition)
+  const transformRef = useRef(transform)
 
   useEffect(() => {
-    gesturesRef.current = gestures
     repositionRef.current = reposition
+    transformRef.current = transform
   })
 
   useEffect(() => {
@@ -204,24 +217,23 @@ function FlowControlsFrame({
     }
   }, [target, highlight])
 
-  const canMove =
-    allows(target.inspection, 'align') ||
-    allows(target.inspection, 'reorder') ||
-    (reposition?.routes ?? false)
+  // The element takes the pointer only while a mode is live, so a drag never does something
+  // the user did not ask for — and the grab cursor only appears when there is something to grab.
+  const modeActive = (transform?.active ?? false) || (reposition?.routes ?? false)
 
   useEffect(() => {
     const { element } = target
-    if (!canMove) return
+    if (!modeActive) return
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || panModeActive() || isPanModifier(event)) return
       if ((event.target as HTMLElement | null)?.closest(INTERACTIVE)) return
-      const piece = repositionRef.current
-      if (piece?.routes) {
-        piece.start(event)
+      const freeTransform = transformRef.current
+      if (freeTransform?.active) {
+        freeTransform.start(event)
         return
       }
-      gesturesRef.current.startMove(event)
+      repositionRef.current?.start(event)
     }
 
     element.setAttribute(MOVE_ATTRIBUTE, '')
@@ -230,7 +242,7 @@ function FlowControlsFrame({
       element.removeAttribute(MOVE_ATTRIBUTE)
       element.removeEventListener('pointerdown', onPointerDown)
     }
-  }, [target, canMove])
+  }, [target, modeActive])
 
   useEffect(
     () =>

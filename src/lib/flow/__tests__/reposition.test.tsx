@@ -139,8 +139,7 @@ describe('reposition', () => {
 
   it('drags the whole piece to a new place in one history entry', async () => {
     const { store, section, media, intro } = await setup()
-    act(() => store.actions.select(media.getAttribute('data-adt-id')))
-    await nextFrames()
+    await selectAndArm(store, media)
     const before = store.state.history.past.length
 
     pointsAt(intro, section)
@@ -156,8 +155,7 @@ describe('reposition', () => {
     const { store, section, media, outro } = await setup()
     const image = media.querySelector<HTMLElement>('img')!
     stubRect(image, { left: 0, top: 100, width: 300, height: 100 })
-    act(() => store.actions.select(image.getAttribute('data-adt-id')))
-    await nextFrames()
+    await selectAndArm(store, image)
 
     pointsAt(outro, section)
     fireEvent.pointerDown(image, pointer(150, 150))
@@ -190,8 +188,7 @@ describe('reposition', () => {
   it('a float drop wraps the text around the object', async () => {
     const { store, media, outro } = await setup()
     const mediaId = idOf(media)
-    act(() => store.actions.select(mediaId))
-    await nextFrames()
+    await selectAndArm(store, media)
 
     pointsAt(outro)
     fireEvent.pointerDown(media, pointer(150, 150))
@@ -206,8 +203,7 @@ describe('reposition', () => {
 
   it('escape leaves the piece exactly where it was', async () => {
     const { store, section, media, intro } = await setup()
-    act(() => store.actions.select(media.getAttribute('data-adt-id')))
-    await nextFrames()
+    await selectAndArm(store, media)
     const before = store.state.history.past.length
 
     pointsAt(intro, section)
@@ -233,10 +229,11 @@ describe('reposition', () => {
     expect(childrenOf(store, section)).toEqual(['media', 'outro', 'intro'])
   })
 
-  it('without arming, a plain block keeps the alignment gesture', async () => {
+  it('without arming, a drag on a plain block does nothing at all', async () => {
     const { store, section, intro, outro } = await setup()
     act(() => store.actions.select(intro.getAttribute('data-adt-id')))
     await nextFrames()
+    const before = store.state.history.past.length
 
     pointsAt(outro, section)
     fireEvent.pointerDown(intro, pointer(300, 50))
@@ -244,7 +241,21 @@ describe('reposition', () => {
     fireEvent.pointerUp(window, pointer(560, 50))
 
     expect(childrenOf(store, section)).toEqual(['intro', 'media', 'outro'])
-    expect(classesOf(store, idOf(intro))).toContain('text-right')
+    expect(classesOf(store, idOf(intro))).toEqual([])
+    expect(store.state.history.past.length).toBe(before)
+  })
+
+  it('leaves a figure alone until the mode is armed', async () => {
+    const { store, section, media, intro } = await setup()
+    act(() => store.actions.select(idOf(media)))
+    await nextFrames()
+
+    pointsAt(intro, section)
+    fireEvent.pointerDown(media, pointer(150, 150))
+    fireEvent.pointerMove(window, pointer(300, 10))
+    fireEvent.pointerUp(window, pointer(300, 10))
+
+    expect(childrenOf(store, section)).toEqual(['intro', 'media', 'outro'])
   })
 
   it('refuses a piece inside a list', async () => {

@@ -8,6 +8,8 @@ import { CanvasStage, CanvasStageContent } from './CanvasStage'
 import { STAGE_PADDING, useCanvasStage } from './stage'
 import { useCanvasContext, type CanvasWidthPreset } from './context'
 import { SelectionOverlay } from './SelectionOverlay'
+import { CanvasContextMenu } from './menu/CanvasContextMenu'
+import { useCanvasBackdrop } from './useCanvasBackdrop'
 import { useCanvasInteractions } from './useCanvasInteractions'
 import { useDarkToggle, useWidthPresets } from './useCanvasControls'
 import { cn } from 'cn'
@@ -61,6 +63,8 @@ export function CanvasDarkToggle({ children }: { children?: ReactNode }) {
 export function CanvasViewport({ className, children }: { className?: string; children?: ReactNode }) {
   const stageRef = useRef<HTMLDivElement | null>(null)
 
+  useCanvasBackdrop(stageRef)
+
   useEffect(() => {
     const element = stageRef.current
     if (!element) return
@@ -79,6 +83,7 @@ export function CanvasViewport({ className, children }: { className?: string; ch
 
       <SelectionOverlay />
       <DropIndicator surface="canvas" />
+      <CanvasContextMenu />
       {children}
     </CanvasStage>
   )
@@ -117,6 +122,7 @@ function CanvasPage() {
           onMouseDown={interactions.onMouseDown}
           onClick={interactions.onClick}
           onDoubleClick={interactions.onDoubleClick}
+          onContextMenu={interactions.onContextMenu}
           onKeyDown={interactions.onKeyDown}
         >
           {children.map((childId) => (

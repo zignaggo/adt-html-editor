@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from 'react'
 import { Canvas, CanvasFixedPage } from '../Canvas/Canvas'
+import { CanvasContextMenu } from '../Canvas/menu/CanvasContextMenu'
 import {
   CanvasDarkToggle,
   CanvasToolbar,
@@ -38,9 +39,11 @@ import {
 } from '../Layers/LayersParts'
 import { Palette, PaletteGrid, PaletteHeader, PaletteItem } from '../Palette/Palette'
 import { BoxSizeControls } from '../../flow/box/BoxSizeControls'
+import { ContainerControls } from '../../flow/container/ContainerControls'
 import { TagControls } from '../../flow/tags/TagControls'
 import { FlowControls } from '../../flow/FlowControls'
 import { FlowStatusBar } from '../../flow/FlowStatusBar'
+import { FlowTransformSection } from '../../flow/transform/FlowTransformSection'
 import { FlowToolbar } from '../../flow/FlowToolbar'
 import { EditorProvider, type EditorProviderProps } from './EditorProvider'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
@@ -130,6 +133,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   WidthPresets: CanvasWidthPresets,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
+  ContextMenu: CanvasContextMenu,
   FixedPage: CanvasFixedPage,
   Zoom,
   Guides,
@@ -141,6 +145,7 @@ const CanvasNamespace = Object.assign(Canvas, {
   FlowToolbar,
   BoxSize: BoxSizeControls,
   TagControls,
+  WrapInContainer: ContainerControls,
 })
 
 const InspectorNamespace = Object.assign(InspectorPanel, {
@@ -156,6 +161,7 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Attributes: InspectorAttributes,
   Position: InspectorPosition,
   Transform: InspectorTransform,
+  FlowPosition: FlowTransformSection,
 })
 
 const HistoryNamespace = Object.assign(HistoryGroup, {

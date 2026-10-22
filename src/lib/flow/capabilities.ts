@@ -1,4 +1,4 @@
-export const FLOW_CAPABILITIES = ['align', 'resize', 'space', 'reorder'] as const
+export const FLOW_CAPABILITIES = ['align', 'resize', 'space', 'reorder', 'transform'] as const
 
 export type FlowCapability = (typeof FLOW_CAPABILITIES)[number]
 
@@ -6,6 +6,7 @@ export type BlockReason =
   | 'constrained'
   | 'grid-child'
   | 'inline'
+  | 'no-box'
   | 'positioned-descendant'
   | 'row-child'
   | 'table'
@@ -23,6 +24,7 @@ export type FlowFlags = {
   constrained: boolean
   ordered: boolean
   positionedDescendant: boolean
+  box: boolean
 }
 
 export type FlowInspection = {
@@ -135,6 +137,7 @@ function readFlags(element: HTMLElement, read: StyleReader): FlowFlags {
     constrained,
     ordered: siblingsAreOrdered(element, read),
     positionedDescendant: hasPositionedDescendant(element, read),
+    box: display !== 'none',
   }
 }
 
@@ -177,6 +180,19 @@ function reorderability(flags: FlowFlags): true | BlockReason {
 }
 
 /**
+ * Free transform paints the element elsewhere without taking it out of the flow, so it asks
+ * less than the others: a box of its own, on the two axes the pointer can reach.
+ */
+function transformability(flags: FlowFlags): true | BlockReason {
+  if (!flags.box) return 'no-box'
+  if (flags.constrained) return 'constrained'
+  if (flags.table) return 'table'
+  if (flags.inline) return 'inline'
+  if (flags.transformed) return 'transformed'
+  return true
+}
+
+/**
  * What the direct controls may do to `element`, and why not when they may not. The reason is
  * the payload: it is what the status bar explains instead of a control silently going missing.
  */
@@ -193,6 +209,7 @@ export function inspectFlow(
       resize: sizeability(flags),
       space: spaceability(flags),
       reorder: reorderability(flags),
+      transform: transformability(flags),
     },
   }
 }

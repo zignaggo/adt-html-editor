@@ -20,6 +20,8 @@ export {
   CanvasZoom,
 } from './parts/Canvas/CanvasParts'
 export type { CanvasProps } from './parts/Canvas/CanvasParts'
+export { WrapInContainer } from './parts/Canvas/WrapInContainer'
+export type { WrapInContainerProps } from './parts/Canvas/WrapInContainer'
 export {
   InspectorAttributes,
   InspectorBody,
