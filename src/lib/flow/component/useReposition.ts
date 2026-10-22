@@ -19,6 +19,7 @@ import {
   type ComponentBlock,
 } from './componentLayout'
 import { repositionUi, setRepositionArmed } from './repositionStore'
+import { setTransformActive } from '../transform/transformStore'
 
 export type RepositionOutcome = 'moved' | 'same-place' | 'no-target'
 
@@ -216,7 +217,10 @@ export function useReposition(target: FlowTarget | null): Reposition | null {
     component,
     blocked,
     armed,
-    toggle: () => setRepositionArmed(!armed),
+    toggle: () => {
+      if (!armed) setTransformActive(false)
+      setRepositionArmed(!armed)
+    },
     start,
     routes: blocked === null && (armed || looksLikeComponent(component)),
   }

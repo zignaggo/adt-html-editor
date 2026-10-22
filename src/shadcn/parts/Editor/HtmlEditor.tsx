@@ -57,6 +57,7 @@ import { BoxSizeControls } from '../../../lib/flow/box/BoxSizeControls'
 import { TagControls } from '../../../lib/flow/tags/TagControls'
 import { FlowControls } from '../../../lib/flow/FlowControls'
 import { FlowStatusBar } from '../../../lib/flow/FlowStatusBar'
+import { FlowTransformSection } from '../../../lib/flow/transform/FlowTransformSection'
 import { FlowToolbar } from '../../../lib/flow/FlowToolbar'
 import { Sidebar, SidebarLayers, SidebarPalette, SidebarSearch, SidebarTabs } from '../Sidebar/Sidebar'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
@@ -174,6 +175,7 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Attributes: InspectorAttributes,
   Position: InspectorPosition,
   Transform: InspectorTransform,
+  FlowPosition: FlowTransformSection,
   Styles: InspectorStyles,
   Layout: InspectorLayout,
   Spacing: InspectorSpacing,

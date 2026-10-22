@@ -42,6 +42,7 @@ import { ContainerControls } from '../../flow/container/ContainerControls'
 import { TagControls } from '../../flow/tags/TagControls'
 import { FlowControls } from '../../flow/FlowControls'
 import { FlowStatusBar } from '../../flow/FlowStatusBar'
+import { FlowTransformSection } from '../../flow/transform/FlowTransformSection'
 import { FlowToolbar } from '../../flow/FlowToolbar'
 import { EditorProvider, type EditorProviderProps } from './EditorProvider'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
@@ -158,6 +159,7 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Attributes: InspectorAttributes,
   Position: InspectorPosition,
   Transform: InspectorTransform,
+  FlowPosition: FlowTransformSection,
 })
 
 const HistoryNamespace = Object.assign(HistoryGroup, {

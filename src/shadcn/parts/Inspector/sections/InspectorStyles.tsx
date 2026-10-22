@@ -1,3 +1,4 @@
+import { FlowTransformSection } from '../../../../lib/flow/transform/FlowTransformSection'
 import { InspectorAppearance } from './InspectorAppearance'
 import { InspectorBorders } from './InspectorBorders'
 import { InspectorLayout } from './InspectorLayout'
@@ -10,6 +11,7 @@ export function InspectorStyles() {
     <div className="flex flex-col">
       <InspectorLayout />
       <InspectorSpacing />
+      <FlowTransformSection />
       <InspectorSizing />
       <InspectorTypography />
       <InspectorAppearance />

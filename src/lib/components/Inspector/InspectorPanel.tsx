@@ -4,6 +4,7 @@ import type { StateVariant, StyleTarget } from '../../tailwind/variants'
 import { selectSelectedIds, useBreakpoint, useEditorSelector } from '../Editor/context'
 import { InspectorPosition } from '../../fixed/InspectorPosition'
 import { InspectorTransform } from '../../fixed/InspectorTransform'
+import { FlowTransformSection } from '../../flow/transform/FlowTransformSection'
 import { InspectorContext, type InspectorContextValue } from './context'
 import {
   InspectorAttributes,
@@ -69,6 +70,7 @@ function DefaultInspector() {
       <InspectorBody>
         <InspectorPosition />
         <InspectorTransform />
+        <FlowTransformSection />
         <InspectorSection title="Classes">
           <InspectorClassInput />
           <InspectorClassList />

@@ -444,3 +444,28 @@ export {
 } from './flow/component/repositionStore'
 export type { RepositionUi } from './flow/component/repositionStore'
 export { RepositionControl as CanvasRepositionControl } from './flow/component/RepositionControl'
+
+export {
+  NO_TRANSLATION,
+  addToComponent,
+  ancestorScale,
+  formatTranslation,
+  isNoTranslation,
+  offsetTranslation,
+  parsePx as parseTranslationPx,
+  readTranslation,
+  splitComponents,
+  translationMatches,
+} from './flow/transform/translation'
+export type { Translation } from './flow/transform/translation'
+export {
+  NUDGE_COARSE_PX,
+  NUDGE_PX,
+  TRANSFORM_ATTRIBUTE,
+  useFreeTransform,
+} from './flow/transform/useFreeTransform'
+export type { FreeTransform } from './flow/transform/useFreeTransform'
+export { resetTransform, setTransformActive, transformUi } from './flow/transform/transformStore'
+export type { TransformUi } from './flow/transform/transformStore'
+export { TransformControls as CanvasTransformControls } from './flow/transform/TransformControls'
+export { FlowTransformSection } from './flow/transform/FlowTransformSection'

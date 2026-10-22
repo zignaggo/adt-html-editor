@@ -12,6 +12,7 @@ const HINTS: Record<BlockReason, string> = {
   constrained: 'This element sits outside the normal flow, so dragging it here would not stick.',
   'grid-child': 'The grid places this cell — edit the grid to change where it sits.',
   inline: 'Inline elements follow the text around them.',
+  'no-box': 'This element draws no box of its own.',
   'positioned-descendant':
     'Something inside is positioned by hand, and resizing would pull it out of place.',
   'row-child': 'The row sizes this item — edit the row to change it.',
