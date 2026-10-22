@@ -1,6 +1,7 @@
 import type { NodeId } from '../../../core/ids'
 import { isLockedDeep, type LockMap } from '../../../core/lock'
 import { isStyled, type EditorDocument } from '../../../core/model'
+import type { MenuIconName } from './menuIcons'
 
 export type MenuActionId =
   | 'duplicate'
@@ -15,6 +16,7 @@ export type MenuActionId =
 export type MenuAction = {
   id: MenuActionId
   label: string
+  icon: MenuIconName
   disabled: boolean
   /** Starts a new group in the rendered menu. */
   separatorBefore?: boolean
@@ -63,26 +65,40 @@ export function menuActionsFor(context: MenuContext): MenuAction[] {
   const locked = allLocked(context)
 
   return [
-    { id: 'duplicate', label: 'Duplicate', disabled: !canEdit },
-    { id: 'delete', label: 'Delete', disabled: !canEdit },
-    { id: 'copy', label: 'Copy', disabled: context.selectedIds.length === 0, separatorBefore: true },
-    { id: 'paste', label: 'Paste', disabled: !context.hasClipboard || !canEdit },
+    { id: 'duplicate', label: 'Duplicate', icon: 'duplicate', disabled: !canEdit },
+    { id: 'delete', label: 'Delete', icon: 'delete', disabled: !canEdit },
+    {
+      id: 'copy',
+      label: 'Copy',
+      icon: 'copy',
+      disabled: context.selectedIds.length === 0,
+      separatorBefore: true,
+    },
+    { id: 'paste', label: 'Paste', icon: 'paste', disabled: !context.hasClipboard || !canEdit },
     {
       id: 'copy-style',
       label: 'Copy style',
+      icon: 'copyStyle',
       disabled: !single,
       separatorBefore: true,
     },
-    { id: 'paste-style', label: 'Paste style', disabled: !context.hasStyle || !canEdit },
+    {
+      id: 'paste-style',
+      label: 'Paste style',
+      icon: 'pasteStyle',
+      disabled: !context.hasStyle || !canEdit,
+    },
     {
       id: 'select-parent',
       label: 'Select parent',
+      icon: 'parent',
       disabled: parentOf(context) === null,
       separatorBefore: true,
     },
     {
       id: 'lock',
       label: locked ? 'Unlock' : 'Lock',
+      icon: locked ? 'unlock' : 'lock',
       disabled: context.selectedIds.length === 0,
     },
   ]

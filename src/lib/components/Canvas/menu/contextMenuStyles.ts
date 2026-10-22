@@ -4,7 +4,8 @@ export const MENU_CLASS =
 
 export const ITEM_CLASS =
   'flex w-full cursor-default appearance-none items-center rounded-sm border-0 bg-transparent ' +
-  'px-2 py-1.5 text-left font-[inherit] text-[11px] leading-5 text-foreground ' +
+  '[&>svg]:shrink-0 ' +
+  'gap-2 px-2 py-1.5 text-left font-[inherit] text-[11px] leading-5 text-foreground ' +
   'hover:not-disabled:bg-muted focus-visible:bg-muted focus-visible:outline-none ' +
   'disabled:pointer-events-none disabled:opacity-40'
 

@@ -485,3 +485,5 @@ export {
 } from './components/Canvas/menu/styleClipboard'
 export type { CopiedStyle } from './components/Canvas/menu/styleClipboard'
 export { clearClipboard } from './core/clipboard'
+export { MenuIcon } from './components/Canvas/menu/menuIcons'
+export type { MenuIconName } from './components/Canvas/menu/menuIcons'

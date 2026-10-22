@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { ITEM_CLASS, MENU_CLASS, SEPARATOR_CLASS } from './contextMenuStyles'
+import { MenuIcon } from './menuIcons'
 import { useContextMenu, type ContextMenu } from './useContextMenu'
 
 const EDGE_GAP = 8
@@ -78,6 +79,7 @@ function ContextMenuSurface({ menu }: { menu: ContextMenu }) {
             disabled={action.disabled}
             onClick={() => menu.run(action.id)}
           >
+            <MenuIcon name={action.icon} />
             {action.label}
           </button>
         </div>
