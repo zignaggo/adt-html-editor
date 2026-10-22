@@ -3,6 +3,8 @@ import { Canvas, CanvasFixedPage } from '../Canvas/Canvas'
 import { CanvasContextMenu } from '../Canvas/menu/CanvasContextMenu'
 import {
   CanvasDarkToggle,
+  CanvasFrames,
+  CanvasModeToggle,
   CanvasToolbar,
   CanvasViewport,
   CanvasWidthPresets,
@@ -131,6 +133,8 @@ const HandlesNamespace = Object.assign(Handles, {
 const CanvasNamespace = Object.assign(Canvas, {
   Toolbar: CanvasToolbar,
   WidthPresets: CanvasWidthPresets,
+  ModeToggle: CanvasModeToggle,
+  Frames: CanvasFrames,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
   ContextMenu: CanvasContextMenu,

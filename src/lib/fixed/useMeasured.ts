@@ -1,13 +1,13 @@
 import { useEffect, useEffectEvent, useState } from 'react'
 import type { NodeId } from '../core/ids'
-import { useEditorContext } from '../components/Editor/context'
+import { useCanvasRoot } from '../components/Editor/context'
 
 export function useMeasured<T>(
   id: NodeId,
   measure: (element: HTMLElement, root: HTMLElement) => T,
   equals: (a: T, b: T) => boolean,
 ): T | null {
-  const { canvasRootRef } = useEditorContext()
+  const root = useCanvasRoot()
   const [measured, setMeasured] = useState<T | null>(null)
 
   const readValue = useEffectEvent((element: HTMLElement, root: HTMLElement) =>
@@ -16,7 +16,6 @@ export function useMeasured<T>(
   const isSame = useEffectEvent((a: T, b: T) => equals(a, b))
 
   useEffect(() => {
-    const root = canvasRootRef.current
     if (!root) return
     let frame = 0
     let latest: T | null = null
@@ -49,7 +48,7 @@ export function useMeasured<T>(
       mutations.disconnect()
       resize.disconnect()
     }
-  }, [id, canvasRootRef])
+  }, [id, root])
 
   return measured
 }

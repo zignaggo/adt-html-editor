@@ -15,6 +15,7 @@ export type { LayerRowProps, LayersPanelProps, LayersSearchProps, LayersTreeProp
 export {
   Canvas,
   CanvasDarkToggle,
+  CanvasModeToggle,
   CanvasToolbar,
   CanvasWidthPresets,
   CanvasZoom,

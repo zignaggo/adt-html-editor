@@ -12,6 +12,7 @@ import type { NodeId } from '../../core/ids'
 import type { EditorDocument } from '../../core/model'
 import { serializeHtml } from '../../core/html/serialize'
 import { createEditorStore, type EditorState } from '../../core/store'
+import { createCanvasRoot } from '../Canvas/canvasRoot'
 import { detectLayout, pageSizeOf, type PageSize } from '../../fixed/detect'
 import { pageContainerOf } from '../../fixed/pageContainer'
 import type { BreakpointId } from '../../tailwind/variants'
@@ -113,7 +114,7 @@ export function EditorProvider({
   const [store] = useState(() => createEditorStore(value ?? defaultValue))
   const [aspectLock] = useState(() => new Store(false))
   const [breakpoint] = useState(() => new Store<BreakpointId>('desktop'))
-  const canvasRootRef = useRef<HTMLElement | null>(null)
+  const [canvasRoot] = useState(createCanvasRoot)
   const lastEmittedRef = useRef<string | null>(null)
   const onChangeRef = useRef(onChange)
 
@@ -150,7 +151,8 @@ export function EditorProvider({
     flowLayout: { directControls: flowLayout.directControls ?? false },
     aspectLock,
     breakpoint,
-    canvasRootRef,
+    canvasRoot: canvasRoot.store,
+    canvasRootRef: canvasRoot.ref,
   }
 
   useEffect(() => {

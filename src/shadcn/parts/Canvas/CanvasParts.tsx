@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react'
-import { MoonIcon } from 'lucide-react'
+import { LayoutGridIcon, MonitorIcon, MoonIcon } from 'lucide-react'
 import { CanvasFixedPage, CanvasProvider } from '../../../lib/components/Canvas/Canvas'
 import { CanvasViewport } from '../../../lib/components/Canvas/CanvasParts'
-import type { CanvasWidthPreset } from '../../../lib/components/Canvas/context'
-import { useDarkToggle, useWidthPresets } from '../../../lib/components/Canvas/useCanvasControls'
+import type { CanvasMode, CanvasWidthPreset } from '../../../lib/components/Canvas/context'
+import {
+  useCanvasMode,
+  useDarkToggle,
+  useWidthPresets,
+} from '../../../lib/components/Canvas/useCanvasControls'
 import { useLayoutMode } from '../../../lib/components/Editor/context'
 import { LiveGhost } from '../../../lib/fixed/ghost/LiveGhost'
 import { Guides } from '../../../lib/fixed/guides/Guides'
@@ -18,11 +22,13 @@ import { HistoryGroup } from '../Editor/HistoryParts'
 export type CanvasProps = {
   className?: string
   children?: ReactNode
+  presets?: CanvasWidthPreset[]
+  defaultMode?: CanvasMode
 }
 
-export function Canvas({ className, children }: CanvasProps) {
+export function Canvas({ className, children, presets, defaultMode }: CanvasProps) {
   return (
-    <CanvasProvider>
+    <CanvasProvider presets={presets} defaultMode={defaultMode}>
       <div className={cn('flex min-h-0 min-w-0 flex-col bg-muted/40 text-foreground', className)}>
         {children ?? <DefaultCanvas />}
       </div>
@@ -54,6 +60,7 @@ function DefaultCanvas() {
     <>
       <CanvasToolbar>
         <HistoryGroup />
+        <CanvasModeToggle />
         <CanvasWidthPresets />
       </CanvasToolbar>
       <CanvasViewport />
@@ -92,6 +99,33 @@ export function CanvasWidthPresets({ presets }: { presets?: CanvasWidthPreset[] 
       {control.presets.map((preset) => (
         <ToggleGroupItem key={preset.id} value={preset.id} aria-label={preset.label}>
           {preset.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  )
+}
+
+const MODE_ITEMS: { id: CanvasMode; label: string; Icon: typeof MonitorIcon }[] = [
+  { id: 'single', label: 'Single page', Icon: MonitorIcon },
+  { id: 'frames', label: 'All breakpoints', Icon: LayoutGridIcon },
+]
+
+export function CanvasModeToggle() {
+  const control = useCanvasMode()
+  return (
+    <ToggleGroup
+      value={[control.mode]}
+      onValueChange={(value) =>
+        control.select(singleValue(value as string[], control.mode) as CanvasMode)
+      }
+      variant="outline"
+      size="sm"
+      spacing={0}
+      aria-label="Canvas mode"
+    >
+      {MODE_ITEMS.map(({ id, label, Icon }) => (
+        <ToggleGroupItem key={id} value={id} aria-label={label} title={label}>
+          <Icon />
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

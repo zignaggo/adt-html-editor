@@ -1,11 +1,13 @@
 import { createContext, use } from 'react'
 import invariant from 'tiny-invariant'
 import type { GhostStrategy } from '../../fixed/ghost/strategy'
+import type { CanvasFrame } from './frames'
 
 export type CanvasWidthPreset = {
   id: string
   label: string
   width: number
+  frameWidth?: number
 }
 
 export const DEFAULT_WIDTH_PRESETS: CanvasWidthPreset[] = [
@@ -16,10 +18,17 @@ export const DEFAULT_WIDTH_PRESETS: CanvasWidthPreset[] = [
 
 export type CanvasZoom = number | 'fit'
 
+export type CanvasMode = 'single' | 'frames'
+
 export type CanvasContextValue = {
   width: number
   presetId: string
   setPreset: (preset: CanvasWidthPreset) => void
+  presets: CanvasWidthPreset[]
+  mode: CanvasMode
+  setMode: (mode: CanvasMode) => void
+  frames: CanvasFrame[]
+  fitWidth: number
   isDark: boolean
   setIsDark: (dark: boolean) => void
   /** `false` while the CSS for the current document has not been generated yet. */

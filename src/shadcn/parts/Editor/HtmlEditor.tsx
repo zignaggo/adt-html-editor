@@ -14,6 +14,7 @@ import { TooltipProvider } from '../../ui/tooltip'
 import {
   Canvas,
   CanvasDarkToggle,
+  CanvasModeToggle,
   CanvasToolbar,
   CanvasWidthPresets,
   CanvasZoom,
@@ -144,6 +145,7 @@ const HandlesNamespace = Object.assign(Handles, {
 
 const CanvasNamespace = Object.assign(Canvas, {
   Toolbar: CanvasToolbar,
+  ModeToggle: CanvasModeToggle,
   WidthPresets: CanvasWidthPresets,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
