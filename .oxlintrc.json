@@ -1,14 +1,27 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "ignorePatterns": ["src/shadcn/ui/**"],
+  "plugins": [
+    "react",
+    "typescript",
+    "oxc"
+  ],
+  "ignorePatterns": [
+    "src/shadcn/ui/**"
+  ],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ]
   },
   "overrides": [
     {
-      "files": ["src/lib/**"],
+      "files": [
+        "src/lib/**"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -25,6 +38,14 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "files": [
+        "apps/docs/src/routes/**"
+      ],
+      "rules": {
+        "react/only-export-components": "off"
       }
     }
   ]

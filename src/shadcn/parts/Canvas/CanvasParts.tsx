@@ -15,9 +15,9 @@ import { Handles } from '../../../lib/fixed/transform/Handles'
 import { useZoom } from '../../../lib/fixed/useZoom'
 import type { CanvasZoomLevel } from '../../../lib/fixed/zoomLevels'
 import { cn } from '../../lib/utils'
+import { Separator } from '../../ui/separator'
 import { Toggle } from '../../ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '../../ui/toggle-group'
-import { HistoryGroup } from '../Editor/HistoryParts'
 
 export type CanvasProps = {
   className?: string
@@ -29,7 +29,12 @@ export type CanvasProps = {
 export function Canvas({ className, children, presets, defaultMode }: CanvasProps) {
   return (
     <CanvasProvider presets={presets} defaultMode={defaultMode}>
-      <div className={cn('flex min-h-0 min-w-0 flex-col bg-muted/40 text-foreground', className)}>
+      <div
+        className={cn(
+          'relative flex min-h-0 min-w-0 flex-col bg-muted/40 text-foreground',
+          className,
+        )}
+      >
         {children ?? <DefaultCanvas />}
       </div>
     </CanvasProvider>
@@ -42,30 +47,53 @@ function DefaultCanvas() {
   if (layout === 'fixed') {
     return (
       <>
-        <CanvasToolbar>
-          <HistoryGroup />
-          <CanvasZoom />
-          <CanvasDarkToggle />
-        </CanvasToolbar>
         <CanvasFixedPage>
           <Guides />
           <LiveGhost />
           <Handles />
         </CanvasFixedPage>
+        <CanvasDock>
+          <CanvasZoom />
+          <DockSeparator />
+          <CanvasDarkToggle />
+        </CanvasDock>
       </>
     )
   }
 
   return (
     <>
-      <CanvasToolbar>
-        <HistoryGroup />
-        <CanvasModeToggle />
-        <CanvasWidthPresets />
-      </CanvasToolbar>
       <CanvasViewport />
+      <CanvasDock>
+        <CanvasModeToggle />
+        <DockSeparator />
+        <CanvasWidthPresets />
+        <DockSeparator />
+        <CanvasZoom />
+        <DockSeparator />
+        <CanvasDarkToggle />
+      </CanvasDock>
     </>
   )
+}
+
+export function CanvasDock({ className, children }: { className?: string; children?: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4',
+        className,
+      )}
+    >
+      <div className="pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border bg-popover/95 p-1 text-popover-foreground shadow-lg backdrop-blur">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function DockSeparator() {
+  return <Separator orientation="vertical" className="mx-0.5 my-1" />
 }
 
 export function CanvasToolbar({ className, children }: { className?: string; children?: ReactNode }) {

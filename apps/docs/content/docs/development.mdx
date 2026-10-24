@@ -1,0 +1,63 @@
+---
+title: "Development"
+description: "Running the library, the tests and this documentation site."
+---
+
+```bash
+bun run dev          # this site, on :3000
+bun run test         # vitest
+bun run typecheck    # tsc -b
+bun run lint         # oxlint
+bun run build        # dist/index.js + dist/style.css + dist/index.d.ts
+```
+
+## The documentation site
+
+The docs and the playground live in `apps/docs`, a Fumadocs site on TanStack Start (SPA mode). It
+consumes the library the way an app would — through the package entry points, resolved to `dist` —
+so `bun run build` has to run before the site picks up a library change:
+
+```bash
+bun run docs:dev     # builds the library, then serves the site on :3000
+bun run docs:build   # builds the library, then the static site
+```
+
+`bun run dev` serves the site without rebuilding the library first.
+
+## Deploying
+
+The site goes to GitHub Pages at `https://zignaggo.github.io/adt-html-editor/`, from
+`.github/workflows/docs.yml` on every push to `main` that touches the library or the site.
+
+Because that is a project page, the whole site lives under a path. The base comes from the
+`DOCS_BASE` environment variable, which the workflow sets to `/adt-html-editor/`:
+
+```bash
+DOCS_BASE=/adt-html-editor/ bun run docs:build
+```
+
+Vite uses it for assets and the router takes `basepath` from `import.meta.env.BASE_URL`, so any
+link that is not a router `<Link>` — an `<img src>` in `layout.shared.tsx`, the favicon — has to
+prepend `import.meta.env.BASE_URL` itself. Unset, `DOCS_BASE` falls back to `/`, which is what a
+custom domain or a local build wants.
+
+Two details GitHub Pages needs: `public/.nojekyll`, so the `_shell.html` and `__tsr/` paths are not
+swallowed by Jekyll, and a `404.html` copy of the shell, which the workflow makes after the build.
+Every route is prerendered to its own `index.html`, so the fallback only catches URLs that do not
+exist.
+
+## Where the playground lives
+
+Each scenario in the playground is an entry in `apps/docs/src/components/editor/scenarios.tsx`:
+the document it loads, the skin, the layout mode and, when the scenario is about composition, the
+component that fills `<HtmlEditor>`. Those compositions are in
+`apps/docs/src/components/editor/compositions`, and they are ordinary consumer code — the same
+thing an app embedding the editor would write.
+
+Any docs page can embed a scenario:
+
+```mdx
+<EditorDemo scenario="flow-direct" height={560} />
+```
+
+The fixtures the scenarios load are in `apps/docs/src/components/editor/fixtures`.

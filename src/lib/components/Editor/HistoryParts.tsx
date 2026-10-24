@@ -3,10 +3,10 @@ import { useHistory } from './useHistory'
 import { cn } from 'cn'
 
 const historyButtonClass =
-  'h-[26px] min-w-16 cursor-default rounded-sm border-0 bg-transparent px-2 font-[inherit] text-2xs font-medium text-muted-foreground ' +
-  'transition-[background-color,color,opacity,scale] duration-100 ease-out ' +
-  'hover:not-disabled:bg-card hover:not-disabled:text-foreground hover:not-disabled:shadow-sm ' +
-  'active:not-disabled:scale-95 disabled:opacity-40'
+  'inline-flex h-7 cursor-default items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] ' +
+  'border border-transparent bg-transparent px-2.5 font-[inherit] text-xs font-medium whitespace-nowrap ' +
+  'text-foreground transition-all hover:not-disabled:bg-muted hover:not-disabled:text-foreground ' +
+  'active:not-disabled:translate-y-px disabled:pointer-events-none disabled:opacity-50'
 
 export type HistoryProps = {
   className?: string
@@ -19,7 +19,7 @@ export function HistoryGroup({ className, children }: HistoryProps) {
     <div
       role="group"
       aria-label="History"
-      className={cn('flex gap-0.5 rounded-md bg-accent p-0.5', className)}
+      className={cn('flex items-center gap-1', className)}
     >
       {children ?? (
         <>

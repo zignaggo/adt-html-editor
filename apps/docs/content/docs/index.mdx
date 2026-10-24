@@ -1,0 +1,36 @@
+---
+title: "adt-html-editor"
+description: "React library for visual HTML editing — element tree, canvas and Tailwind style panel. HTML in, HTML out."
+---
+
+React library for visual HTML editing: element tree, canvas and Tailwind style panel. It takes an
+HTML string, the user edits it, and it returns an HTML string.
+
+<EditorDemo scenario="default" />
+
+## What it is
+
+- **A string in, a string out.** `defaultValue` takes HTML, `onChange` and `getHtml()` give it
+  back. Nothing from the editor — ids, overlays, indicators — reaches the output.
+- **Panels you compose.** Layers, canvas, inspector and palette are independent roots. Without
+  children each renders its default composition; with children you choose the parts, their order
+  and their labels.
+- **Headless underneath.** Every part is a thin view over a hook, and `parseHtml` / `serializeHtml`
+  work outside React entirely.
+- **Two layout modes.** Normal flow, with controls that edit the page straight on the canvas, and a
+  fixed-layout editor for pages whose elements are absolutely positioned.
+- **Two skins, shadcn by default.** The [shadcn/ui skin](/docs/shadcn-skin) is the one to reach
+  for: a top bar, a sidebar that merges layers and palette, a canvas with a floating dock and the
+  style inspector. The built-in chrome, self-contained in one stylesheet, is there for an app that
+  is not on shadcn/ui.
+
+## Where to go next
+
+<Cards>
+  <Card title="Installation" href="/docs/installation" description="The package, the stylesheet and the theme tokens." />
+  <Card title="Composition" href="/docs/composition" description="The ready-made layout and the parts behind it." />
+  <Card title="Flow layout controls" href="/docs/flow-controls" description="Editing a page straight on the canvas." />
+  <Card title="Fixed layout" href="/docs/fixed-layout" description="Absolutely positioned pages, guides and handles." />
+  <Card title="Input and output contract" href="/docs/html-contract" description="What is guaranteed to survive the round-trip." />
+  <Card title="Playground" href="/playground" description="Every scenario on one page." />
+</Cards>

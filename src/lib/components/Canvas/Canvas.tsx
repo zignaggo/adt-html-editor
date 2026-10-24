@@ -112,7 +112,7 @@ export type CanvasProps = {
 export function Canvas({ className, children, presets, defaultMode }: CanvasProps) {
   return (
     <CanvasProvider presets={presets} defaultMode={defaultMode}>
-      <div className={cn('flex min-h-0 min-w-0 flex-col bg-muted', className)}>
+      <div className={cn('relative flex min-h-0 min-w-0 flex-col bg-muted/40', className)}>
         {children ?? <DefaultCanvas />}
       </div>
     </CanvasProvider>

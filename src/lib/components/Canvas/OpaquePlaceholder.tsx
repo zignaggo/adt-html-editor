@@ -11,7 +11,7 @@ export function OpaquePlaceholder({ setElement, id, tag }: OpaquePlaceholderProp
     <div
       ref={setElement}
       data-adt-id={id}
-      className="inline-flex items-center gap-1.5 rounded-sm bg-muted px-2 py-1 font-mono text-2xs text-muted-foreground ring-1 ring-border ring-inset"
+      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 font-mono text-xs text-muted-foreground"
       title={`<${tag}> preserved, not rendered in the editor`}
     >
       <code>{`<${tag}>`}</code>

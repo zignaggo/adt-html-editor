@@ -11,7 +11,7 @@ export type PaletteProps = {
 
 export function Palette({ className, entries = PALETTE_ENTRIES, children }: PaletteProps) {
   return (
-    <div className={cn('flex flex-none flex-col border-b border-border bg-muted', className)}>
+    <div className={cn('flex flex-none flex-col border-b border-border bg-background', className)}>
       {children ?? (
         <>
           <PaletteHeader>Palette</PaletteHeader>
@@ -25,7 +25,7 @@ export function Palette({ className, entries = PALETTE_ENTRIES, children }: Pale
 export function PaletteHeader({ children }: { children?: ReactNode }) {
   return (
     <div className="px-3 pt-2 pb-1">
-      <span className="text-2xs font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+      <span className="text-xs font-medium text-muted-foreground">
         {children}
       </span>
     </div>
@@ -40,7 +40,7 @@ export function PaletteGrid({
   children?: ReactNode
 }) {
   return (
-    <div className="flex flex-wrap gap-1 px-2 pt-1 pb-3">
+    <div className="flex flex-wrap gap-1.5 px-3 pt-1 pb-3">
       {children ?? entries.map((entry) => <PaletteItem key={entry.id} entry={entry} />)}
     </div>
   )
@@ -54,9 +54,11 @@ export function PaletteItem({ entry, children }: { entry: PaletteEntry; children
       ref={setElement}
       type="button"
       className={cn(
-        'min-h-[26px] cursor-grab rounded-sm border-0 bg-card px-2 py-1 font-mono text-2xs text-muted-foreground shadow-sm',
-        'transition-[color,background-color,scale,box-shadow] duration-100 ease-out',
-        'hover:text-foreground active:scale-95 active:cursor-grabbing',
+        'inline-flex h-7 cursor-grab items-center justify-center rounded-[min(var(--radius-md),12px)] border border-border',
+        'bg-background px-2.5 font-mono text-xs font-medium text-muted-foreground transition-all',
+        'hover:bg-muted hover:text-foreground active:translate-y-px active:cursor-grabbing',
+        'dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
+        'data-dragging:opacity-40',
       )}
       data-dragging={isDragging || undefined}
       title={title}

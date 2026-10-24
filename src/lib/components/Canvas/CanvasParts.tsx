@@ -34,7 +34,7 @@ import {
 
 export function CanvasToolbar({ children }: { children?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-border bg-background px-3 py-1.5">
+    <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-3">
       {children}
     </div>
   )
@@ -135,19 +135,34 @@ export function CanvasViewport({ className, children }: { className?: string; ch
 }
 
 function CanvasPage() {
-  const { width } = useCanvasContext()
+  const { width, presetId, presets } = useCanvasContext()
   const stage = useCanvasStage()
+  const frameRef = useRef<HTMLDivElement | null>(null)
+  const preset = presets.find((entry) => entry.id === presetId)
+
+  useFrameLabelScale(frameRef)
 
   return (
     <div className="box-border flex w-full justify-center p-4">
       <div
-        className={cn(PAGE_CLASS, 'transition-[width] duration-200 ease-out')}
-        style={{
-          width: width ? `${width}px` : '100%',
-          minHeight: stage.height ? `${stage.height - STAGE_PADDING * 2}px` : undefined,
-        }}
+        ref={frameRef}
+        className="relative min-w-0 transition-[width] duration-200 ease-out"
+        style={{ width: width ? `${width}px` : '100%' }}
       >
-        <CanvasRoot active />
+        {preset ? (
+          <span className={FRAME_LABEL_CLASS} style={LABEL_STYLE}>
+            <span>{preset.label}</span>
+            {width ? <span className="text-xs text-muted-foreground/70">{width}</span> : null}
+          </span>
+        ) : null}
+        <div
+          className={PAGE_CLASS}
+          style={{
+            minHeight: stage.height ? `${stage.height - STAGE_PADDING * 2}px` : undefined,
+          }}
+        >
+          <CanvasRoot active />
+        </div>
       </div>
     </div>
   )
@@ -232,7 +247,7 @@ function CanvasFrameView({
         onClick={onActivate}
       >
         <span>{frame.label}</span>
-        <span className="text-2xs opacity-60">{frame.width}</span>
+        <span className="text-xs text-muted-foreground/70">{frame.width}</span>
       </button>
       <div
         className={cn(PAGE_CLASS, FRAME_PAGE_CLASS)}

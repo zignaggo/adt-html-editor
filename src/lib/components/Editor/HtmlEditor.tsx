@@ -72,7 +72,7 @@ function EditorShell({ className, children }: { className?: string; children: Re
     <div
       ref={shellRef}
       className={cn(
-        'adt-editor adt-chrome isolate flex h-full min-h-0 min-w-0 bg-background font-sans text-xs text-pretty text-foreground tabular-nums antialiased',
+        'adt-editor adt-chrome isolate flex h-full min-h-0 min-w-0 bg-background font-sans text-sm text-pretty text-foreground tabular-nums antialiased',
         '[&_:focus-visible]:rounded-sm [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-1 [&_:focus-visible]:outline-ring',
         '[&_h3]:text-balance',
         className,

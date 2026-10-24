@@ -1,16 +1,16 @@
 import type { AnyNode } from '../../core/model'
 
 const labelClass = 'flex max-w-[60%] min-w-0 flex-none items-baseline gap-1'
-const detailClass = 'overflow-hidden text-2xs text-ellipsis whitespace-nowrap text-muted-foreground'
+const detailClass = 'overflow-hidden text-xs text-ellipsis whitespace-nowrap text-muted-foreground'
 
 export function LayerLabel({ node }: { node: AnyNode }) {
   if (node.kind === 'element' || node.kind === 'opaque') {
     const id = node.attrs.id
     return (
       <span className={labelClass}>
-        <span className="font-mono text-xs whitespace-nowrap text-primary">{node.tag}</span>
+        <span className="font-mono text-xs font-medium whitespace-nowrap text-foreground">{node.tag}</span>
         {id ? (
-          <span className="font-mono text-2xs whitespace-nowrap text-muted-foreground/70">
+          <span className="font-mono text-xs whitespace-nowrap text-muted-foreground">
             #{id}
           </span>
         ) : null}

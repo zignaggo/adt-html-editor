@@ -30,11 +30,11 @@ export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }:
       ref={setElement}
       {...rowProps}
       className={cn(
-        'group mx-1 flex h-7.5 cursor-default items-center gap-1.5 rounded-sm pe-2 text-foreground select-none',
+        'group mx-1 flex h-7.5 cursor-default items-center gap-1.5 rounded-md pe-2 text-sm text-foreground select-none',
         '[content-visibility:auto] [contain-intrinsic-size:auto_30px]',
-        'transition-[background-color,opacity,scale] duration-100 ease-out',
-        'hover:bg-accent active:scale-[0.995]',
-        'data-selected:bg-primary/10 data-dragging:opacity-40 data-muted:opacity-50',
+        'transition-colors',
+        'hover:bg-muted',
+        'data-selected:bg-muted data-selected:text-foreground data-dragging:opacity-40 data-muted:opacity-50',
       )}
       style={{ paddingInlineStart: `${indent}px` }}
     >
@@ -42,8 +42,8 @@ export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }:
         <button
           {...chevronProps}
           className={cn(
-            '-ms-1.5 grid size-7.5 flex-none cursor-default place-items-center rounded-sm border-0 bg-transparent p-0 text-muted-foreground',
-            'transition-[color,background-color] duration-100 ease-out hover:bg-accent hover:text-foreground',
+            '-ms-1.5 grid size-7.5 flex-none cursor-default place-items-center rounded-md border-0 bg-transparent p-0 text-muted-foreground',
+            'transition-colors hover:bg-muted hover:text-foreground',
             '[&_svg]:rotate-90 [&_svg]:transition-[rotate] [&_svg]:duration-200 [&_svg]:ease-out',
             'data-collapsed:[&_svg]:rotate-0',
           )}
@@ -67,7 +67,7 @@ export function LayerRow({ id, level, mode, hasChildren, isFocusable, isMatch }:
 
       {classes.length > 0 ? (
         <span
-          className="min-w-0 flex-1 overflow-hidden text-end font-mono text-2xs text-ellipsis whitespace-nowrap text-muted-foreground/70 [direction:rtl]"
+          className="min-w-0 flex-1 overflow-hidden text-end font-mono text-xs text-ellipsis whitespace-nowrap text-muted-foreground [direction:rtl]"
           title={classes.join(' ')}
         >
           {classes.join(' ')}

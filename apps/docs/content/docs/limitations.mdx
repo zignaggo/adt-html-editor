@@ -1,0 +1,10 @@
+---
+title: "Known limitations"
+description: "What v1 does not do."
+---
+
+- Drag and drop uses the native HTML5 API: **desktop-first**, no touch support.
+- The canvas renders in the same document (no iframe). A `<style>` inside the edited HTML could affect the editor UI — that is why `<style>` is rendered as an inert placeholder in the canvas.
+- `DOMParser` normalizes invalid HTML (closes implicit `<p>`, inserts `<tbody>`). The output is equivalent valid HTML, not the original un-normalized one.
+- No `<head>` editing, no real-time collaboration, no reusable symbols/components.
+- Pure CSS mode (`styleMode="inline-css"`) has only the adapter (`StyleAdapter`), no dedicated controls.

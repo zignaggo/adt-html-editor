@@ -2,6 +2,9 @@
   "name": "@zignaggo/adt-html-editor",
   "version": "0.3.0",
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zignaggo/adt-html-editor.git"
@@ -10,14 +13,14 @@
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "bun --filter docs dev",
     "build": "tsc -b && vite build --config vite.lib.config.ts && tsc -p tsconfig.types.json",
-    "build:playground": "vite build",
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "docs:dev": "bun run build && bun --filter docs dev",
+    "docs:build": "bun run build && bun --filter docs build"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^3.1.0",
@@ -42,8 +45,8 @@
     "@testing-library/react": "^16.3.3",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.13.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "class-variance-authority": "^0.7.1",
@@ -51,12 +54,12 @@
     "jsdom": "^30.0.1",
     "lucide-react": "^1.46.0",
     "oxlint": "^1.79.0",
-    "react": "^19.2.8",
+    "react": "^19.3.1",
     "react-doctor": "^0.9.13",
-    "react-dom": "^19.2.8",
+    "react-dom": "^19.3.1",
     "react-resizable-panels": "^4.12.4",
-    "react-scan": "^0.5.7",
     "shadcn": "^4.21.0",
+    "shiki": "^4.5.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.2",

@@ -1,6 +1,8 @@
 export { HtmlEditor, DefaultLayout, Layout } from './parts/Editor/HtmlEditor'
 export type { HtmlEditorProps, DefaultLayoutProps } from './parts/Editor/HtmlEditor'
 export { HistoryGroup, HistoryRedo, HistoryUndo } from './parts/Editor/HistoryParts'
+export { Topbar, TopbarEnd, TopbarStart, TopbarTitle } from './parts/Editor/Topbar'
+export type { TopbarProps, TopbarSlotProps } from './parts/Editor/Topbar'
 export {
   LayerRow,
   LayersCount,
@@ -15,6 +17,7 @@ export type { LayerRowProps, LayersPanelProps, LayersSearchProps, LayersTreeProp
 export {
   Canvas,
   CanvasDarkToggle,
+  CanvasDock,
   CanvasModeToggle,
   CanvasToolbar,
   CanvasWidthPresets,

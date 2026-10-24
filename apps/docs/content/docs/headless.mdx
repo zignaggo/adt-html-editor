@@ -1,0 +1,13 @@
+---
+title: "Headless API"
+description: "Parsing, serializing and the store, without React chrome."
+---
+
+```ts
+import { parseHtml, serializeHtml, createEditorStore } from 'adt-html-editor'
+
+const doc = parseHtml(html)      // pure, usable outside React
+const out = serializeHtml(doc)
+```
+
+Also exported: `useEditor()`, `useNode()`, `useChildren()`, `useDocument()`, `useEditorSelector()` and the model types.

@@ -1,0 +1,104 @@
+---
+title: "Composition"
+description: "The ready-made layout, picking panels and taking over the inside of each one."
+---
+
+## Ready-made layout (3 panels)
+
+```tsx
+<HtmlEditor.DefaultLayout defaultValue={html} onChange={(next) => setHtml(next)} />
+```
+
+<EditorDemo scenario="core-chrome" />
+
+## Picking the panels
+
+Each panel is independent. Use only the ones you want, in whatever arrangement you want:
+
+```tsx
+<HtmlEditor defaultValue={html} onChange={(next) => setHtml(next)}>
+  <HtmlEditor.Layout>
+    <HtmlEditor.Palette />
+    <HtmlEditor.Layers />
+    <HtmlEditor.Canvas />
+    <HtmlEditor.Inspector />
+  </HtmlEditor.Layout>
+</HtmlEditor>
+```
+
+Only `<HtmlEditor>` is required — it creates the instance store. `<HtmlEditor><HtmlEditor.Inspector /></HtmlEditor>` works on its own, and `HtmlEditor.Layout` is optional (use your own grid).
+
+## Customizing the inside of each panel
+
+Each panel is a `Root` that accepts `children`. **Without children it renders the default composition; with children, you control everything** — which parts exist, in what order, and with which labels.
+
+```tsx
+<HtmlEditor defaultValue={html} onChange={setHtml}>
+  <MyLayout>
+    <HtmlEditor.Layers>
+      <HtmlEditor.Layers.Header>
+        <HtmlEditor.Layers.Title>Structure</HtmlEditor.Layers.Title>
+        <HtmlEditor.Layers.Count />
+      </HtmlEditor.Layers.Header>
+      <HtmlEditor.Layers.Search placeholder="Filter…" />
+      <HtmlEditor.Layers.Tree />
+    </HtmlEditor.Layers>
+
+    <HtmlEditor.Canvas>
+      <HtmlEditor.Canvas.Viewport />
+      <HtmlEditor.Canvas.Toolbar>
+        <HtmlEditor.History>
+          <HtmlEditor.History.Undo>↶</HtmlEditor.History.Undo>
+          <HtmlEditor.History.Redo>↷</HtmlEditor.History.Redo>
+        </HtmlEditor.History>
+        <HtmlEditor.Canvas.DarkToggle>Dark theme</HtmlEditor.Canvas.DarkToggle>
+        <HtmlEditor.Canvas.WidthPresets
+          presets={[
+            { id: 'narrow', label: '360', width: 360 },
+            { id: 'fluid', label: 'Fluid', width: 0 },
+          ]}
+        />
+      </HtmlEditor.Canvas.Toolbar>
+    </HtmlEditor.Canvas>
+
+    <HtmlEditor.Inspector>
+      <HtmlEditor.Inspector.Header />
+      <HtmlEditor.Inspector.Empty>Nothing selected.</HtmlEditor.Inspector.Empty>
+      <HtmlEditor.Inspector.Variants />
+      <HtmlEditor.Inspector.Body>
+        <HtmlEditor.Inspector.Section title="Shortcuts">
+          <HtmlEditor.Inspector.Control id="display" />
+          <HtmlEditor.Inspector.Control id="gap" />
+        </HtmlEditor.Inspector.Section>
+        <HtmlEditor.Inspector.Category id="typography" />
+      </HtmlEditor.Inspector.Body>
+    </HtmlEditor.Inspector>
+  </MyLayout>
+</HtmlEditor>
+```
+
+The demo above is a complete example: `apps/docs/src/components/editor/compositions/CustomLayout.tsx`, with a tree row, a palette and two inspector controls written outside the library.
+
+<EditorDemo scenario="custom" />
+
+## Available parts
+
+| Panel | Parts |
+|---|---|
+| `HtmlEditor.Layers` | `Header`, `Title`, `Count`, `Search`, `Tree`, `Row`, `Empty` |
+| `HtmlEditor.Canvas` | `Toolbar`, `WidthPresets`, `DarkToggle`, `Viewport`, `FixedPage`, `Zoom`, `Guides`, `LiveGhost`, `ImageGhost`, `Handles` (`Handles.Resize`, `Handles.Rotate`) |
+| `HtmlEditor.Inspector` | `Header`, `Empty`, `Variants`, `Body`, `Section`, `Category`, `Control`, `ClassInput`, `ClassList`, `Attributes`, `Position`, `Transform` |
+| `HtmlEditor.Palette` | `Header`, `Grid`, `Item` |
+| `HtmlEditor.History` | `Undo`, `Redo` |
+
+`HtmlEditor.History` does not depend on any panel: place it in any toolbar inside `<HtmlEditor>`. Without children it renders `Undo` + `Redo`; with children you choose labels, order and extra parts (a counter, for example). To write your own buttons use `useHistory()` → `{ canUndo, canRedo, undo, redo }`. The `Ctrl/⌘+Z` and `Ctrl/⌘+Shift+Z` (or `Ctrl+Y`) shortcuts keep working regardless of the buttons.
+
+`Category` and `Control` take an `id` from the exported `CATEGORIES` — categories: `layout`, `flex`, `spacing`, `sizing`, `typography`, `color`, `border`, `effects`; controls: `display`, `gap`, `p`, `text-size`, etc.
+
+To change the look of the tree rows without losing drag and drop, pass `renderRow` to `Tree` and build your row around `HtmlEditor.Layers.Row`.
+
+`HtmlEditor.Layers.Search` filters the tree. A query matches tag, id, classes and text; `#hero` and `.flex` restrict the match to id or class, and several words must all match. Ancestors of a match stay visible so the structure reads correctly, rendered muted (`data-muted` on the row, `isMatch: false` in `LayerRowInfo`). While a query is active, collapsed state is ignored, `Count` shows the number of matches and `Empty` reports when nothing matched. `Esc` clears the query; `↓` or `Enter` jump into the tree. The search state lives in the `Layers` root, so any part inside it can read `useLayersContext()` → `{ rows, state: { query, isSearching, matchCount }, actions: { setQuery, clearSearch, focusTree, focusSearch }, meta: { registerSearch, registerTree } }` to build its own input or match counter (pass `meta.registerSearch` as the `ref` of a custom input so `focusSearch` keeps working).
+
+Each part is also exported standalone (`LayersTree`, `InspectorCategory`, `CanvasViewport`, `HistoryGroup`…), and the contexts are accessible via `useLayersContext()`, `useInspectorContext()`, `useCanvasContext()` and `useHistory()` if you need to write your own parts.
+
+<EditorDemo scenario="layers" />

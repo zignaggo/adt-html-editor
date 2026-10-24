@@ -1,0 +1,18 @@
+---
+title: "Tailwind in the canvas"
+description: "Runtime compilation in a worker, scoping and container queries."
+---
+
+The CSS is compiled at runtime by `tailwindcss` v4 running in a **Web Worker** (loaded on demand when the first `<Canvas>` mounts). Only the classes present in the document are compiled.
+
+The generated CSS is isolated in `@scope (.adt-canvas)` — with a selector-prefixing fallback in browsers without `@scope`. Breakpoint media queries are rewritten to container queries:
+
+```
+@media (width >= 48rem)  →  @container adt-canvas (width >= 48rem)
+```
+
+That is, `sm:` / `md:` / `lg:` and the desktop-first `max-lg:` / `max-sm:` written by the inspector respond to the **canvas width**, not the editor window's. Feature media queries (`hover`, `prefers-color-scheme`, …) are not rewritten.
+
+Class conflicts are resolved with [`cn`](https://github.com/shadcn-ui/cn) — both for the classes written into the document and for the `className` a caller passes to any part. The canvas dark mode uses the `dark:` variant bound to the `.adt-dark` class.
+
+The editor chrome is a separate compilation: `src/lib/styles/base.css` is a Tailwind entry point (theme + utilities, no preflight) that scans the library's own components and is emitted as `dist/style.css` at build time. Nothing in the chrome is hand-written CSS — components carry Tailwind classes, and the ones shared between files live in `*Styles.ts` modules next to them.
