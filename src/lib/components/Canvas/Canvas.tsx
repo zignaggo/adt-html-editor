@@ -13,10 +13,18 @@ import {
   CanvasContext,
   DEFAULT_WIDTH_PRESETS,
   type CanvasContextValue,
+  type CanvasMode,
   type CanvasWidthPreset,
   type CanvasZoom,
 } from './context'
-import { CanvasDarkToggle, CanvasToolbar, CanvasViewport, CanvasWidthPresets } from './CanvasParts'
+import { framesWidth, resolveFrames, type CanvasFrame } from './frames'
+import {
+  CanvasDarkToggle,
+  CanvasModeToggle,
+  CanvasToolbar,
+  CanvasViewport,
+  CanvasWidthPresets,
+} from './CanvasParts'
 import { cn } from 'cn'
 
 const LazyFixedPage = lazy(() =>
@@ -31,10 +39,19 @@ export function CanvasFixedPage(props: FixedPageProps) {
   )
 }
 
-export function CanvasProvider({ children }: { children: ReactNode }) {
-  const [preset, setPreset] = useState<CanvasWidthPreset>(
-    DEFAULT_WIDTH_PRESETS[0],
-  )
+export type CanvasProviderProps = {
+  children: ReactNode
+  presets?: CanvasWidthPreset[]
+  defaultMode?: CanvasMode
+}
+
+export function CanvasProvider({
+  children,
+  presets = DEFAULT_WIDTH_PRESETS,
+  defaultMode = 'single',
+}: CanvasProviderProps) {
+  const [preset, setPreset] = useState<CanvasWidthPreset>(presets[0] ?? DEFAULT_WIDTH_PRESETS[0])
+  const [mode, setMode] = useState<CanvasMode>(defaultMode)
   const [isDark, setIsDark] = useState(false)
   const [zoom, setZoom] = useState<CanvasZoom>('fit')
   const ghostRef = useRef<GhostStrategy | null>(null)
@@ -58,10 +75,17 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
     ghostLayerRef.current = element
   }
 
+  const frames = mode === 'frames' ? resolveFrames(presets) : EMPTY_FRAMES
+
   const context: CanvasContextValue = {
     width: preset.width,
     presetId: preset.id,
     setPreset,
+    presets,
+    mode,
+    setMode,
+    frames,
+    fitWidth: mode === 'frames' ? framesWidth(frames) : preset.width,
     isDark,
     setIsDark,
     stylesReady,
@@ -76,15 +100,19 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   return <CanvasContext value={context}>{children}</CanvasContext>
 }
 
+const EMPTY_FRAMES: CanvasFrame[] = []
+
 export type CanvasProps = {
   className?: string
   children?: ReactNode
+  presets?: CanvasWidthPreset[]
+  defaultMode?: CanvasMode
 }
 
-export function Canvas({ className, children }: CanvasProps) {
+export function Canvas({ className, children, presets, defaultMode }: CanvasProps) {
   return (
-    <CanvasProvider>
-      <div className={cn('flex min-h-0 min-w-0 flex-col bg-muted', className)}>
+    <CanvasProvider presets={presets} defaultMode={defaultMode}>
+      <div className={cn('relative flex min-h-0 min-w-0 flex-col bg-muted/40', className)}>
         {children ?? <DefaultCanvas />}
       </div>
     </CanvasProvider>
@@ -115,6 +143,7 @@ function DefaultCanvas() {
     <>
       <CanvasToolbar>
         <HistoryGroup />
+        <CanvasModeToggle />
         <CanvasWidthPresets />
         <Zoom />
         <CanvasDarkToggle />

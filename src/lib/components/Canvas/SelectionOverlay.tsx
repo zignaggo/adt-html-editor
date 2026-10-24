@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { NodeId } from '../../core/ids'
 import { subscribeHovered } from '../../core/hover'
 import { labelOf } from '../../core/model'
-import { useEditorContext, useEditorStoreApi } from '../Editor/context'
+import { useCanvasRoot, useEditorStoreApi } from '../Editor/context'
 import { subscribeCanvasViewport } from './viewport'
 
 const clipClass = 'pointer-events-none fixed top-0 left-0 z-30 overflow-hidden'
@@ -21,7 +21,7 @@ const labelClass =
   'data-[flip=below]:top-full data-[flip=below]:rounded-t-none data-[flip=below]:rounded-b-sm'
 
 export function SelectionOverlay() {
-  const { canvasRootRef } = useEditorContext()
+  const root = useCanvasRoot()
   const store = useEditorStoreApi()
   const selectionRef = useRef<HTMLDivElement | null>(null)
   const hoverRef = useRef<HTMLDivElement | null>(null)
@@ -30,7 +30,6 @@ export function SelectionOverlay() {
   const clipRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    const root = canvasRootRef.current
     const poolRoot = poolRef.current
     if (!root || !poolRoot) return
 
@@ -152,7 +151,7 @@ export function SelectionOverlay() {
       for (const box of pool.values()) box.remove()
       pool.clear()
     }
-  }, [canvasRootRef, store])
+  }, [root, store])
 
   return (
     <div ref={clipRef} className={clipClass} aria-hidden="true">

@@ -22,7 +22,6 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "vite.config.ts",
     "vite.lib.config.ts",
     "vitest.config.ts"
   ]

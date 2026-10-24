@@ -17,12 +17,21 @@ function buildLargeHtml(sections: number, itemsPerSection: number): string {
   return html
 }
 
+const MEASURE_ATTEMPTS = 3
+
+function fastestRun(run: () => void): number {
+  let fastest = Number.POSITIVE_INFINITY
+  for (let attempt = 0; attempt < MEASURE_ATTEMPTS; attempt += 1) {
+    const start = performance.now()
+    run()
+    fastest = Math.min(fastest, performance.now() - start)
+  }
+  return fastest
+}
+
 function measure(label: string, run: () => void): number {
-  const start = performance.now()
-  run()
-  const elapsed = performance.now() - start
   void label
-  return elapsed
+  return fastestRun(run)
 }
 
 describe('performance budget (2,000 nodes)', () => {

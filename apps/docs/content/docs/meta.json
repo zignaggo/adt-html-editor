@@ -1,0 +1,21 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "installation",
+    "composition",
+    "---Editing---",
+    "drop-zones",
+    "context-menu",
+    "flow-controls",
+    "fixed-layout",
+    "---Reference---",
+    "html-contract",
+    "headless",
+    "shadcn-skin",
+    "shortcuts",
+    "tailwind",
+    "limitations",
+    "development"
+  ]
+}

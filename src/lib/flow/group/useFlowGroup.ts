@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useCanvasHost, type CanvasHost } from '../../components/Canvas/useCanvasHost'
 import {
   useDirectControls,
-  useEditorContext,
+  useCanvasRoot,
   useEditorSelector,
   useEditorStoreApi,
 } from '../../components/Editor/context'
@@ -66,7 +66,7 @@ function unionOf(boxes: readonly FlowBox[]): FlowBox {
 
 export function useFlowGroup(): FlowGroup | null {
   const direct = useDirectControls()
-  const { canvasRootRef } = useEditorContext()
+  const root = useCanvasRoot()
   const store = useEditorStoreApi()
   const host = useCanvasHost()
   const selectedIds = useEditorSelector((state) =>
@@ -74,13 +74,10 @@ export function useFlowGroup(): FlowGroup | null {
   )
   const locks = useEditorSelector((state) => state.locked)
   const [resolved, setResolved] = useState<Resolved | null>(null)
+  const enabled = direct && root !== null && selectedIds.length > 1
 
   useEffect(() => {
-    const root = canvasRootRef.current
-    if (!direct || !root || selectedIds.length < 2) {
-      setResolved(null)
-      return
-    }
+    if (!enabled || !root) return
 
     let frame = 0
     let latest: Resolved | null = null
@@ -125,9 +122,9 @@ export function useFlowGroup(): FlowGroup | null {
       mutations.disconnect()
       resize.disconnect()
     }
-  }, [direct, canvasRootRef, store, selectedIds, locks])
+  }, [enabled, root, store, selectedIds, locks])
 
-  if (!resolved || resolved.members.length < 2) return null
+  if (!enabled || !resolved || resolved.members.length < 2) return null
 
   const { members, parent, can } = resolved
   const ids: NodeId[] = []

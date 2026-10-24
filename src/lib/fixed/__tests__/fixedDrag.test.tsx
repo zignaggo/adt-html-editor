@@ -2,7 +2,11 @@ import { act, cleanup, render } from '@testing-library/react'
 import { useEffect } from 'react'
 import type { Input } from '@atlaskit/pragmatic-drag-and-drop/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CanvasContext, type CanvasContextValue } from '../../components/Canvas/context'
+import {
+  CanvasContext,
+  DEFAULT_WIDTH_PRESETS,
+  type CanvasContextValue,
+} from '../../components/Canvas/context'
 import { useEditorStoreApi } from '../../components/Editor/context'
 import { EditorProvider } from '../../components/Editor/EditorProvider'
 import { isStyled } from '../../core/model'
@@ -21,6 +25,11 @@ const canvasContext: CanvasContextValue = {
   width: 0,
   presetId: 'desktop',
   setPreset: () => {},
+  presets: DEFAULT_WIDTH_PRESETS,
+  mode: 'single',
+  setMode: () => {},
+  frames: [],
+  fitWidth: 0,
   isDark: false,
   setIsDark: () => {},
   stylesReady: true,

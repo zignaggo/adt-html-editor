@@ -2,7 +2,8 @@
   "ignore": {
     "files": [
       "dist/**",
-      "dist-playground/**",
+      "apps/docs/.output/**",
+      "apps/docs/.tanstack/**",
       "src/shadcn/ui/**"
     ],
     "overrides": [

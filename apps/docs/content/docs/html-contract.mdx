@@ -1,0 +1,43 @@
+---
+title: "Input and output contract"
+description: "What goes in, what comes out, and what is guaranteed to survive."
+---
+
+```tsx
+const editor = useRef<HtmlEditorHandle>(null)
+
+<HtmlEditor
+  defaultValue={html}            // uncontrolled
+  value={html}                   // or controlled: reparses when changed from outside
+  onChange={(html, doc) => {}}
+  changeDebounceMs={0}
+  handleRef={editor}             // editor.current.getHtml() / setHtml() / getDocument()
+/>
+```
+
+- `onChange` fires on every committed action (drop, class applied, attribute, text on leaving `contentEditable`, undo/redo). Never per drag frame nor per typed key.
+- `getHtml()` can be called at any time (e.g. the workflow's "Done" button).
+- `value` changing from outside replaces the whole document and clears history and selection.
+
+## Accepted formats
+
+| Input | How it is handled | Output |
+|---|---|---|
+| Fragment (`<section>…</section><p>…</p>`) | Direct children become children of the virtual root node | Fragment |
+| Full document | Edits only the content of `<body>`; `<!doctype>`, `<html>` attrs, the whole `<head>` and `<body>` attrs are stored as opaque text | Full document, with `<head>` identical to the original |
+
+Detection is based on the presence of `<html`, `<head` or `<body` in the input.
+
+<EditorDemo scenario="full-document" />
+
+## Fidelity guarantees
+
+- **DOM equivalence, not byte equivalence.** `serialize(parse(html))` produces HTML whose DOM equals the input's; the original indentation between blocks is not preserved. The round-trip is idempotent: `serialize(parse(serialize(parse(x)))) === serialize(parse(x))`.
+- Preserved: all attributes in their original order, class order, unknown tags and custom elements, HTML comments, entities.
+- `<script>`, `<style>`, `<svg>`, `<math>`, `<iframe>`, `<template>`, `<noscript>` are **opaque nodes**: they show up in the tree, can be moved and removed, do not accept children, and their inner content is re-emitted **byte for byte**.
+- Whitespace-only text nodes between block elements are dropped during parsing. Whitespace adjacent to inline elements is kept. `<pre>` and `<textarea>` preserve whitespace in full.
+- Nothing from the editor leaks into the output: `data-adt-id`, overlays and indicators exist only in the rendered DOM.
+
+In the canvas, the content of opaque nodes goes through a sanitizer (removes `on*`, `<script>`, `javascript:` urls) **only for the preview** — the model and the output remain byte for byte.
+
+<EditorDemo scenario="tricky" />

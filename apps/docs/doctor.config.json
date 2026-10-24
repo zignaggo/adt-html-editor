@@ -1,0 +1,20 @@
+{
+  "ignore": {
+    "files": [
+      ".output/**",
+      ".tanstack/**",
+      ".source/**",
+      "src/routeTree.gen.ts"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "src/routes/**"
+        ],
+        "rules": [
+          "react/only-export-components"
+        ]
+      }
+    ]
+  }
+}

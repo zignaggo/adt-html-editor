@@ -74,6 +74,8 @@ export type { FixedDragSession } from './fixed/fixedDragStore'
 export type { FixedLayoutOptions } from './components/Editor/EditorProvider'
 export {
   CanvasDarkToggle,
+  CanvasFrames,
+  CanvasModeToggle,
   CanvasToolbar,
   CanvasViewport,
   CanvasWidthPresets,
@@ -85,7 +87,22 @@ export { useCanvasStage } from './components/Canvas/stage'
 export type { CanvasStageSize } from './components/Canvas/stage'
 export { SelectionOverlay } from './components/Canvas/SelectionOverlay'
 export { DEFAULT_WIDTH_PRESETS, useCanvasContext } from './components/Canvas/context'
-export type { CanvasWidthPreset, CanvasZoom as CanvasZoomValue } from './components/Canvas/context'
+export type {
+  CanvasMode,
+  CanvasWidthPreset,
+  CanvasZoom as CanvasZoomValue,
+} from './components/Canvas/context'
+export {
+  DEFAULT_FRAME_WIDTH,
+  FRAME_GAP,
+  FRAME_MIN_HEIGHT,
+  FRAME_ROW_PADDING,
+  frameWidthOf,
+  framesWidth,
+  resolveFrames,
+  useIsActiveFrame,
+} from './components/Canvas/frames'
+export type { CanvasFrame } from './components/Canvas/frames'
 
 export { InspectorPanel } from './components/Inspector/InspectorPanel'
 export type { InspectorPanelProps } from './components/Inspector/InspectorPanel'
@@ -152,6 +169,7 @@ export {
   useCanUndo,
   useCanRedo,
   useBreakpoint,
+  useCanvasRoot,
 } from './components/Editor/context'
 export type {
   EditorApi,
@@ -210,8 +228,12 @@ export type { TransformGesture } from './fixed/transform/transformGestureStore'
 export { useLayersSearch } from './components/Layers/useLayersSearch'
 export type { LayersSearch as LayersSearchApi } from './components/Layers/useLayersSearch'
 export type { LayersScrollerProps } from './components/Layers/LayersParts'
-export { useDarkToggle, useWidthPresets } from './components/Canvas/useCanvasControls'
-export type { DarkToggle, WidthPresets } from './components/Canvas/useCanvasControls'
+export { useCanvasMode, useDarkToggle, useWidthPresets } from './components/Canvas/useCanvasControls'
+export type {
+  CanvasModeControl,
+  DarkToggle,
+  WidthPresets,
+} from './components/Canvas/useCanvasControls'
 export { useZoom } from './fixed/useZoom'
 export type { ZoomControl } from './fixed/useZoom'
 export { useVariantBar } from './components/Inspector/useVariantBar'
@@ -226,6 +248,7 @@ export type { TransformFields } from './fixed/useTransformFields'
 export { LayersProvider } from './components/Layers/LayersPanel'
 export { InspectorProvider } from './components/Inspector/InspectorPanel'
 export { CanvasProvider } from './components/Canvas/Canvas'
+export type { CanvasProviderProps } from './components/Canvas/Canvas'
 export { useClassMapControl } from './components/Inspector/controls/useClassMapControl'
 export type { ClassMapControl, ClassMapOverride } from './components/Inspector/controls/useClassMapControl'
 export { useOptionalFields } from './components/Inspector/controls/useOptionalFields'

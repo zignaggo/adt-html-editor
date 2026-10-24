@@ -51,7 +51,7 @@ export type LayersPanelProps = {
 export function LayersPanel({ className, children }: LayersPanelProps) {
   return (
     <LayersProvider>
-      <div className={cn('flex min-h-0 flex-col border-r border-border bg-muted', className)}>
+      <div className={cn('flex min-h-0 flex-col border-r border-border bg-background', className)}>
         {children ?? <DefaultLayers />}
       </div>
     </LayersProvider>

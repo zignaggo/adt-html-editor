@@ -33,6 +33,7 @@ export type EditorContextValue = {
   flowLayout: FlowLayoutConfig
   aspectLock: Store<boolean>
   breakpoint: Store<BreakpointId>
+  canvasRoot: Store<HTMLElement | null>
   canvasRootRef: { current: HTMLElement | null }
 }
 
@@ -128,6 +129,10 @@ export function useDirectControls(): boolean {
 
 export function useAspectLocked(): boolean {
   return useSelector(useEditorContext().aspectLock, (locked) => locked)
+}
+
+export function useCanvasRoot(): HTMLElement | null {
+  return useSelector(useEditorContext().canvasRoot, (root) => root)
 }
 
 export function useBreakpoint(): BreakpointId {

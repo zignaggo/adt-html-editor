@@ -1,7 +1,11 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useEffect } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CanvasContext, type CanvasContextValue } from '../../components/Canvas/context'
+import {
+  CanvasContext,
+  DEFAULT_WIDTH_PRESETS,
+  type CanvasContextValue,
+} from '../../components/Canvas/context'
 import { useEditorStoreApi } from '../../components/Editor/context'
 import { EditorProvider } from '../../components/Editor/EditorProvider'
 import type { EditorStore } from '../../core/store'
@@ -18,6 +22,11 @@ const canvasContext: CanvasContextValue = {
   width: 0,
   presetId: 'desktop',
   setPreset: () => {},
+  presets: DEFAULT_WIDTH_PRESETS,
+  mode: 'single',
+  setMode: () => {},
+  frames: [],
+  fitWidth: 0,
   isDark: false,
   setIsDark: () => {},
   stylesReady: true,

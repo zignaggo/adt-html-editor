@@ -14,6 +14,8 @@ import { TooltipProvider } from '../../ui/tooltip'
 import {
   Canvas,
   CanvasDarkToggle,
+  CanvasModeToggle,
+  CanvasDock,
   CanvasToolbar,
   CanvasWidthPresets,
   CanvasZoom,
@@ -62,6 +64,7 @@ import { FlowTransformSection } from '../../../lib/flow/transform/FlowTransformS
 import { FlowToolbar } from '../../../lib/flow/FlowToolbar'
 import { Sidebar, SidebarLayers, SidebarPalette, SidebarSearch, SidebarTabs } from '../Sidebar/Sidebar'
 import { HistoryGroup, HistoryRedo, HistoryUndo } from './HistoryParts'
+import { Topbar, TopbarEnd, TopbarStart, TopbarTitle } from './Topbar'
 
 export type HtmlEditorProps = EditorProviderProps & {
   className?: string
@@ -105,22 +108,38 @@ export function Layout({ children, className }: { children: ReactNode; className
 
 export type DefaultLayoutProps = Omit<EditorProviderProps, 'children'> & {
   className?: string
+  title?: ReactNode
+  actions?: ReactNode
+  topbar?: boolean
+  sidebar?: ReactNode
+  canvas?: ReactNode
+  inspector?: ReactNode
 }
 
-export function DefaultLayout({ className, ...providerProps }: DefaultLayoutProps) {
+export function DefaultLayout({
+  className,
+  title,
+  actions,
+  topbar = true,
+  sidebar,
+  canvas,
+  inspector,
+  ...providerProps
+}: DefaultLayoutProps) {
   return (
-    <HtmlEditor {...providerProps} className={className}>
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0">
+    <HtmlEditor {...providerProps} className={cn('flex-col', className)}>
+      {topbar ? <Topbar title={title} actions={actions} /> : null}
+      <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel defaultSize={22} minSize={16} className="flex min-h-0 flex-col">
-          <Sidebar className="min-h-0 flex-1 border-r-0" />
+          <Sidebar className="min-h-0 flex-1 border-r-0">{sidebar}</Sidebar>
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={54} minSize={30} className="flex min-h-0 min-w-0 flex-col">
-          <Canvas className="min-h-0 flex-1" />
+          <Canvas className="min-h-0 flex-1">{canvas}</Canvas>
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={24} minSize={18} className="flex min-h-0 flex-col">
-          <InspectorPanel className="min-h-0 flex-1 border-l-0" />
+          <InspectorPanel className="min-h-0 flex-1 border-l-0">{inspector}</InspectorPanel>
         </ResizablePanel>
       </ResizablePanelGroup>
     </HtmlEditor>
@@ -144,6 +163,8 @@ const HandlesNamespace = Object.assign(Handles, {
 
 const CanvasNamespace = Object.assign(Canvas, {
   Toolbar: CanvasToolbar,
+  Dock: CanvasDock,
+  ModeToggle: CanvasModeToggle,
   WidthPresets: CanvasWidthPresets,
   DarkToggle: CanvasDarkToggle,
   Viewport: CanvasViewport,
@@ -187,6 +208,12 @@ const InspectorNamespace = Object.assign(InspectorPanel, {
   Borders: InspectorBorders,
 })
 
+const TopbarNamespace = Object.assign(Topbar, {
+  Start: TopbarStart,
+  Title: TopbarTitle,
+  End: TopbarEnd,
+})
+
 const HistoryNamespace = Object.assign(HistoryGroup, {
   Undo: HistoryUndo,
   Redo: HistoryRedo,
@@ -210,6 +237,7 @@ HtmlEditor.Canvas = CanvasNamespace
 HtmlEditor.Inspector = InspectorNamespace
 HtmlEditor.Palette = PaletteNamespace
 HtmlEditor.Sidebar = SidebarNamespace
+HtmlEditor.Topbar = TopbarNamespace
 HtmlEditor.History = HistoryNamespace
 HtmlEditor.Layout = Layout
 HtmlEditor.DefaultLayout = DefaultLayout

@@ -47,7 +47,7 @@ export type CanvasStageProps = {
 }
 
 export function CanvasStage({ className, children, ref }: CanvasStageProps) {
-  const { width, zoom, setZoom } = useCanvasContext()
+  const { fitWidth, mode, zoom, setZoom } = useCanvasContext()
   const localRef = useRef<HTMLDivElement | null>(null)
   const stageRef = ref ?? localRef
   const appliedRef = useRef<number | null>(null)
@@ -69,7 +69,8 @@ export function CanvasStage({ className, children, ref }: CanvasStageProps) {
     return () => observer.disconnect()
   }, [stageRef])
 
-  const target = zoom === 'fit' ? fitScale(size.width, width) : zoom
+  const target = zoom === 'fit' ? fitScale(size.width, fitWidth) : zoom
+  const layout = mode === 'frames' ? `frames:${fitWidth}:${size.width}` : `single:${size.width}`
 
   const onUserZoom = (instance: ReactZoomPanPinchRef) => {
     const { scale } = instance.state
@@ -99,6 +100,7 @@ export function CanvasStage({ className, children, ref }: CanvasStageProps) {
           <CanvasStageSync
             stageRef={stageRef}
             target={target}
+            layout={layout}
             appliedRef={appliedRef}
             measured={size.width > 0}
           />
@@ -109,13 +111,20 @@ export function CanvasStage({ className, children, ref }: CanvasStageProps) {
   )
 }
 
+const FRAMES_CONTENT_STYLE = { width: 'max-content' }
+
 export function CanvasStageContent({ children }: { children?: ReactNode }) {
   const { width, height } = useCanvasStage()
+  const { mode } = useCanvasContext()
 
   return (
     <TransformComponent
       wrapperStyle={WRAPPER_STYLE}
-      contentStyle={{ width: width || undefined, minHeight: height || undefined }}
+      contentStyle={
+        mode === 'frames'
+          ? FRAMES_CONTENT_STYLE
+          : { width: width || undefined, minHeight: height || undefined }
+      }
     >
       {children}
     </TransformComponent>
@@ -125,16 +134,19 @@ export function CanvasStageContent({ children }: { children?: ReactNode }) {
 function CanvasStageSync({
   stageRef,
   target,
+  layout,
   appliedRef,
   measured,
 }: {
   stageRef: RefObject<HTMLDivElement | null>
   target: number
+  layout: string
   appliedRef: RefObject<number | null>
   measured: boolean
 }) {
   const controls = useControls()
   const controlsRef = useRef(controls)
+  const layoutRef = useRef(layout)
 
   useEffect(() => {
     controlsRef.current = controls
@@ -147,12 +159,21 @@ function CanvasStageSync({
   useEffect(() => {
     const stage = stageRef.current
     if (!stage || !measured || target <= 0) return
-    if (appliedRef.current !== null && Math.abs(appliedRef.current - target) < SCALE_EPSILON) return
 
-    const first = appliedRef.current === null
+    const resized = layoutRef.current !== layout
+    layoutRef.current = layout
+    if (
+      !resized &&
+      appliedRef.current !== null &&
+      Math.abs(appliedRef.current - target) < SCALE_EPSILON
+    ) {
+      return
+    }
+
+    const snap = resized || appliedRef.current === null
     appliedRef.current = target
 
-    if (first) {
+    if (snap) {
       controlsRef.current.setTransform(0, 0, target, 0)
       return
     }
@@ -164,7 +185,7 @@ function CanvasStageSync({
       rect.top + rect.height / 2,
       ZOOM_DURATION,
     )
-  }, [target, measured, stageRef, appliedRef])
+  }, [target, layout, measured, stageRef, appliedRef])
 
   return null
 }

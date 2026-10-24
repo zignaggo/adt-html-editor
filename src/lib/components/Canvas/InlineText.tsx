@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ElementType, type KeyboardEvent } from 'react'
 import type { NodeId } from '../../core/ids'
 import { useEditor, useNode } from '../Editor/context'
+import { useIsActiveFrame } from './frames'
 
 export type InlineTextProps = {
   textId: NodeId
@@ -12,6 +13,7 @@ export type InlineTextProps = {
 
 export function InlineText({ textId, nodeId, tag, className, setElement }: InlineTextProps) {
   const node = useNode(textId)
+  const active = useIsActiveFrame()
   const { setText, beginTextEdit } = useEditor()
   const localRef = useRef<HTMLElement | null>(null)
   const initialRef = useRef(node && 'value' in node ? node.value : '')
@@ -23,7 +25,7 @@ export function InlineText({ textId, nodeId, tag, className, setElement }: Inlin
 
   useEffect(() => {
     const element = localRef.current
-    if (!element) return
+    if (!element || !active) return
     element.textContent = initialRef.current
     element.focus()
     const selection = window.getSelection()
@@ -33,7 +35,7 @@ export function InlineText({ textId, nodeId, tag, className, setElement }: Inlin
     range.collapse(false)
     selection.removeAllRanges()
     selection.addRange(range)
-  }, [])
+  }, [active])
 
   const commit = () => {
     const element = localRef.current
@@ -56,6 +58,14 @@ export function InlineText({ textId, nodeId, tag, className, setElement }: Inlin
   if (!node || node.kind !== 'text') return null
 
   const Tag = tag as unknown as ElementType
+
+  if (!active) {
+    return (
+      <Tag ref={attachRef} data-adt-id={nodeId} className={className}>
+        {node.value}
+      </Tag>
+    )
+  }
 
   return (
     <Tag

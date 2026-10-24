@@ -1,0 +1,43 @@
+---
+title: "Installation"
+description: "Adding the package, the stylesheet and the theme tokens."
+---
+
+```bash
+bun add file:../adt-html-editor
+```
+
+`react` and `react-dom` (>= 19) are peer dependencies. Every `react` subpath is
+external, including `react/compiler-runtime`, so the consuming app's own React
+is the only one in the bundle. The Tailwind worker is inlined into the bundle:
+no asset from `dist/assets` has to be served.
+
+```tsx
+import { HtmlEditor } from 'adt-html-editor'
+import 'adt-html-editor/style.css'
+```
+
+`style.css` is self-contained: the chrome is written in Tailwind classes and the
+build compiles them into it, so an app without Tailwind gets the editor fully
+styled. It ships no preflight — the only global rule is a `box-sizing: border-box`
+scoped to `.adt-chrome` — so it never resets the host app.
+
+## Theming
+
+The chrome is written against the shadcn token names (`--background`,
+`--foreground`, `--muted`, `--primary`, `--border`, `--ring`, `--radius`, …).
+`style.css` declares a default for each of them inside `@layer theme` — the
+product palette, blue `--primary` and all — so an app that already defines them
+in an unlayered `:root` (anything produced by `shadcn init`) wins and the editor
+takes that app's colors with no extra configuration. Adding `dark` to an ancestor
+switches the editor to the dark set, and `color-scheme` follows on `.adt-editor`
+so native scrollbars and form controls match.
+
+The chrome also follows shadcn/ui’s own component vocabulary — the same radii, control
+heights, borders, hover states and focus rings — so the built-in look sits next to shadcn
+components without a seam, and the two entry points differ in markup, not in style.
+
+The `--sidebar-*`, `--chart-*` and `--brand-*` ramps are declared and registered
+as Tailwind namespaces (`bg-sidebar`, `text-brand-600`, …) even though the core
+chrome does not use them yet, so a skin built on top of the same tokens gets them
+for free.

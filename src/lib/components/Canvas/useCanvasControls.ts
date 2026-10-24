@@ -1,4 +1,4 @@
-import { DEFAULT_WIDTH_PRESETS, useCanvasContext, type CanvasWidthPreset } from './context'
+import { useCanvasContext, type CanvasMode, type CanvasWidthPreset } from './context'
 
 export type WidthPresets = {
   presets: CanvasWidthPreset[]
@@ -7,16 +7,34 @@ export type WidthPresets = {
   select: (id: string) => void
 }
 
-export function useWidthPresets(presets: CanvasWidthPreset[] = DEFAULT_WIDTH_PRESETS): WidthPresets {
-  const { presetId, setPreset } = useCanvasContext()
+export function useWidthPresets(presets?: CanvasWidthPreset[]): WidthPresets {
+  const { presetId, setPreset, presets: fromContext } = useCanvasContext()
+  const list = presets ?? fromContext
   return {
-    presets,
+    presets: list,
     activeId: presetId,
     isActive: (id) => id === presetId,
     select: (id) => {
-      const preset = presets.find((entry) => entry.id === id)
+      const preset = list.find((entry) => entry.id === id)
       if (preset) setPreset(preset)
     },
+  }
+}
+
+export type CanvasModeControl = {
+  mode: CanvasMode
+  isActive: (mode: CanvasMode) => boolean
+  select: (mode: CanvasMode) => void
+  toggle: () => void
+}
+
+export function useCanvasMode(): CanvasModeControl {
+  const { mode, setMode } = useCanvasContext()
+  return {
+    mode,
+    isActive: (candidate) => candidate === mode,
+    select: setMode,
+    toggle: () => setMode(mode === 'frames' ? 'single' : 'frames'),
   }
 }
 

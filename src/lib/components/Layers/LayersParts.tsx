@@ -25,7 +25,7 @@ import { cn } from 'cn'
 
 const selectSelectedId = (state: EditorState) => state.selectedId
 
-const emptyClass = 'mx-3 my-4 text-2xs text-pretty text-muted-foreground/70'
+const emptyClass = 'mx-3 my-4 text-xs text-pretty text-muted-foreground'
 
 const ROW_HEIGHT = 30
 const VIRTUALIZE_ABOVE = 300
@@ -41,7 +41,7 @@ export function LayersHeader({ children }: { children?: ReactNode }) {
 
 export function LayersTitle({ children }: { children?: ReactNode }) {
   return (
-    <span className="text-2xs font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+    <span className="text-xs font-medium text-muted-foreground">
       {children}
     </span>
   )
@@ -50,7 +50,7 @@ export function LayersTitle({ children }: { children?: ReactNode }) {
 export function LayersCount() {
   const { state } = useLayersContext()
   return (
-    <span className="min-w-5 rounded-sm bg-accent px-1.5 py-px text-center text-2xs text-muted-foreground tabular-nums">
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-muted px-1.5 text-xs text-muted-foreground tabular-nums">
       {state.matchCount}
     </span>
   )
@@ -79,14 +79,15 @@ export function LayersSearch({
   const search = useLayersSearch()
 
   return (
-    <div className={cn('border-b border-border px-3 py-1.5', className)}>
+    <div className={cn('border-b border-border px-3 py-2', className)}>
       <input
         ref={(element) => search.registerInput(element)}
         type="search"
         className={cn(
-          'box-border min-h-[26px] w-full rounded-sm border-0 bg-card px-1.5 py-1 font-mono text-2xs text-foreground',
-          'ring-1 ring-border transition-shadow duration-100 ease-out ring-inset hover:ring-foreground/25',
-          'placeholder:text-muted-foreground/70',
+          'box-border h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-xs text-foreground',
+          'transition-colors outline-none dark:bg-input/30',
+          'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+          'placeholder:text-muted-foreground',
         )}
         aria-label={ariaLabel}
         placeholder={placeholder}
