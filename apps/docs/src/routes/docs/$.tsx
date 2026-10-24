@@ -17,6 +17,10 @@ import { useFumadocsLoader } from 'fumadocs-core/source/client';
 import { Suspense, use } from 'react';
 import { useMDXComponents } from '@/components/mdx';
 
+function withBase(url: string) {
+  return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`;
+}
+
 export const Route = createFileRoute('/docs/$')({
   component: Page,
   loader: async ({ params }) => {
@@ -26,7 +30,7 @@ export const Route = createFileRoute('/docs/$')({
     return data;
   },
   head: ({ loaderData }) => ({
-    meta: loaderData ? [{ property: 'og:image', content: loaderData.imageUrl }] : [],
+    meta: loaderData ? [{ property: 'og:image', content: withBase(loaderData.imageUrl) }] : [],
   }),
 });
 

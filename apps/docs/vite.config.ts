@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { fumadocsMdx } from 'fumadocs-mdx/vite';
 import { nitro } from 'nitro/vite';
@@ -16,6 +16,28 @@ const base = process.env.DOCS_BASE ?? '/';
 const imageRoutes: string[] = [];
 for await (const entry of glob('**/*.mdx', { cwd: 'content/docs' })) {
   imageRoutes.push(getPageImageUrl({ slugs: getSlugs(entry) }).url);
+}
+
+function staticServerFnCacheBase(base: string): Plugin {
+  const absolute = '`/__tsr/staticServerFnCache/';
+  const prefixed = `\`${base.replace(/\/$/, '')}/__tsr/staticServerFnCache/`;
+
+  return {
+    name: 'docs:static-server-fn-cache-base',
+    apply: 'build',
+    applyToEnvironment: (environment) => environment.name === 'client',
+    transform(code, id) {
+      if (!id.includes('start-static-server-functions')) return;
+      if (!id.includes('staticFunctionMiddleware')) return;
+      if (!code.includes(absolute)) {
+        throw new Error(
+          `Cannot prefix the static server function cache URL with "${base}": @tanstack/start-static-server-functions no longer builds it from the "${absolute}" literal.`,
+        );
+      }
+
+      return code.replaceAll(absolute, prefixed);
+    },
+  };
 }
 
 export default defineConfig({
@@ -54,6 +76,7 @@ export default defineConfig({
       ],
     }),
     react(),
+    ...(base === '/' ? [] : [staticServerFnCacheBase(base)]),
     // please see https://tanstack.com/start/latest/docs/framework/react/guide/hosting#nitro for guides on hosting
     nitro({
       // TanStack Start pre-renders responses as text, which breaks images
