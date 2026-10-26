@@ -70,7 +70,7 @@ export function CanvasStage({ className, children, ref }: CanvasStageProps) {
   }, [stageRef])
 
   const target = zoom === 'fit' ? fitScale(size.width, fitWidth) : zoom
-  const layout = mode === 'frames' ? `frames:${fitWidth}:${size.width}` : `single:${size.width}`
+  const layout = mode === 'frames' ? `frames:${fitWidth}` : `single:${size.width}`
 
   const onUserZoom = (instance: ReactZoomPanPinchRef) => {
     const { scale } = instance.state
@@ -101,6 +101,7 @@ export function CanvasStage({ className, children, ref }: CanvasStageProps) {
             stageRef={stageRef}
             target={target}
             layout={layout}
+            stageWidth={size.width}
             appliedRef={appliedRef}
             measured={size.width > 0}
           />
@@ -135,18 +136,21 @@ function CanvasStageSync({
   stageRef,
   target,
   layout,
+  stageWidth,
   appliedRef,
   measured,
 }: {
   stageRef: RefObject<HTMLDivElement | null>
   target: number
   layout: string
+  stageWidth: number
   appliedRef: RefObject<number | null>
   measured: boolean
 }) {
   const controls = useControls()
   const controlsRef = useRef(controls)
   const layoutRef = useRef(layout)
+  const stageWidthRef = useRef(stageWidth)
 
   useEffect(() => {
     controlsRef.current = controls
@@ -161,7 +165,9 @@ function CanvasStageSync({
     if (!stage || !measured || target <= 0) return
 
     const resized = layoutRef.current !== layout
+    const stageResized = stageWidthRef.current !== stageWidth
     layoutRef.current = layout
+    stageWidthRef.current = stageWidth
     if (
       !resized &&
       appliedRef.current !== null &&
@@ -183,9 +189,9 @@ function CanvasStageSync({
       target,
       rect.left + rect.width / 2,
       rect.top + rect.height / 2,
-      ZOOM_DURATION,
+      stageResized ? 0 : ZOOM_DURATION,
     )
-  }, [target, layout, measured, stageRef, appliedRef])
+  }, [target, layout, stageWidth, measured, stageRef, appliedRef])
 
   return null
 }
